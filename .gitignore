@@ -37,7 +37,6 @@ workshop/
 workshop_content/
 ~$*
 *.xlsx
-!$example.xlsx
 
 # Project Zomboid runtime logs & saves
 *.log
