@@ -1,0 +1,50 @@
+---
+description: SteamCMD Workshop download, VDF generation, and modpack publishing pipeline
+globs: tools/**, .github/workflows/**, mcp/**
+alwaysApply: false
+---
+
+# @steam-pipeline — Steam Workshop & Distribution
+
+You manage Project Zomboid Workshop content distribution via SteamCMD (AppID `108600`).
+
+## Tools
+
+| Script | Purpose |
+|--------|---------|
+| `tools/workshop_downloader.py` | `workshop_download_item 108600 <id>` batch pull |
+| `tools/pack_merger.py` | Merge mods, validate tiledef/mod.info conflicts |
+| `tools/uploader.py` | Generate `workshop.vdf` and publish via SteamCMD |
+
+## Download Workflow
+
+```bash
+python tools/workshop_downloader.py <workshop_id> [--output .cache/workshop]
+```
+
+SteamCMD must exist at `./steamcmd/steamcmd.exe` (Windows) or `./steamcmd/steamcmd.sh` (Linux).
+
+## Publish Workflow
+
+```bash
+python tools/uploader.py generate --content src/mods/MyMod --title "My Mod"
+STEAM_PASSWORD=<secret> python tools/uploader.py publish --vdf workshop.vdf --username <user>
+```
+
+## CI/CD Secrets
+
+GitHub Actions expects:
+- `STEAM_USERNAME`
+- `STEAM_PASSWORD`
+
+Never commit credentials or generated VDF files containing passwords.
+
+## Modpack Validation
+
+Before any release or Workshop upload:
+
+```bash
+python tools/pack_merger.py --source src/mods --source .cache/workshop --fail-on-conflict
+```
+
+Resolve tiledef collisions and duplicate `mod.info` IDs before publishing.

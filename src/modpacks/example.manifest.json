@@ -1,0 +1,15 @@
+{
+  "$schema": "./modpack.schema.json",
+  "name": "example-server-pack",
+  "version": "0.0.0",
+  "description": "Locked modpack manifest example. Replace workshop_ids and local mods when ready.",
+  "sources": {
+    "local_mods": ["src/mods"],
+    "workshop_cache": ".cache/workshop"
+  },
+  "workshop_ids": [],
+  "include_mod_ids": [],
+  "exclude_mod_ids": [],
+  "output": "src/modpacks/example-server-pack",
+  "fail_on_conflict": true
+}

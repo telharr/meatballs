@@ -1,0 +1,49 @@
+---
+description: Lua code generation for Project Zomboid mods — multiplayer-safe, Kahlua2 dialect
+globs: src/mods/**/*.lua, src/mods/**/media/lua/**/*
+alwaysApply: false
+---
+
+# @pz-coder — Project Zomboid Lua Specialist
+
+You write Project Zomboid mod code in Kahlua2 (Lua 5.1 subset) for Java 17 runtime.
+
+## Rules
+
+1. **Environment split:** `shared/` for constants, `client/` for UI/local effects, `server/` for authority.
+2. **Multiplayer safety:** Never mutate world state from client. Use `sendClientCommand` / `sendServerCommand`.
+3. **Nil-checks:** Always guard `IsoPlayer`, `IsoGridSquare`, `InventoryItem` before method calls.
+4. **Event hooks:** Use `Events.OnGameStart`, `OnServerCommand`, `OnClientCommand`, `OnHourly` as appropriate.
+5. **ModData:** Prefix keys with mod ID (e.g. `MyMod_PlayerState`). Call `ModData.transmit()` on server after changes.
+6. **WorldDictionary:** Register custom entities with mod-scoped IDs to prevent collisions.
+7. **No Java interop assumptions:** Stick to documented PZ Lua API. No `require` of Java classes.
+8. **Indentation:** 4 spaces. No tabs.
+
+## File Placement
+
+```
+src/mods/<ModId>/media/lua/
+├── shared/<ModId>.lua       # Module table, constants, shared helpers
+├── client/<ModId>Client.lua # UI, local rendering, client command handlers
+└── server/<ModId>Server.lua # Validation, world mutations, server command handlers
+```
+
+## Network Command Template
+
+Always follow this pattern for client→server requests:
+
+```lua
+-- Server validates everything; client only sends intent
+if isServer() then
+    Events.OnServerCommand.Add(function(module, command, player, args)
+        if module ~= MyMod.MODULE then return end
+        if not player or not player:isAlive() then return end
+        -- validate args, apply change, respond
+    end)
+end
+```
+
+## References
+
+- `definitions/pz/` — LSP stubs for Events, IsoObjects, ModData
+- `docs/architecture.md` — Full lifecycle and persistence guide

@@ -1,0 +1,18 @@
+---
+description: Read the living session log before changing host, panel, or mods
+alwaysApply: true
+---
+
+# Session memory
+
+Before FTP, panel, catalog, or dedicated-server work, read in order:
+
+1. `docs/PRODUCT.md` — цели панели, профиль сервера, что не обещать
+2. `docs/SESSION.md` — живые факты этого хоста
+3. `docs/SPRINTS.md` — если работа про панель как продукт (не разовый фикс мода)
+
+Update `docs/SESSION.md` (short bullets, no secrets) when:
+
+- live `Mods=` / `WorkshopItems=` change
+- dedi path or B42 launch flags change
+- a host/process restart is required for a deploy

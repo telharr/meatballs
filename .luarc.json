@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime": {
+    "version": "Lua 5.1",
+    "path": ["?.lua", "?/init.lua"]
+  },
+  "workspace": {
+    "checkThirdParty": false,
+    "library": ["definitions/pz"]
+  },
+  "diagnostics": {
+    "globals": [
+      "Events",
+      "getPlayer",
+      "getSpecificPlayer",
+      "getCell",
+      "getWorld",
+      "getGameTime",
+      "getServerOptions",
+      "sendClientCommand",
+      "sendServerCommand",
+      "ModData",
+      "SandboxVars",
+      "ZombRand",
+      "isClient",
+      "isServer",
+      "isAdmin",
+      "isDebugEnabled",
+      "IsoPlayer",
+      "IsoGridSquare",
+      "InventoryItem",
+      "ItemContainer",
+      "Perks",
+      "Traits",
+      "WorldDictionary"
+    ],
+    "disable": ["lowercase-global"]
+  }
+}

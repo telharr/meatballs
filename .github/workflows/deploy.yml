@@ -1,0 +1,110 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install luacheck
+        run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
+
+      - name: Lint Lua mods
+        run: |
+          if find src/mods -name "*.lua" 2>/dev/null | grep -q .; then
+            luacheck src/mods/
+          else
+            echo "No Lua files found — skipping luacheck"
+          fi
+
+  validate-modpack:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate modpack
+        run: |
+          if find src/mods -name "mod.info" 2>/dev/null | grep -q .; then
+            python tools/pack_merger.py --fail-on-conflict
+          else
+            echo "No mods found — skipping pack validation"
+          fi
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: [lint, validate-modpack]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build modpack artifact
+        run: |
+          python tools/pack_merger.py --output dist/modpack || mkdir -p dist/modpack
+          cd dist && zip -r modpack.zip modpack/
+
+      - name: Upload release artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/modpack.zip
+          generate_release_notes: true
+
+  steam-publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SteamCMD
+        run: |
+          mkdir -p steamcmd
+          cd steamcmd
+          curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -
+
+      - name: Generate Workshop VDF
+        if: env.STEAM_USERNAME != ''
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          MOD_TITLE: ${{ github.event.repository.name }}
+          MOD_CONTENT: src/mods
+        run: |
+          if [ -n "$STEAM_USERNAME" ] && find src/mods -name "mod.info" | grep -q .; then
+            python tools/uploader.py generate \
+              --content "$MOD_CONTENT" \
+              --title "$MOD_TITLE" \
+              --description "Release ${{ github.ref_name }}"
+          fi
+
+      - name: Publish to Steam Workshop
+        if: env.STEAM_USERNAME != '' && env.STEAM_PASSWORD != ''
+        env:
+          STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+          STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
+        run: |
+          if [ -n "$STEAM_USERNAME" ] && [ -n "$STEAM_PASSWORD" ] && [ -f workshop.vdf ]; then
+            python tools/uploader.py publish \
+              --vdf workshop.vdf \
+              --steamcmd steamcmd/steamcmd.sh \
+              --username "$STEAM_USERNAME"
+          else
+            echo "Steam secrets not configured — skipping Workshop publish"
+          fi

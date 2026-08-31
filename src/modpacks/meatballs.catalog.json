@@ -1,0 +1,43 @@
+{
+  "$schema": "./catalog.schema.json",
+  "name": "meatballs",
+  "ini_filename": "world.ini",
+  "items": [
+    {
+      "kind": "mod",
+      "id": "ServerTweaker",
+      "name": "Server Tweaker",
+      "source": "local",
+      "enabled": true,
+      "path": "src/mods/ServerTweaker",
+      "notes": "Patched B42: vendor/json + empty AnimSets. Sandbox options merged into LogExtender."
+    },
+    {
+      "kind": "mod",
+      "id": "LogExtender",
+      "name": "Log Extender",
+      "source": "local",
+      "enabled": true,
+      "path": "src/mods/LogExtender",
+      "notes": "Patched B42: merged sandbox options/translations so Tweaker page survives overlay."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsSlots",
+      "name": "Meatballs Slots",
+      "source": "local",
+      "enabled": true,
+      "path": "src/mods/MeatballsSlots",
+      "notes": "Trainers Rook/Otto/Sarge/Ash/Vera on the player list. Count from Lua/mb_slots.txt."
+    },
+    {
+      "kind": "mod",
+      "id": "AdminTools",
+      "name": "Admin Tools",
+      "source": "local",
+      "enabled": true,
+      "path": "src/mods/AdminTools",
+      "notes": "City wipe, Louisville claim ban, safehouse borders, disable map share"
+    }
+  ]
+}

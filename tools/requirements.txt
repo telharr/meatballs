@@ -1,0 +1,5 @@
+# Python tooling for PZ modpack pipeline (3.10+)
+# Install: python -m pip install -r tools/requirements.txt
+
+fastmcp>=2.0.0
+python-dotenv>=1.0.0

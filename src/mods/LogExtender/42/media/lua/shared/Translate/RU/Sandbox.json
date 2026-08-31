@@ -1,0 +1,19 @@
+{
+    "Sandbox_ServerTweaker": "Server Tweaker",
+    "Sandbox_HighlightSafehouse": "Подсветка убежищ",
+    "Sandbox_ShowCoordinates": "Отображать координаты персонажа",
+    "Sandbox_EnableSuicideCommand": "Включить команду suicide в чате",
+    "Sandbox_AdminSafehouseExtension": "Продвинутое создание убежищ админом",
+    "Sandbox_SafehouseVehicleProtection": "Защищать транспорт в убежище",
+    "Sandbox_ElevatedStaffPermissions": "Повышение прав персоналу",
+    "Sandbox_BrushToolFix": "Исправить синхронизацию Brush Tool",
+    "Sandbox_LogExtender": "Log Extender",
+    "Sandbox_PlayerLogs": "Включить логи _player.txt",
+    "Sandbox_PlayerTickLogs": "Дополнительно писать лог игрока каждый игровой час",
+    "Sandbox_VehicleLogs": "Включить логи _vehicle.txt",
+    "Sandbox_VehicleAdminTools": "Включить логирование действий админов над машинами",
+    "Sandbox_BrushToolLogs": "Включить логи _brushtool.txt",
+    "Sandbox_SafehouseLogs": "Включить логи _safehouse.txt",
+    "Sandbox_SafehouseAdminTools": "Включить логирование действий админов над убежищами",
+    "Sandbox_CraftLogs": "Включить логи _craft.txt"
+}

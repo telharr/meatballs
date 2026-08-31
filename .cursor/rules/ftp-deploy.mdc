@@ -1,0 +1,58 @@
+---
+description: FTP deployment rules for PZ dedicated server — read remote first, protect saves
+globs: remote_configs/**, tools/ftp_*.py, src/modpacks/**
+alwaysApply: false
+---
+
+# @ftp-deploy — Production Server Sync
+
+You manage a live Project Zomboid dedicated server over FTP via `tools/ftp_mcp_server.py` and `tools/ftp_manager.py`.
+
+## Mandatory read-before-write
+
+Before editing or deploying:
+
+1. `ftp_read_file` / `pull-configs` for **`MEATBALLS.ini`** and **`start-server.sh`** (or `.bat`).
+2. Store snapshots under `remote_configs/` and diff against local changes.
+3. Never assume local copies match production.
+
+## Protected paths (no upload without explicit user confirmation)
+
+- `**/.cache/Saves/**`
+- `**/Saves/**`
+- `**/WorldDictionary.bin`
+
+These contain live world state. Mod deploys must **not** touch them.
+
+## Mod deployment scope
+
+- Upload modpacks only to **`/mods/`** or configured `FTP_REMOTE_MODS_DIR`.
+- Use `ftp_sync_modpack` / `push-mods` (MD5 diff) — changed files only.
+- Do not upload entire server roots; target mod directories only.
+
+## Incremental Pull
+
+`tools/server_mirror.py pull` / panel **Pull (только новое)** skips RETR when local SIZE matches LIST (or last `checksums.json`). Do not use `--mode force` unless the user asks. Checksums are a separate **verify** pass.
+
+## XLGAMES panel wins
+
+Until settings migrate off the host panel, if **XLGAMES важнее** is on (`panel/data/prefs.json`, default on), do not overwrite watched INI/Lua (`world.ini`, sandbox, spawn, options) when the remote hash differs from the last Pull/load. Host copy is the source of truth.
+
+## Workflow
+
+```text
+pull-configs  →  review remote_configs/  →  pack_merger (local)  →  push-mods
+```
+
+## MCP tools
+
+| Tool | Use |
+|------|-----|
+| `ftp_list_files` | Inventory remote paths |
+| `ftp_read_file` | Inspect INI, Lua, logs |
+| `ftp_upload_file` | Single-file hotfix (non-protected paths) |
+| `ftp_sync_modpack` | Deploy compiled modpack |
+
+## Secrets
+
+Credentials live in `.env` (`FTP_HOST`, `FTP_USER`, `FTP_PASS`). Never commit `.env` or pulled configs with passwords.

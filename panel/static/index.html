@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEATBALLS — PZ Control Panel</title>
+  <link rel="icon" href="/static/assets/icon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
+  <link rel="stylesheet" href="/static/style.css?v=3.13.1" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-brand">
+      <img src="/static/assets/icon.ico" alt="" class="nav-logo" width="28" height="28" />
+      <span class="nav-title">MEATBALLS <em>PZ</em></span>
+      <span id="status-pill" class="status-pill unknown" title="Checking…">
+        <span class="led"></span>
+        <span id="status-pill-text">…</span>
+      </span>
+      <label class="server-switcher" data-i18n-title="nav.server">
+        <span class="pill-k" data-i18n="nav.server">Сервер</span>
+        <select id="server-switcher" aria-label="Active server"></select>
+      </label>
+    </div>
+    <div class="nav-pills" id="nav-pills">
+      <span class="pill"><span class="pill-k" data-i18n="pill.ip">IP</span><span id="pill-ip" class="pill-v">—</span></span>
+      <span class="pill"><span class="pill-k" data-i18n="pill.query">Query</span><span id="pill-query" class="pill-v">—</span></span>
+      <span class="pill"><span class="pill-k" data-i18n="pill.rcon">RCON</span><span id="pill-rcon" class="pill-v">—</span></span>
+      <span class="pill pill-players"><span class="pill-k" data-i18n="pill.players">Players</span><span id="pill-players" class="pill-v">0/32</span></span>
+      <span class="pill"><span class="pill-k" data-i18n="pill.uptime">Uptime</span><span id="pill-uptime" class="pill-v">00:00:00</span></span>
+    </div>
+    <div class="nav-controls">
+      <div class="lang-switch" id="lang-switch" title="Language">
+        <button type="button" class="lang-btn" data-lang="ru">RU</button>
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+      </div>
+      <span id="user-badge" class="user-badge hidden" title=""></span>
+      <button type="button" id="btn-logout" class="btn xs hidden" data-i18n="auth.logout">Выход</button>
+      <button type="button" id="btn-sync-ftp" class="icon-btn" data-need="files" title="Force Sync FTP">⟳</button>
+      <button type="button" id="btn-theme" class="icon-btn" title="Dark / OLED">☀</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <p class="sidebar-label" data-i18n="nav.server">Сервер</p>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item active" data-view="home">
+          <span class="nav-icon">⌂</span> <span data-i18n="nav.home">Главная</span>
+        </button>
+        <button type="button" class="nav-item" data-view="console" data-need="rcon">
+          <span class="nav-icon">⌘</span> <span data-i18n="nav.console">Консоль</span>
+        </button>
+        <button type="button" class="nav-item" data-view="network">
+          <span class="nav-icon">🌐</span> <span data-i18n="nav.network">Сеть</span>
+        </button>
+        <button type="button" class="nav-item" data-view="mirror" data-need="files">
+          <span class="nav-icon">🪞</span> <span data-i18n="nav.mirror">Зеркало</span>
+        </button>
+        <button type="button" class="nav-item" data-view="smoke" data-need="files">
+          <span class="nav-icon">🧪</span> <span data-i18n="nav.smoke">Smoke test</span>
+        </button>
+      </nav>
+      <p class="sidebar-label sidebar-label-gap" data-i18n="nav.people">Люди</p>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item" data-view="players" data-need="rcon">
+          <span class="nav-icon">👥</span> Игроки
+        </button>
+        <button type="button" class="nav-item" data-view="bans" data-need="files">
+          <span class="nav-icon">⛔</span> Баны
+        </button>
+        <button type="button" class="nav-item" data-view="npc" data-need="files" data-need-plugin="meatballs">
+          <span class="nav-icon">♟</span> NPC
+        </button>
+        <button type="button" class="nav-item" data-view="chat" data-need="files">
+          <span class="nav-icon">💬</span> Чат
+        </button>
+        <button type="button" class="nav-item" data-view="privates" data-need="files" data-need-plugin="meatballs">
+          <span class="nav-icon">⌂</span> Приваты
+        </button>
+      </nav>
+      <p class="sidebar-label sidebar-label-gap">Конфиг</p>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item" data-view="files" data-need="files">
+          <span class="nav-icon">📁</span> Файлы
+        </button>
+        <button type="button" class="nav-item" data-view="mods" data-need="files">
+          <span class="nav-icon">🧩</span> <span data-i18n="nav.mods">Моды</span>
+        </button>
+        <button type="button" class="nav-item" data-view="workshop" data-need="files">
+          <span class="nav-icon">⚙</span> <span data-i18n="nav.workshop">Workshop</span>
+        </button>
+        <button type="button" class="nav-item" data-view="scheduler" data-need="rcon">
+          <span class="nav-icon">📅</span> Планировщик
+        </button>
+        <button type="button" class="nav-item" data-view="logs" data-need="files">
+          <span class="nav-icon">📋</span> Логи
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <!-- Home -->
+      <section class="view view-active" id="view-home">
+        <div class="card full-height home-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Быстрое управление</h2>
+              <span class="hint" id="home-hint">профиль сервера · хостер — адаптер</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-panel-snapshot" class="btn sm" data-i18n="home.snapshot" title="Full panel source dump as .txt">Snapshot</button>
+              <button type="button" id="btn-home-refresh" class="btn sm" data-i18n="home.refresh">Обновить</button>
+            </div>
+          </div>
+          <div class="home-body">
+            <div id="home-status" class="home-status"><p class="muted">Загрузка…</p></div>
+            <div class="home-actions">
+              <button type="button" class="btn primary" id="btn-home-save">Сохранить мир</button>
+              <button type="button" class="btn danger" id="btn-home-graceful">Рестарт 5 мин</button>
+              <button type="button" class="btn danger" id="btn-home-hard">Рестарт сейчас</button>
+              <button type="button" class="btn sm" id="btn-home-local-start">Local Start</button>
+              <button type="button" class="btn sm danger" id="btn-home-local-stop">Local Stop</button>
+            </div>
+            <p class="muted home-host-note" id="home-host-note">Запустить хост панель не может — после quit открой панель хостера.</p>
+            <div class="home-jumps">
+              <button type="button" class="btn sm" data-jump="files" data-need="files" data-open="world.ini">Настройки (world.ini)</button>
+              <button type="button" class="btn sm" data-jump="mods" data-need="files">Моды</button>
+              <button type="button" class="btn sm" data-jump="logs" data-need="files">Логи</button>
+              <button type="button" class="btn sm" data-jump="players" data-need="rcon">Игроки</button>
+              <button type="button" class="btn sm" data-jump="scheduler" data-need="rcon">Планировщик</button>
+              <button type="button" class="btn sm" data-jump="chat" data-need="files">Чат</button>
+              <button type="button" class="btn sm" data-jump="bans" data-need="files">Баны</button>
+              <button type="button" class="btn sm" data-jump="privates" data-need="files" data-need-plugin="meatballs">Приваты</button>
+            </div>
+            <h3 class="players-subhead">Подключить сервер</h3>
+            <p class="muted home-wizard-lead">Мастер: хостер подставляет пути, пробы пишут capabilities. Без FTP вкладки логов серые, не падают.</p>
+            <div id="cap-strip" class="cap-strip"></div>
+            <div class="profile-crud">
+              <button type="button" class="btn sm" id="btn-profile-edit">Редактировать профиль</button>
+              <button type="button" class="btn sm danger" id="btn-profile-delete">Удалить профиль</button>
+            </div>
+            <form id="server-form" class="server-form">
+              <input type="hidden" id="srv-edit-id" value="" />
+              <p class="wizard-step">1. Имя и хостер</p>
+              <label class="field"><span>Имя</span><input id="srv-name" required maxlength="80" placeholder="MEATBALLS" /></label>
+              <label class="field"><span>Хостер</span>
+                <select id="srv-hoster">
+                  <option value="xlgames">XLGAMES</option>
+                  <option value="vps">VPS / vanilla</option>
+                  <option value="local">Local dedi</option>
+                </select>
+              </label>
+              <label class="field"><span>Версия PZ</span><input id="srv-version" maxlength="20" placeholder="42.20.4" /></label>
+              <p class="wizard-step">2. RCON</p>
+              <label class="field"><span>RCON host</span><input id="srv-rcon-host" maxlength="200" placeholder="your.server.example" /></label>
+              <label class="field"><span>RCON port</span><input id="srv-rcon-port" type="number" value="16284" /></label>
+              <label class="field"><span>RCON password</span><input id="srv-rcon-pass" type="password" autocomplete="new-password" /></label>
+              <p class="wizard-step" data-i18n="wizard.step3">3. Файлы (FTP, SFTP или local path)</p>
+              <label class="field"><span data-i18n="wizard.files_kind">Файлы</span>
+                <select id="srv-files-kind">
+                  <option value="ftp">FTP</option>
+                  <option value="sftp">SFTP (SSH)</option>
+                  <option value="local">Local path</option>
+                </select>
+              </label>
+              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_host">Host</span><input id="srv-ftp-host" maxlength="200" /></label>
+              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_user">User</span><input id="srv-ftp-user" maxlength="120" /></label>
+              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_pass">Password</span><input id="srv-ftp-pass" type="password" autocomplete="new-password" /></label>
+              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_port">SFTP port</span><input id="srv-sftp-port" type="number" value="22" /></label>
+              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_path">SSH key path</span><input id="srv-sftp-key-path" maxlength="500" placeholder="C:\Users\you\.ssh\id_ed25519" /></label>
+              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_inline">Inline private key</span><textarea id="srv-sftp-key-inline" rows="3" maxlength="16000" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea></label>
+              <label class="field"><span data-i18n="wizard.root">Root / путь</span><input id="srv-files-root" maxlength="300" placeholder="/ServerWorld" /></label>
+              <label class="field"><span data-i18n="wizard.ini">INI</span><input id="srv-files-ini" maxlength="80" placeholder="world.ini" /></label>
+              <label class="toggle-label plugin-toggle"><input type="checkbox" id="srv-plugin-meatballs" /> <span data-i18n="wizard.plugin_meatballs">Включить модуль MEATBALLS</span></label>
+              <p class="wizard-step">4. Публичные порты</p>
+              <label class="field"><span>Публичный IP</span><input id="srv-public-host" maxlength="200" /></label>
+              <label class="field"><span>Game UDP</span><input id="srv-game-port" type="number" value="16282" /></label>
+              <label class="field"><span>Query UDP</span><input id="srv-query-port" type="number" value="16281" /></label>
+              <p class="wizard-step">5. Кто поднимает JVM</p>
+              <label class="field"><span>Процесс</span>
+                <select id="srv-process">
+                  <option value="none">none — хостер сам</option>
+                  <option value="local">local — эта машина</option>
+                </select>
+              </label>
+              <div class="server-form-actions">
+                <button type="button" class="btn sm" id="btn-srv-probe-rcon">Проверить RCON</button>
+                <button type="button" class="btn sm" id="btn-srv-probe-files">Проверить файлы</button>
+                <button type="button" class="btn sm" id="btn-srv-probe-query">Проверить Query</button>
+                <button type="button" class="btn sm" id="btn-srv-probe-all">Проверить каналы</button>
+                <button type="button" class="btn sm" id="btn-srv-save-draft">Сохранить черновик</button>
+                <button type="submit" class="btn primary sm">Сохранить и сделать активным</button>
+              </div>
+              <p id="srv-probe" class="muted server-probe"></p>
+            </form>
+            <h3 class="players-subhead">Онлайн</h3>
+            <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
+            <h3 class="players-subhead">Последние ошибки лога</h3>
+            <ul id="home-errors" class="world-errors"><li class="muted">нет</li></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Console -->
+      <section class="view" id="view-console">
+        <div class="card terminal-card full-height">
+          <div class="card-head">
+            <div class="card-head-left"><h2>RCON Terminal</h2></div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-clear-console" class="btn ghost sm">Clear</button>
+              <label class="toggle-label"><input type="checkbox" id="autoscroll-lock" checked /> Auto-scroll</label>
+              <button type="button" id="btn-download-log" class="btn ghost sm">Download</button>
+              <button type="button" class="btn sm" data-cmd="save">Save World</button>
+              <button type="button" class="btn sm danger" id="btn-graceful">Restart 5m</button>
+              <button type="button" class="btn sm" data-action="mods">Mods</button>
+            </div>
+          </div>
+          <div id="console" class="console"></div>
+          <form id="console-form" class="console-input-row">
+            <span class="prompt">❯</span>
+            <input id="console-input" type="text" autocomplete="off" spellcheck="false"
+                   placeholder='servermsg "Hello" · save · players' list="cmd-hints" />
+            <datalist id="cmd-hints">
+              <option value="players"></option>
+              <option value="save"></option>
+              <option value="checkModsNeedUpdate"></option>
+              <option value='servermsg "'></option>
+              <option value="kick "></option>
+            </datalist>
+            <button type="submit" class="btn primary sm">Send</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Players -->
+      <section class="view" id="view-players">
+        <div class="card full-height players-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Игроки и старт</h2>
+              <span class="hint">живые клиенты · инвайт · основатели</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-invite-copy" class="btn primary sm">Скопировать инвайт</button>
+              <button type="button" id="btn-players-refresh" class="btn sm">Обновить</button>
+            </div>
+          </div>
+          <div class="players-split">
+            <div class="players-col">
+              <h3 class="players-subhead">Онлайн сейчас</h3>
+              <p class="muted">Только живые клиенты. Тренеры — вкладка NPC слева.</p>
+              <div id="players-page-list" class="players-page-list">
+                <p class="muted">Загрузка…</p>
+              </div>
+            </div>
+            <div class="launch-pane">
+              <h3 class="players-subhead">Карточка подключения</h3>
+              <pre id="invite-card" class="invite-card">Загрузка…</pre>
+              <p class="muted launch-meta" id="launch-meta"></p>
+              <div class="launch-actions">
+                <button type="button" id="btn-invite-copy-pwd" class="btn sm">Инвайт с паролем</button>
+                <label class="toggle-label" id="label-discord-announce">
+                  <input type="checkbox" id="chk-announce-discord" /> + Discord webhook
+                </label>
+              </div>
+              <form id="announce-form" class="launch-form">
+                <input id="announce-text" type="text" maxlength="280"
+                       placeholder='servermsg для онлайна, латиница/без кавычек' />
+                <button type="submit" class="btn sm">В эфир</button>
+              </form>
+              <h3 class="players-subhead">Основатели (кого зовём)</h3>
+              <form id="founder-form" class="launch-form launch-form-grid">
+                <input id="founder-name" type="text" maxlength="24" placeholder="Nick (латиница)" required />
+                <input id="founder-steamid" type="text" maxlength="20" placeholder="SteamID64" />
+                <input id="founder-note" type="text" maxlength="200" placeholder="Заметка" />
+                <button type="submit" class="btn sm primary">В список</button>
+              </form>
+              <form id="adduser-form" class="launch-form">
+                <input id="adduser-name" type="text" maxlength="24" placeholder="Ник для adduser" />
+                <input id="adduser-pass" type="text" maxlength="24" placeholder="Пароль (пусто = сгенерировать)" />
+                <button type="submit" class="btn sm">Создать аккаунт (RCON)</button>
+              </form>
+              <div id="founders-list" class="founders-list">
+                <p class="muted">Пока никого не добавили</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NPC trainers (world bodies, not Steam / RCON players) -->
+      <section class="view" id="view-npc">
+        <div class="card full-height npc-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>NPC-тренеры</h2>
+              <span class="hint">тела в мире · не игроки · не Steam / RCON</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-npc-refresh" class="btn sm">Обновить</button>
+            </div>
+          </div>
+          <div class="npc-split">
+            <div class="npc-col">
+              <div class="npc-callout">
+                Это не слоты игроков и не фейковый онлайн. Мод <code>MeatballsSlots</code>
+                ставит до пяти именованных тренеров в города. Вкладка <strong>Игроки</strong>
+                показывает только живых клиентов.
+              </div>
+              <h3 class="players-subhead">Сколько в мире</h3>
+              <form id="slots-form" class="launch-form slots-form">
+                <label class="slots-count-label">
+                  <span>Число (0–5)</span>
+                  <input id="slots-count" type="number" min="0" max="5" value="0" />
+                </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="chk-slots-ftp" checked /> Записать на FTP
+                </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="chk-slots-mod" /> Залить мод MeatballsSlots
+                </label>
+                <button type="button" id="btn-slots-five" class="btn sm primary">Включить всех пятерых</button>
+                <button type="submit" class="btn sm">Применить</button>
+              </form>
+              <p class="muted" id="slots-hint">Rook · Otto · Sarge · Ash · Vera — в мире, не в списке Steam.</p>
+              <p class="muted" id="npc-next"></p>
+            </div>
+            <div class="npc-roster-pane">
+              <h3 class="players-subhead">Ростер</h3>
+              <div id="trainers-roster" class="npc-roster"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Files -->
+      <section class="view" id="view-files">
+        <div class="card studio full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Config Studio</h2>
+              <span class="hint">Ctrl+S · multi-tab</span>
+            </div>
+          </div>
+          <div class="studio-body">
+            <aside class="file-tree" id="file-tree"><p class="muted">Scanning FTP…</p></aside>
+            <div class="editor-pane">
+              <div class="editor-tabs" id="config-tabs"></div>
+              <div class="editor-stage">
+                <div id="codemirror-host"></div>
+                <div class="editor-fab">
+                  <button type="button" id="btn-save" class="btn primary fab-btn" disabled>
+                    <span class="fab-spinner hidden" id="save-spinner"></span>
+                    <span id="save-label">Save &amp; Push to FTP</span>
+                  </button>
+                </div>
+              </div>
+              <div class="editor-meta">
+                <span id="current-file" class="muted">No file open</span>
+                <span id="editor-lang" class="muted"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scheduler -->
+      <section class="view" id="view-scheduler">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left"><h2>Планировщик RCON</h2></div>
+            <button type="button" id="btn-new-task" class="btn primary sm">+ Создать задание</button>
+          </div>
+          <div id="scheduler-list" class="scheduler-list">
+            <p class="muted">Загрузка задач…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bans -->
+      <section class="view" id="view-bans">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Баны и кики</h2>
+              <span class="hint">db/ на зеркале · unban через RCON</span>
+            </div>
+            <button type="button" id="btn-bans-refresh" class="btn sm">Обновить</button>
+          </div>
+          <div class="home-body">
+            <div id="bans-list"><p class="muted">Загрузка…</p></div>
+            <h3 class="players-subhead">Журнал киков / дисконнектов</h3>
+            <div id="kicks-list" class="muted">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section class="view" id="view-chat">
+        <div class="card full-height chat-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Игровой чат</h2>
+              <span class="hint">из _chat.txt · whisper только чтение</span>
+            </div>
+            <div class="terminal-tools">
+              <select id="chat-channel">
+                <option value="all">Все</option>
+                <option value="global">Глобальный</option>
+                <option value="local">Локальный</option>
+                <option value="whisper">Личный</option>
+                <option value="admin">Админ</option>
+              </select>
+              <button type="button" id="btn-chat-refresh" class="btn sm">Обновить</button>
+            </div>
+          </div>
+          <div id="chat-feed" class="chat-feed"><p class="muted">Загрузка…</p></div>
+          <form id="chat-announce-form" class="console-input-row">
+            <input id="chat-announce-text" type="text" maxlength="280"
+                   placeholder='servermsg в эфир, латиница/без кавычек' />
+            <button type="submit" class="btn primary sm">В эфир</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Privates -->
+      <section class="view" id="view-privates">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Приваты и фракции</h2>
+              <span class="hint">дамп LogExtender · Saves не трогаем</span>
+            </div>
+            <button type="button" id="btn-privates-refresh" class="btn sm">Обновить</button>
+          </div>
+          <div class="home-body">
+            <p class="muted" id="privates-note"></p>
+            <div id="privates-list"><p class="muted">Загрузка…</p></div>
+            <h3 class="players-subhead">Журнал _safehouse.txt</h3>
+            <div id="privates-journal" class="muted">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Logs -->
+      <section class="view" id="view-logs">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Логи</h2>
+              <span id="log-meta" class="hint">зеркало + console</span>
+            </div>
+            <div class="terminal-tools">
+              <select id="log-kind">
+                <option value="console">server-console</option>
+                <option value="chat">чат</option>
+                <option value="user">вход/выход</option>
+                <option value="player">player</option>
+                <option value="safehouse">приваты</option>
+                <option value="admin">админ</option>
+                <option value="cmd">команды</option>
+                <option value="pvp">PVP</option>
+              </select>
+              <label class="toggle-label"><input type="checkbox" id="log-autorefresh" checked /> Auto 15s</label>
+              <button type="button" id="btn-log-refresh" class="btn sm">Обновить</button>
+              <button type="button" id="btn-log-download" class="btn ghost sm">Download</button>
+            </div>
+          </div>
+          <pre id="server-log" class="server-log">Загрузка…</pre>
+        </div>
+      </section>
+
+      <!-- Network -->
+      <section class="view" id="view-network">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left"><h2>Сеть и статус</h2></div>
+            <button type="button" id="btn-network-refresh" class="btn sm">Проверить</button>
+          </div>
+          <div id="network-grid" class="network-grid">
+            <p class="muted">Загрузка диагностики…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mods -->
+      <section class="view" id="view-mods">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Каталог модов</h2>
+              <span class="hint">репозиторий + Workshop</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-mods-refresh" class="btn sm">Обновить</button>
+              <button type="button" id="btn-mods-apply" class="btn primary sm">Записать в world.ini</button>
+            </div>
+          </div>
+          <div class="mods-layout">
+            <div class="meatballs-only" data-need-plugin="meatballs">
+            <form id="mod-add-form" class="mod-form">
+              <label class="field"><span>Тип</span>
+                <select id="mod-kind">
+                  <option value="mod">Мод</option>
+                  <option value="library">Библиотека</option>
+                </select>
+              </label>
+              <label class="field"><span>Mod ID</span>
+                <input type="text" id="mod-id" required placeholder="tsarslib" />
+              </label>
+              <label class="field"><span>Workshop ID</span>
+                <input type="text" id="mod-workshop" placeholder="2392709985" />
+              </label>
+              <label class="field"><span>Название</span>
+                <input type="text" id="mod-name" placeholder="Tsar's Common Library" />
+              </label>
+              <label class="toggle-label"><input type="checkbox" id="mod-download" /> Скачать SteamCMD в .cache/workshop</label>
+              <div class="modal-actions">
+                <button type="submit" class="btn primary sm">В каталог</button>
+                <button type="button" id="btn-mod-scaffold" class="btn sm">Скелет в src/mods</button>
+              </div>
+            </form>
+            <div id="mods-catalog" class="mods-catalog"><p class="muted">Загрузка…</p></div>
+            </div>
+            <div id="mods-live" class="mods-live muted"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Workshop & ModPack -->
+      <section class="view" id="view-workshop">
+        <div class="card full-height workshop-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2 data-i18n="workshop.title">Workshop &amp; ModPack</h2>
+              <span class="hint" data-i18n="workshop.hint">SteamCMD → .mirror/&lt;id&gt;/ · обновления Steam API</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-ws-refresh" class="btn sm" data-i18n="workshop.refresh">Обновить</button>
+              <button type="button" id="btn-ws-download" class="btn primary sm" data-i18n="workshop.download">Скачать недостающие</button>
+              <button type="button" id="btn-ws-check" class="btn sm" data-i18n="workshop.check">Проверить обновления</button>
+            </div>
+          </div>
+          <div class="workshop-toolbar">
+            <label class="toggle-label">
+              <input type="checkbox" id="chk-ws-auto-restart" />
+              <span data-i18n="workshop.auto_restart">Авто-рестарт при обновлении (RCON 3 мин)</span>
+            </label>
+            <button type="button" id="btn-ws-graceful" class="btn sm danger" data-i18n="workshop.graceful">Graceful restart сейчас</button>
+          </div>
+          <p id="ws-download-status" class="muted workshop-status"></p>
+          <div id="ws-table" class="workshop-table"><p class="muted" data-i18n="loading">Загрузка…</p></div>
+          <div class="workshop-builder">
+            <h3 class="players-subhead" data-i18n="workshop.builder">ModPack Builder</h3>
+            <p class="muted" data-i18n="workshop.builder_hint">Выберите моды, задайте ID пака, скомпилируйте единый ServerModPack.</p>
+            <div class="workshop-builder-grid">
+              <div id="ws-mod-picker" class="ws-mod-picker"><p class="muted">…</p></div>
+              <form id="ws-compile-form" class="mod-form">
+                <label class="field"><span data-i18n="workshop.pack_id">Pack ID</span>
+                  <input id="ws-pack-id" required maxlength="40" placeholder="ServerModPack_v1" />
+                </label>
+                <label class="field"><span data-i18n="workshop.pack_name">Название</span>
+                  <input id="ws-pack-name" maxlength="80" placeholder="Server Mod Pack v1" />
+                </label>
+                <label class="toggle-label"><input type="checkbox" id="ws-fail-conflict" /> <span data-i18n="workshop.fail_conflict">Стоп при конфликтах</span></label>
+                <div class="modal-actions">
+                  <button type="button" id="btn-ws-analyze" class="btn sm" data-i18n="workshop.analyze">Анализ конфликтов</button>
+                  <button type="submit" class="btn primary sm" data-i18n="workshop.compile">Compile</button>
+                </div>
+              </form>
+            </div>
+            <pre id="ws-compile-log" class="workshop-log muted"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mirror -->
+      <section class="view" id="view-mirror">
+        <div class="card full-height">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Зеркало FTP + локальный сервер</h2>
+              <span class="hint">Pull качает только новое · без java / media / steamapps</span>
+            </div>
+            <div class="terminal-tools">
+              <label class="toggle-label" title="Пока галочка включена, запись с нашей панели не затрёт правки из панели XLGAMES">
+                <input type="checkbox" id="chk-host-wins" checked /> XLGAMES важнее
+              </label>
+              <button type="button" id="btn-mirror-pull" class="btn primary sm">Pull (только новое)</button>
+              <button type="button" id="btn-mirror-verify" class="btn sm">Проверить суммы</button>
+              <button type="button" id="btn-local-start" class="btn sm">Start local</button>
+              <button type="button" id="btn-local-stop" class="btn danger sm">Stop</button>
+            </div>
+          </div>
+          <div id="mirror-grid" class="network-grid">
+            <p class="muted">Загрузка…</p>
+          </div>
+          <div class="wipe-box">
+            <h3 class="players-subhead">Точечный вайп чанка</h3>
+            <p class="muted">Удаляет только map/chunkdata/zpop этой клетки (256×256). WorldDictionary не трогаем. Сначала превью.</p>
+            <form id="wipe-form" class="launch-form wipe-form">
+              <label class="field"><span>Мир X</span><input id="wipe-x" type="number" placeholder="10707" /></label>
+              <label class="field"><span>Мир Y</span><input id="wipe-y" type="number" placeholder="9484" /></label>
+              <label class="field"><span>или cell X</span><input id="wipe-cx" type="number" placeholder="41" /></label>
+              <label class="field"><span>cell Y</span><input id="wipe-cy" type="number" placeholder="37" /></label>
+              <button type="button" id="btn-wipe-preview" class="btn sm">Превью файлов</button>
+            </form>
+            <div id="wipe-preview" class="muted">Укажи координаты и нажми превью. На живом хосте не жать «Вайп» без бэкапа.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Smoke test -->
+      <section class="view" id="view-smoke">
+        <div class="card full-height smoke-layout">
+          <div class="card-head">
+            <div class="card-head-left">
+              <h2>Smoke test</h2>
+              <span class="hint">Pull на Зеркале → локальный GameServer на `.mirror/&lt;id&gt;/`</span>
+            </div>
+            <div class="terminal-tools">
+              <button type="button" id="btn-smoke-refresh" class="btn sm">Обновить</button>
+              <button type="button" id="btn-smoke-start" class="btn primary sm">Start smoke</button>
+              <button type="button" id="btn-smoke-stop" class="btn danger sm">Stop</button>
+            </div>
+          </div>
+          <div class="smoke-body">
+            <div id="smoke-status" class="smoke-status"><p class="muted">Загрузка…</p></div>
+            <pre id="smoke-log" class="smoke-log">(лог появится после Start)</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="auth-modal" class="modal hidden auth-modal">
+    <div class="modal-card auth-card">
+      <div class="modal-head">
+        <h3 id="auth-modal-title" data-i18n="auth.login">Вход</h3>
+      </div>
+      <div class="modal-body">
+        <p id="auth-modal-hint" class="muted" data-i18n="auth.login_hint">Войдите для управления серверами.</p>
+        <form id="auth-form" class="auth-form">
+          <label class="field">
+            <span data-i18n="auth.username">Логин</span>
+            <input id="auth-username" type="text" autocomplete="username" required maxlength="80" />
+          </label>
+          <label class="field">
+            <span data-i18n="auth.password">Пароль</span>
+            <input id="auth-password" type="password" autocomplete="current-password" required maxlength="200" />
+          </label>
+          <label class="field auth-setup-only hidden">
+            <span data-i18n="auth.password_confirm">Повтор пароля</span>
+            <input id="auth-password2" type="password" autocomplete="new-password" maxlength="200" />
+          </label>
+          <p id="auth-error" class="err hidden"></p>
+          <div id="auth-local-wrap" class="auth-local-wrap hidden">
+            <button type="button" class="btn primary full" id="auth-local-btn" data-i18n="auth.local_enter">
+              Локальный вход (без пароля)
+            </button>
+            <p class="muted auth-local-note" data-i18n="auth.local_hint">127.0.0.1 · AUTH_DISABLED · ярлык с рабочего стола</p>
+          </div>
+          <div id="auth-credentials-wrap">
+            <button type="submit" class="btn primary full" id="auth-submit" data-i18n="auth.login">Вход</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="onboarding-modal" class="modal hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-head"><h3 data-i18n="onboarding.title">Добро пожаловать</h3></div>
+      <div class="modal-body">
+        <p data-i18n="onboarding.body">Профилей серверов пока нет. Подключите первый PZ-сервер на Главной: RCON + FTP или local path, затем Pull и Smoke test.</p>
+        <p class="muted">См. <code>docs/ONBOARDING.md</code> в репозитории.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn primary" id="btn-onboarding-go" data-i18n="onboarding.go">Подключить сервер</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scheduler modal -->
+  <div id="task-modal" class="modal hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-head">
+        <h3 id="task-modal-title">Новое задание</h3>
+        <button type="button" id="btn-task-close" class="icon-btn">✕</button>
+      </div>
+      <form id="task-form" class="modal-body">
+        <input type="hidden" id="task-id" />
+        <label class="field">
+          <span>Название</span>
+          <input type="text" id="task-name" required placeholder="Сохранение мира" />
+        </label>
+        <label class="field">
+          <span>Шаблон</span>
+          <select id="task-preset">
+            <option value="custom">Своя RCON-команда</option>
+            <option value="save">save</option>
+            <option value="announce">servermsg</option>
+            <option value="restart">quit (рестарт)</option>
+            <option value="mods">checkModsNeedUpdate</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>RCON команда</span>
+          <input type="text" id="task-command" required placeholder="save" />
+        </label>
+        <div class="cron-grid">
+          <label class="field"><span>Минута</span><input type="text" id="cron-min" value="0" /></label>
+          <label class="field"><span>Час</span><input type="text" id="cron-hour" value="*" /></label>
+          <label class="field"><span>День</span><input type="text" id="cron-day" value="*" /></label>
+          <label class="field"><span>Месяц</span><input type="text" id="cron-month" value="*" /></label>
+          <label class="field"><span>День нед.</span><input type="text" id="cron-weekday" value="*" /></label>
+        </div>
+        <label class="toggle-label"><input type="checkbox" id="task-enabled" checked /> Активно</label>
+        <div class="modal-actions">
+          <button type="button" id="btn-task-cancel" class="btn ghost">Отмена</button>
+          <button type="submit" class="btn primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+  <script src="/static/i18n.js?v=3.13.1"></script>
+  <script src="/static/app.js?v=3.13.1"></script>
+</body>
+</html>

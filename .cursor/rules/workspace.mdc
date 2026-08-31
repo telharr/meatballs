@@ -1,0 +1,30 @@
+---
+description: Project Zomboid workspace conventions — always apply
+alwaysApply: true
+---
+
+# PZ Workspace Context
+
+This repository is a Project Zomboid (Kahlua2 Lua / Java 17) mod and modpack pipeline.
+
+**New chat:** read `docs/PRODUCT.md` then `docs/SESSION.md` before changing FTP, the panel, mods, or the dedicated server. Panel-as-product work also reads `docs/SPRINTS.md`. Update `SESSION.md` when host, mods, or dedi status changes.
+
+## Priorities
+
+1. Prepare tooling, validation, and distribution before writing feature mods unless the user asks for mod code.
+2. Prefer `docs/setup.md`, `docs/architecture.md`, and `tools/` over inventing new layouts.
+3. Keep secrets out of git (`.env`, Steam passwords, credential VDF).
+
+## Layout
+
+- Mods: `src/mods/<ModId>/`
+- Modpacks: `src/modpacks/`
+- Skeletons only: `templates/mod/`
+- LSP stubs: `definitions/pz/` (not game-loaded)
+- Agents: `@pz-coder` (Lua), `@steam-pipeline` (Workshop/SteamCMD)
+
+## Quality bars
+
+- 4-space indent; Lua 5.1 / Kahlua2 dialect
+- Multiplayer: server authority, nil-checks, prefixed ModData keys
+- Before release packs: `python tools/pack_merger.py --fail-on-conflict`

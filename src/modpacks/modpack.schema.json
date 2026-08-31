@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PZ Modpack Manifest",
+  "type": "object",
+  "required": ["name", "version", "output"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "sources": {
+      "type": "object",
+      "properties": {
+        "local_mods": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "workshop_cache": { "type": "string" }
+      }
+    },
+    "workshop_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9]+$" }
+    },
+    "include_mod_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exclude_mod_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "output": { "type": "string" },
+    "fail_on_conflict": { "type": "boolean", "default": true }
+  },
+  "additionalProperties": false
+}

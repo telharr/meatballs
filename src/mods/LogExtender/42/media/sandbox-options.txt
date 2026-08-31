@@ -1,0 +1,106 @@
+VERSION = 1,
+
+option ServerTweaker.HighlightSafehouse {
+  type        = boolean,
+  default     = true,
+  page        = ServerTweaker,
+  translation = HighlightSafehouse
+}
+
+option ServerTweaker.ShowCoordinates {
+  type        = boolean,
+  default     = true,
+  page        = ServerTweaker,
+  translation = ShowCoordinates
+}
+
+option ServerTweaker.EnableSuicideCommand {
+  type        = boolean,
+  default     = true,
+  page        = ServerTweaker,
+  translation = EnableSuicideCommand
+}
+
+option ServerTweaker.AdminSafehouseExtension {
+  type        = boolean,
+  default     = true,
+  page        = ServerTweaker,
+  translation = AdminSafehouseExtension
+}
+
+option ServerTweaker.SafehouseVehicleProtection {
+  type        = boolean,
+  default     = false,
+  page        = ServerTweaker,
+  translation = SafehouseVehicleProtection
+}
+
+option ServerTweaker.ElevatedStaffPermissions {
+  type        = boolean,
+  default     = false,
+  page        = ServerTweaker,
+  translation = ElevatedStaffPermissions
+}
+
+option ServerTweaker.BrushToolFix {
+  type        = boolean,
+  default     = false,
+  page        = ServerTweaker,
+  translation = BrushToolFix
+}
+
+option LogExtender.PlayerLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = PlayerLogs
+}
+
+option LogExtender.PlayerTickLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = PlayerTickLogs
+}
+
+option LogExtender.VehicleLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = VehicleLogs
+}
+
+option LogExtender.VehicleAdminTools {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = VehicleAdminTools
+}
+
+option LogExtender.BrushToolLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = BrushToolLogs
+}
+
+option LogExtender.SafehouseLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = SafehouseLogs
+}
+
+option LogExtender.SafehouseAdminTools {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = SafehouseAdminTools
+}
+
+option LogExtender.CraftLogs {
+  type        = boolean,
+  default     = true,
+  page        = LogExtender,
+  translation = CraftLogs
+}

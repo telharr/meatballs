@@ -1,0 +1,19 @@
+{
+    "Sandbox_ServerTweaker": "Server Tweaker",
+    "Sandbox_HighlightSafehouse": "Highlight safehouse",
+    "Sandbox_ShowCoordinates": "Display character coordinates",
+    "Sandbox_EnableSuicideCommand": "Enable suicide command in chat",
+    "Sandbox_AdminSafehouseExtension": "Advanced admin safehouse creation",
+    "Sandbox_SafehouseVehicleProtection": "Protect vehicles in safehouse",
+    "Sandbox_ElevatedStaffPermissions": "Elevated Staff Permissions",
+    "Sandbox_BrushToolFix": "Fix Brush Tool synchronization",
+    "Sandbox_LogExtender": "Log Extender",
+    "Sandbox_PlayerLogs": "Enable _player.txt logs",
+    "Sandbox_PlayerTickLogs": "Additionally write player log every game hour",
+    "Sandbox_VehicleLogs": "Enable _vehicle.txt logs",
+    "Sandbox_VehicleAdminTools": "Enable logging of admin actions on vehicle",
+    "Sandbox_BrushToolLogs": "Enable _brushtool.txt logs",
+    "Sandbox_SafehouseLogs": "Enable _safehouse.txt logs",
+    "Sandbox_SafehouseAdminTools": "Enable logging of admin actions on safehouses",
+    "Sandbox_CraftLogs": "Enable _craft.txt logs"
+}

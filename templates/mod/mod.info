@@ -1,0 +1,4 @@
+name=REPLACE_ME
+id=REPLACE_ME
+description=Copy templates/mod to src/mods/<YourMod> and fill this file.
+poster=poster.png
