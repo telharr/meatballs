@@ -24,7 +24,7 @@ panel/data._v1validate_backup/
 
 # Cache, Mirrors & Dedicated Server Dumps
 .mirror/
-.cache/
+.cache/*
 !.cache/.gitkeep
 steamcmd/*
 !steamcmd/.gitkeep
@@ -35,6 +35,9 @@ ServerWorld/
 remote_configs/
 workshop/
 workshop_content/
+~$*
+*.xlsx
+!$example.xlsx
 
 # Project Zomboid runtime logs & saves
 *.log
