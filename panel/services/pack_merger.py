@@ -65,6 +65,15 @@ def _append_log(log: list[str], message: str, *, progress: LogFn | None = None, 
     log.append(message)
     if progress:
         progress(message, percent)
+    try:
+        from panel.services.event_bus import emit
+
+        emit(
+            "compile_progress",
+            {"message": message, "percent": percent, "lines": len(log)},
+        )
+    except Exception:
+        pass
 
 
 def _remote_paths(server_id: str | None = None) -> dict[str, str]:

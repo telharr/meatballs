@@ -119,11 +119,15 @@ from panel.auth import (  # noqa: E402
     authenticate_request,
     authenticate_websocket,
     is_public_api_path,
+    moderator_write_forbidden,
     needs_setup,
+    require_role,
 )
 from panel.routes.auth import router as auth_router  # noqa: E402
 from panel.routes.workshop import router as workshop_router  # noqa: E402
 from panel.routes.admintools import router as admintools_router  # noqa: E402
+from panel.routes.telemetry import router as telemetry_router  # noqa: E402
+from panel.services.event_bus import bus as event_bus  # noqa: E402
 
 from panel.scheduler import (  # noqa: E402
     add_task,
@@ -142,6 +146,9 @@ load_dotenv()
 
 _PANEL_STARTED_AT = time.time()
 _scheduler_task: asyncio.Task | None = None
+_telemetry_task: asyncio.Task | None = None
+_status_bus_task: asyncio.Task | None = None
+_console_tail_task: asyncio.Task | None = None
 
 CONFIG_EXTENSIONS = {".ini", ".sh", ".bat", ".cfg", ".txt", ".lua", ".json"}
 
@@ -392,35 +399,74 @@ async def _workshop_monitor_loop() -> None:
         await asyncio.sleep(1800)
 
 
+async def _telemetry_loop() -> None:
+    from panel.services import telemetry as telemetry_svc
+
+    while True:
+        try:
+            stats = await asyncio.to_thread(telemetry_svc.collect_stats)
+            await event_bus.publish("telemetry", stats)
+        except Exception:
+            traceback.print_exc()
+        await asyncio.sleep(2.5)
+
+
+async def _status_bus_loop() -> None:
+    while True:
+        try:
+            if await event_bus.has_subscribers("status"):
+                payload = await server_status()
+                await event_bus.publish("status", payload)
+        except Exception:
+            traceback.print_exc()
+        await asyncio.sleep(10)
+
+
+async def _console_tail_loop() -> None:
+    last_hash = ""
+    while True:
+        try:
+            if await event_bus.has_subscribers("console_tail"):
+                data = await asyncio.to_thread(logs_tail_kind, "console", 200)
+                content = str(data.get("content") or "")
+                digest = str(hash(content))
+                if digest != last_hash:
+                    last_hash = digest
+                    await event_bus.publish("console_tail", data)
+        except Exception:
+            traceback.print_exc()
+        await asyncio.sleep(12)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _scheduler_task
+    global _scheduler_task, _telemetry_task, _status_bus_task, _console_tail_task
     monitor_task: asyncio.Task | None = None
+    event_bus.bind_loop(asyncio.get_running_loop())
     try:
         ensure_migrated()
     except Exception:
         traceback.print_exc()
     _scheduler_task = asyncio.create_task(_scheduler_loop())
     monitor_task = asyncio.create_task(_workshop_monitor_loop())
+    _telemetry_task = asyncio.create_task(_telemetry_loop())
+    _status_bus_task = asyncio.create_task(_status_bus_loop())
+    _console_tail_task = asyncio.create_task(_console_tail_loop())
     yield
-    if _scheduler_task:
-        _scheduler_task.cancel()
-        try:
-            await _scheduler_task
-        except asyncio.CancelledError:
-            pass
-    if monitor_task:
-        monitor_task.cancel()
-        try:
-            await monitor_task
-        except asyncio.CancelledError:
-            pass
+    for task in (_scheduler_task, monitor_task, _telemetry_task, _status_bus_task, _console_tail_task):
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.15.0", lifespan=lifespan)
+app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.16.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(workshop_router)
 app.include_router(admintools_router)
+app.include_router(telemetry_router)
 
 
 @app.middleware("http")
@@ -433,6 +479,9 @@ async def auth_middleware(request: Request, call_next):
             request.state.user = authenticate_request(request)
         except HTTPException as exc:
             return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        user = request.state.user
+        if user.get("role") == "moderator" and moderator_write_forbidden(request.method, path):
+            return JSONResponse(status_code=403, content={"detail": "Insufficient permissions"})
     return await call_next(request)
 
 
@@ -816,7 +865,10 @@ async def api_servers_list() -> dict[str, Any]:
 
 
 @app.post("/api/servers")
-async def api_servers_create(body: ServerUpsertBody) -> dict[str, Any]:
+async def api_servers_create(
+    body: ServerUpsertBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         return upsert_server(body.model_dump())
     except ValueError as exc:
@@ -824,7 +876,11 @@ async def api_servers_create(body: ServerUpsertBody) -> dict[str, Any]:
 
 
 @app.patch("/api/servers/{server_id}")
-async def api_servers_patch(server_id: str, body: ServerUpsertBody) -> dict[str, Any]:
+async def api_servers_patch(
+    server_id: str,
+    body: ServerUpsertBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         return upsert_server(body.model_dump(), server_id)
     except KeyError as exc:
@@ -834,7 +890,10 @@ async def api_servers_patch(server_id: str, body: ServerUpsertBody) -> dict[str,
 
 
 @app.delete("/api/servers/{server_id}")
-async def api_servers_delete(server_id: str) -> dict[str, Any]:
+async def api_servers_delete(
+    server_id: str,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         data = delete_server(server_id)
     except KeyError as exc:
@@ -846,7 +905,10 @@ async def api_servers_delete(server_id: str) -> dict[str, Any]:
 
 
 @app.post("/api/servers/{server_id}/activate")
-async def api_servers_activate(server_id: str) -> dict[str, Any]:
+async def api_servers_activate(
+    server_id: str,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         profile = activate_server(server_id)
     except KeyError as exc:
@@ -1081,7 +1143,10 @@ async def api_safehouses() -> dict[str, Any]:
 
 
 @app.post("/api/wipe/preview")
-async def api_wipe_preview(body: WipeBody) -> dict[str, Any]:
+async def api_wipe_preview(
+    body: WipeBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         return wipe_preview(body.x, body.y, body.cell_x, body.cell_y)
     except ValueError as exc:
@@ -1089,7 +1154,10 @@ async def api_wipe_preview(body: WipeBody) -> dict[str, Any]:
 
 
 @app.post("/api/wipe/apply")
-async def api_wipe_apply(body: WipeBody) -> dict[str, Any]:
+async def api_wipe_apply(
+    body: WipeBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     if not body.apply:
         raise HTTPException(status_code=400, detail="apply=true required")
     try:
@@ -1582,7 +1650,10 @@ async def load_config(filename: str) -> dict[str, str]:
 
 
 @app.post("/api/config/save")
-async def save_config(body: SaveConfigBody) -> dict[str, Any]:
+async def save_config(
+    body: SaveConfigBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         remote_path = _resolve_remote_path(body.filename)
         if _active_files_kind() == "local":
@@ -1691,6 +1762,32 @@ async def rcon_quick(action: str) -> dict[str, Any]:
         return result
     except Exception as exc:
         raise HTTPException(status_code=502, detail=_rcon_error_message(exc)) from exc
+
+
+@app.websocket("/ws/events")
+async def ws_events(ws: WebSocket) -> None:
+    if not auth_disabled():
+        try:
+            authenticate_websocket(ws)
+        except HTTPException:
+            await ws.close(code=4401, reason="Authentication required")
+            return
+    await ws.accept()
+    client_id = await event_bus.connect(ws)
+    try:
+        await ws.send_json({"channel": "connected", "data": {"ok": True}, "ts": time.time()})
+        while True:
+            raw = await ws.receive_text()
+            try:
+                payload = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if payload.get("type") == "ping":
+                await ws.send_json({"type": "pong", "ts": time.time()})
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await event_bus.disconnect(client_id)
 
 
 @app.websocket("/ws/console")

@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from panel.auth import require_role
 from panel.logs_hub import audit_actions
 from panel.services import admin_tools as at_svc
 
@@ -27,7 +28,10 @@ async def api_cities() -> dict[str, Any]:
 
 
 @router.post("/city-wipe")
-async def api_city_wipe(body: CityWipeBody) -> dict[str, Any]:
+async def api_city_wipe(
+    body: CityWipeBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         return at_svc.trigger_city_wipe(
             body.city_id,

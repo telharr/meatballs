@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.15.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.16.0" />
 </head>
 <body>
   <header class="navbar">
@@ -27,6 +27,9 @@
       </label>
     </div>
     <div class="nav-pills" id="nav-pills">
+      <span id="tel-cpu" class="telemetry-badge tel-ok">CPU: —</span>
+      <span id="tel-ram" class="telemetry-badge tel-ok">RAM: —</span>
+      <span id="tel-gameserver" class="telemetry-badge tel-ok hidden">JVM: —</span>
       <span class="pill"><span class="pill-k" data-i18n="pill.ip">IP</span><span id="pill-ip" class="pill-v">—</span></span>
       <span class="pill"><span class="pill-k" data-i18n="pill.query">Query</span><span id="pill-query" class="pill-v">—</span></span>
       <span class="pill"><span class="pill-k" data-i18n="pill.rcon">RCON</span><span id="pill-rcon" class="pill-v">—</span></span>
@@ -772,7 +775,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.15.0"></script>
-  <script src="/static/app.js?v=3.15.0"></script>
+  <script src="/static/i18n.js?v=3.16.0"></script>
+  <script src="/static/app.js?v=3.16.0"></script>
 </body>
 </html>

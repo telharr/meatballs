@@ -151,5 +151,11 @@
   "workshop.deploy_server": "Скомпилировать и сразу залить на сервер (FTP/SFTP)",
   "workshop.update_ini": "Добавить пак в Mods= в world.ini",
   "workshop.deploy_done": "ModPack залит на сервер",
+  "telemetry.cpu": "CPU",
+  "telemetry.ram": "RAM",
+  "telemetry.jvm": "JVM",
+  "rbac.denied": "Недостаточно прав (только admin)",
+  "rbac.role_admin": "Админ",
+  "rbac.role_mod": "Модератор",
   "loading": "Загрузка…"
 }

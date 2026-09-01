@@ -4,6 +4,8 @@ Hosting-agnostic web dashboard: **RCON** console, **FTP/local** config editor, m
 
 Read first: `docs/PRODUCT.md`, `docs/SESSION.md`. Onboarding: **`docs/ONBOARDING.md`**. Sprints: `docs/SPRINTS.md`.
 
+Panel **3.16.0**: WebSocket event bus (`/ws/events`), live CPU/RAM telemetry, RBAC (admin / moderator).
+
 Panel **3.15.0**: SteamCMD auto-bootstrap (`.cache/steamcmd/`); ModPack compile + one-click FTP/SFTP deploy; `world.ini` Mods= injection with `panel/backups/` snapshot.
 
 Panel **3.14.0**: AdminTools city wipe API + Admin Audit in Logs; Snapshot; Workshop / ModPack; SFTP; JWT; Smoke.
@@ -38,6 +40,21 @@ Optional: `AUTH_LOCAL_BYPASS=true` without full `AUTH_DISABLED` (local button + 
 
 API: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/status`.  
 Token: `Authorization: Bearer …` or HttpOnly cookie `pz_panel_token`.
+
+Optional moderator accounts in `panel/data/auth.json`:
+
+```json
+{
+  "username": "admin",
+  "password_hash": "...",
+  "role": "admin",
+  "users": [
+    { "username": "mod", "password_hash": "...", "role": "moderator" }
+  ]
+}
+```
+
+Moderators: read-only config, RCON/chat/bans/logs; cannot edit servers, wipe, compile ModPacks, or save INI.
 
 ## Language (RU / EN)
 

@@ -203,6 +203,12 @@ def _on_progress(info: dict[str, Any]) -> None:
         extra["corrupt"] = info["corrupt"]
         extra["last_error"] = info["corrupt"].get("reason")
     _write_status(extra)
+    try:
+        from panel.services.event_bus import emit
+
+        emit("pull_progress", info)
+    except Exception:
+        pass
 
 
 def _run_pull(

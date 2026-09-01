@@ -128,7 +128,13 @@
 
 ---
 
-## 6. Где мы сейчас (Workshop deploy)
+## 6. Где мы сейчас (Realtime + RBAC)
+
+Панель **3.16.0** — WebSocket event bus + telemetry + roles:
+
+- `WS /ws/events` — live `status`, `telemetry`, `pull_progress`, `compile_progress`, `console_tail`
+- `GET /api/telemetry/stats` — host CPU/RAM, GameServer RSS, optional SFTP probe
+- RBAC: `admin` (full) vs `moderator` (read + RCON/chat/bans/logs; no server edit / wipe / compile)
 
 Панель **3.15.0** — SteamCMD bootstrap + ModPack deploy:
 

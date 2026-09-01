@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-01 (panel 3.15.0 SteamCMD bootstrap + ModPack deploy)
+Last updated: 2026-09-01 (panel 3.16.0 WebSocket bus + telemetry + RBAC)
 
 ## Host (do not commit secrets)
 
@@ -18,6 +18,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. Next sprint: **6 — JVM process**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.16.0**: `/ws/events` event bus; live telemetry bar; RBAC admin/moderator in `auth.json`
 - Panel **3.15.0**: SteamCMD auto-bootstrap; ModPack compile + FTP/SFTP deploy + world.ini Mods= injection
 - Panel **3.14.0**: AdminTools city wipe (`GET/POST /api/admintools/*`) via `Lua/mb_admintools_cmd.txt` + RCON `servermsg`; Admin Audit in Логи; Hard FS wipe under advanced toggle
 - Panel **3.13.1**: Snapshot on Главная

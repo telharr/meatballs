@@ -475,6 +475,38 @@ class SftpClient:
             "remaining": remaining,
         }
 
+    def exec_command(self, command: str, timeout: int = 12) -> tuple[str, str, int]:
+        import paramiko
+
+        self.config.validate()
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        pkey = _load_private_key(self.config)
+        connect_kwargs: dict[str, Any] = {
+            "hostname": self.config.host,
+            "port": int(self.config.port),
+            "username": self.config.user,
+            "timeout": int(self.config.timeout),
+            "allow_agent": False,
+            "look_for_keys": False,
+        }
+        if pkey is not None:
+            connect_kwargs["pkey"] = pkey
+        else:
+            connect_kwargs["password"] = self.config.password
+        client.connect(**connect_kwargs)
+        try:
+            _stdin, stdout, stderr = client.exec_command(command, timeout=timeout)
+            out = stdout.read().decode("utf-8", errors="replace")
+            err = stderr.read().decode("utf-8", errors="replace")
+            code = stdout.channel.recv_exit_status()
+            return out, err, code
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
+
 
 def sftp_config_from_payload(payload: dict[str, Any]) -> SftpConfig:
     return SftpConfig(

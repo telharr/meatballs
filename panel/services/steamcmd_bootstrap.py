@@ -109,6 +109,12 @@ def install_status() -> dict[str, Any]:
 def _set_job(**kwargs: Any) -> None:
     with _job_lock:
         _job.update(kwargs)
+    try:
+        from panel.services.event_bus import emit
+
+        emit("steamcmd_progress", install_status())
+    except Exception:
+        pass
 
 
 def _download(url: str, dest: Path, on_progress: Any) -> None:

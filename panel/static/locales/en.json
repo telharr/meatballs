@@ -151,5 +151,11 @@
   "workshop.deploy_server": "Compile and upload to server (FTP/SFTP)",
   "workshop.update_ini": "Add pack ID to Mods= in world.ini",
   "workshop.deploy_done": "ModPack deployed",
+  "telemetry.cpu": "CPU",
+  "telemetry.ram": "RAM",
+  "telemetry.jvm": "JVM",
+  "rbac.denied": "Insufficient permissions (admin only)",
+  "rbac.role_admin": "Admin",
+  "rbac.role_mod": "Moderator",
   "loading": "Loading…"
 }

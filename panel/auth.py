@@ -1,4 +1,4 @@
-"""JWT session auth for the control panel (Sprint 3)."""
+"""JWT session auth for the control panel (Sprint 3 + RBAC)."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import jwt
-from fastapi import HTTPException, Request, WebSocket
+from fastapi import Depends, HTTPException, Request, WebSocket
 
 from ftp_client import load_dotenv
 
@@ -21,6 +21,9 @@ TOKEN_COOKIE = "pz_panel_token"
 ALGORITHM = "HS256"
 TOKEN_TTL_HOURS = 24
 PBKDF2_ITERATIONS = 260_000
+ROLE_ADMIN = "admin"
+ROLE_MODERATOR = "moderator"
+VALID_ROLES = frozenset({ROLE_ADMIN, ROLE_MODERATOR})
 
 
 def _utcnow() -> datetime:
@@ -51,7 +54,6 @@ def is_loopback_host(host: str) -> bool:
 
 
 def local_bypass_enabled() -> bool:
-    """Desktop / localhost one-click entry (see AUTH_DISABLED, AUTH_LOCAL_BYPASS)."""
     load_dotenv()
     if auth_disabled():
         return True
@@ -105,25 +107,47 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
-def _env_credentials() -> tuple[str, str] | None:
+def _env_credentials() -> tuple[str, str, str] | None:
     load_dotenv()
     user = (os.environ.get("ADMIN_USER") or "").strip()
     pwd_hash = (os.environ.get("ADMIN_PASS_HASH") or "").strip()
     if user and pwd_hash:
-        return user, pwd_hash
+        return user, pwd_hash, ROLE_ADMIN
     return None
 
 
-def stored_credentials() -> tuple[str, str] | None:
+def _primary_credentials() -> tuple[str, str, str] | None:
     env = _env_credentials()
     if env:
         return env
     data = _read_auth_file()
     user = str(data.get("username") or "").strip()
     pwd_hash = str(data.get("password_hash") or "").strip()
+    role = str(data.get("role") or ROLE_ADMIN).strip() or ROLE_ADMIN
     if user and pwd_hash:
-        return user, pwd_hash
+        return user, pwd_hash, role if role in VALID_ROLES else ROLE_ADMIN
     return None
+
+
+def stored_credentials() -> tuple[str, str] | None:
+    primary = _primary_credentials()
+    if primary:
+        return primary[0], primary[1]
+    return None
+
+
+def list_extra_users() -> list[dict[str, str]]:
+    data = _read_auth_file()
+    out: list[dict[str, str]] = []
+    for row in data.get("users") or []:
+        if not isinstance(row, dict):
+            continue
+        username = str(row.get("username") or "").strip()
+        pwd_hash = str(row.get("password_hash") or "").strip()
+        role = str(row.get("role") or ROLE_MODERATOR).strip()
+        if username and pwd_hash and role in VALID_ROLES:
+            out.append({"username": username, "password_hash": pwd_hash, "role": role})
+    return out
 
 
 def jwt_secret() -> str:
@@ -172,30 +196,36 @@ def create_admin(username: str, password: str) -> dict[str, Any]:
         {
             "username": user,
             "password_hash": hash_password(password),
+            "role": ROLE_ADMIN,
             "created_at": _utcnow().isoformat(timespec="seconds"),
         }
     )
     if not data.get("jwt_secret"):
         data["jwt_secret"] = secrets.token_urlsafe(48)
     _write_auth_file(data)
-    return {"username": user}
+    return {"username": user, "role": ROLE_ADMIN}
 
 
 def authenticate_user(username: str, password: str) -> dict[str, Any]:
-    creds = stored_credentials()
-    if not creds:
+    name = username.strip()
+    primary = _primary_credentials()
+    if primary:
+        stored_user, stored_hash, role = primary
+        if name == stored_user and verify_password(password, stored_hash):
+            return {"username": stored_user, "role": role}
+    for row in list_extra_users():
+        if name == row["username"] and verify_password(password, row["password_hash"]):
+            return {"username": row["username"], "role": row["role"]}
+    if not primary:
         raise HTTPException(status_code=503, detail="Admin not configured")
-    stored_user, stored_hash = creds
-    if username.strip() != stored_user or not verify_password(password, stored_hash):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-    return {"username": stored_user, "role": "admin"}
+    raise HTTPException(status_code=401, detail="Invalid username or password")
 
 
 def create_token(user: dict[str, Any]) -> str:
     now = _utcnow()
     payload = {
         "sub": user["username"],
-        "role": user.get("role", "admin"),
+        "role": user.get("role", ROLE_ADMIN),
         "local": bool(user.get("local")),
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(hours=TOKEN_TTL_HOURS)).timestamp()),
@@ -204,7 +234,7 @@ def create_token(user: dict[str, Any]) -> str:
 
 
 def local_session_user() -> dict[str, Any]:
-    return {"username": "local", "role": "admin", "local": True}
+    return {"username": "local", "role": ROLE_ADMIN, "local": True}
 
 
 def issue_local_session(request: Request) -> dict[str, Any]:
@@ -217,9 +247,10 @@ def issue_local_session(request: Request) -> dict[str, Any]:
 def decode_token(token: str) -> dict[str, Any]:
     try:
         payload = jwt.decode(token, jwt_secret(), algorithms=[ALGORITHM])
+        role = payload.get("role", ROLE_ADMIN)
         return {
             "username": payload.get("sub"),
-            "role": payload.get("role", "admin"),
+            "role": role if role in VALID_ROLES else ROLE_ADMIN,
             "local": bool(payload.get("local")),
         }
     except jwt.ExpiredSignatureError as exc:
@@ -272,6 +303,8 @@ def authenticate_websocket(ws: WebSocket) -> dict[str, Any]:
             host = ws.client.host if ws.client else ""
             if is_loopback_host(host):
                 return user
+        else:
+            return user
     if needs_setup():
         raise HTTPException(status_code=401, detail="Admin setup required")
     if not token:
@@ -285,3 +318,37 @@ def is_public_api_path(path: str) -> bool:
     if path in ("/api/auth/status", "/api/auth/login", "/api/auth/setup", "/api/auth/local"):
         return True
     return False
+
+
+def moderator_write_forbidden(method: str, path: str) -> bool:
+    if method.upper() in ("GET", "HEAD", "OPTIONS"):
+        return False
+    if path == "/api/auth/setup":
+        return True
+    if path.startswith("/api/servers"):
+        return True
+    if path == "/api/config/save":
+        return True
+    if path.startswith("/api/wipe/"):
+        return True
+    if path == "/api/workshop/compile":
+        return True
+    return False
+
+
+def ensure_role(user: dict[str, Any], *roles: str) -> None:
+    role = user.get("role", ROLE_ADMIN)
+    if role not in roles:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+
+
+def require_role(*roles: str) -> Callable[..., dict[str, Any]]:
+    allowed = frozenset(roles)
+
+    def _dependency(request: Request) -> dict[str, Any]:
+        user = getattr(request.state, "user", None) or authenticate_request(request)
+        if user.get("role") not in allowed:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        return user
+
+    return Depends(_dependency)

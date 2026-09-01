@@ -152,6 +152,21 @@ body {
 }
 .nav-pills::-webkit-scrollbar { display: none; }
 
+.telemetry-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.telemetry-badge.tel-ok { border-color: rgba(63, 185, 80, 0.45); color: var(--success); }
+.telemetry-badge.tel-warn { border-color: rgba(210, 153, 34, 0.55); color: #d29922; }
+.telemetry-badge.tel-critical { border-color: rgba(248, 81, 73, 0.55); color: var(--danger); }
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -1398,6 +1413,9 @@ code {
 .auth-local-wrap.auth-local-prominent .auth-local-note { margin-top: 0.65rem; text-align: center; }
 .auth-local-note { font-size: 0.72rem; margin: 0.35rem 0 0; }
 .user-badge.user-local { opacity: 0.85; font-style: italic; }
+.user-badge.user-mod { background: rgba(210, 153, 34, 0.18); color: #d29922; }
+.user-badge.user-admin { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+.rbac-disabled { opacity: 0.45; pointer-events: none; }
 body.auth-locked .app-shell,
 body.auth-locked .navbar .nav-pills,
 body.auth-locked .navbar .nav-brand .status-pill,

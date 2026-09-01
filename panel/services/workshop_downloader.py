@@ -37,6 +37,12 @@ def _job_snapshot() -> dict[str, Any]:
 def _set_job(**kwargs: Any) -> None:
     with _job_lock:
         _job.update(kwargs)
+    try:
+        from panel.services.event_bus import emit
+
+        emit("pull_progress", _job_snapshot())
+    except Exception:
+        pass
 
 
 def download_status() -> dict[str, Any]:

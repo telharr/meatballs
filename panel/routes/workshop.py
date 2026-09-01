@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from panel.auth import require_role
 from panel.services import pack_merger as pack_svc
 from panel.services import steamcmd_bootstrap as steamcmd_svc
 from panel.services import workshop_downloader as dl_svc
@@ -152,7 +153,10 @@ async def api_workshop_analyze(body: AnalyzeBody) -> dict[str, Any]:
 
 
 @router.post("/compile")
-async def api_workshop_compile(body: CompileBody) -> dict[str, Any]:
+async def api_workshop_compile(
+    body: CompileBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
     try:
         return pack_svc.compile_pack(
             mod_ids=body.mod_ids,

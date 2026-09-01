@@ -7,6 +7,8 @@ const state = {
   commandHistory: [],
   historyIndex: -1,
   ws: null,
+  eventWs: null,
+  telemetry: null,
   editor: null,
   applyingEditor: false,
   autoscroll: true,
@@ -135,6 +137,9 @@ async function api(path, options = {}) {
     err.status = 401;
     throw err;
   }
+  if (res.status === 403) {
+    showToast(t("rbac.denied") || "Insufficient permissions", "err");
+  }
   if (!res.ok) {
     const detail = data.detail;
     const msg = typeof detail === "string"
@@ -196,11 +201,58 @@ function renderUserBadge() {
     logout.classList.add("hidden");
     return;
   }
-  badge.textContent = state.user.username;
-  badge.title = state.user.local ? t("auth.local_badge") : state.user.username;
+  badge.textContent = state.user.role === "moderator"
+    ? `${state.user.username} [Mod]`
+    : `${state.user.username} [Admin]`;
+  badge.title = state.user.local
+    ? t("auth.local_badge")
+    : `${state.user.username} · ${state.user.role || "admin"}`;
   badge.classList.toggle("user-local", !!state.user.local);
+  badge.classList.toggle("user-mod", state.user.role === "moderator");
+  badge.classList.toggle("user-admin", state.user.role !== "moderator");
   badge.classList.remove("hidden");
   logout.classList.remove("hidden");
+  applyRolePermissions();
+}
+
+function isAdmin() {
+  return !state.user || state.user.role !== "moderator";
+}
+
+function applyRolePermissions() {
+  const mod = state.user?.role === "moderator";
+  document.body.classList.toggle("role-moderator", !!mod);
+  document.body.classList.toggle("role-admin", !mod);
+  [
+    "#btn-save",
+    "#ws-compile-form button[type='submit']",
+    "#btn-ws-analyze",
+    "#btn-ws-steamcmd-install",
+    "#btn-ws-download",
+    "#btn-mirror-pull",
+    "#btn-mirror-verify",
+    "#btn-city-wipe-run",
+    "#btn-wipe-apply",
+    "#btn-wipe-preview",
+    "#server-wizard-form",
+    "#btn-home-save",
+  ].forEach((sel) => {
+    document.querySelectorAll(sel).forEach((el) => {
+      if (mod) {
+        el.disabled = true;
+        el.classList.add("rbac-disabled");
+        el.title = t("rbac.denied") || "Insufficient permissions";
+      } else {
+        el.classList.remove("rbac-disabled");
+      }
+    });
+  });
+  ["#ws-deploy-server", "#ws-fail-conflict", "#ws-update-ini"].forEach((id) => {
+    const el = document.getElementById(id.replace("#", ""));
+    if (el && mod) el.disabled = true;
+  });
+  const compileDrawer = $("#ws-compile-form");
+  if (compileDrawer && mod) compileDrawer.classList.add("rbac-disabled");
 }
 
 async function enterLocalAuth() {
@@ -210,7 +262,7 @@ async function enterLocalAuth() {
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
-    else connectWs();
+    else { connectWs(); connectEventWs(); }
     return;
   }
   try {
@@ -230,7 +282,7 @@ async function enterLocalAuth() {
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
-    else connectWs();
+    else { connectWs(); connectEventWs(); }
   } catch (ex) {
     errEl.textContent = ex.message;
     errEl.classList.remove("hidden");
@@ -268,7 +320,7 @@ async function submitAuthForm(e) {
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
-    else connectWs();
+    else { connectWs(); connectEventWs(); }
   } catch (ex) {
     errEl.textContent = ex.message;
     errEl.classList.remove("hidden");
@@ -281,6 +333,7 @@ async function logoutUser() {
   state.user = null;
   localStorage.removeItem("pz_panel_token");
   if (state.ws) { try { state.ws.close(); } catch { /* ignore */ } state.ws = null; }
+  if (state.eventWs) { try { state.eventWs.close(); } catch { /* ignore */ } state.eventWs = null; }
   state.appBootstrapped = false;
   renderUserBadge();
   showAuthModal(state.authDisabled && state.localBypass ? "local" : "login");
@@ -322,9 +375,141 @@ function bootstrapApp() {
   loadServers();
   checkOnboarding();
   loadConfigs().catch((e) => showToast(e.message, "err"));
-  pollStatus();
+  applyStatusPayload(null);
   tickUptime();
   connectWs();
+  connectEventWs();
+  api("/api/telemetry/stats").then(renderTelemetryBar).catch(() => {});
+  api("/api/status").then(applyStatusPayload).catch(() => {});
+}
+
+function telemetryClass(percent) {
+  const p = Number(percent) || 0;
+  if (p >= 90) return "tel-critical";
+  if (p >= 70) return "tel-warn";
+  return "tel-ok";
+}
+
+function renderTelemetryBar(data) {
+  if (!data) return;
+  state.telemetry = data;
+  const host = data.host || {};
+  const cpuEl = $("#tel-cpu");
+  const ramEl = $("#tel-ram");
+  const gsEl = $("#tel-gameserver");
+  if (cpuEl) {
+    cpuEl.textContent = `CPU: ${host.cpu_percent ?? "—"}%`;
+    cpuEl.className = `telemetry-badge ${telemetryClass(host.cpu_percent)}`;
+  }
+  if (ramEl) {
+    const used = host.ram_used_gb ?? (host.ram_used_mb ? (host.ram_used_mb / 1024).toFixed(1) : "—");
+    const total = host.ram_total_gb ?? (host.ram_total_mb ? (host.ram_total_mb / 1024).toFixed(1) : "—");
+    ramEl.textContent = `RAM: ${used} / ${total} GB`;
+    ramEl.className = `telemetry-badge ${telemetryClass(host.ram_percent)}`;
+  }
+  if (gsEl) {
+    const gs = data.gameserver;
+    if (gs && gs.running) {
+      gsEl.textContent = `JVM: ${gs.rss_mb ?? "—"} MB · ${gs.cpu_percent ?? 0}%`;
+      gsEl.className = `telemetry-badge ${telemetryClass(gs.cpu_percent)}`;
+      gsEl.classList.remove("hidden");
+    } else {
+      gsEl.classList.add("hidden");
+    }
+  }
+}
+
+function applyStatusPayload(status) {
+  if (!status) return;
+  updateStatusPill(status.rcon_online, status.error);
+  updatePlayersPill(status.players ? realPlayers(status.players).length : (status.players_online || 0));
+  if (status.players) {
+    state.players = realPlayers(status.players);
+    if (state.activeView === "players") renderPlayersPage();
+  }
+  if (status.founders) {
+    state.founders = status.founders;
+    if (state.activeView === "players") renderFounders();
+  }
+  if (status.npcs) {
+    state.slots = { ...(state.slots || {}), npcs: status.npcs, count: status.dummy_slots };
+    if (state.activeView === "npc") renderTrainersRoster();
+  }
+  if (state.activeView === "home") loadHome();
+  if (state.activeView === "mirror") loadMirror();
+}
+
+function handleEventMessage(msg) {
+  const channel = msg.channel;
+  const data = msg.data;
+  if (channel === "telemetry") {
+    renderTelemetryBar(data);
+    return;
+  }
+  if (channel === "status") {
+    applyStatusPayload(data);
+    return;
+  }
+  if (channel === "console_tail" && state.logAutoRefresh && state.activeView === "logs") {
+    const kind = $("#log-kind")?.value || state.logKind || "console";
+    if (kind !== "audit") {
+      const pre = $("#server-log");
+      if (pre && data.content !== undefined) {
+        state.serverLogContent = data.content || "";
+        pre.textContent = state.serverLogContent || "(пусто — файла ещё нет на зеркале)";
+        pre.scrollTop = pre.scrollHeight;
+        if ($("#log-meta") && data.filename) {
+          $("#log-meta").textContent = `${data.filename} · ${data.source || ""} · ${data.total_lines} строк`;
+        }
+      }
+    }
+    return;
+  }
+  if (channel === "pull_progress" && state.activeView === "mirror") {
+    loadMirror();
+    return;
+  }
+  if (channel === "steamcmd_progress") {
+    renderSteamcmdBanner({ installed: false, install: data });
+    if (!data.running && data.phase === "done") {
+      loadWorkshop();
+      showToast(t("workshop.steamcmd_done") || "SteamCMD installed", "ok");
+    }
+    return;
+  }
+  if (channel === "pull_progress" && state.activeView === "workshop") {
+    setWorkshopDownloadStatus(`${data.phase || "…"} · ${data.percent || 0}% · ${data.message || ""}`);
+    if (!data.running && data.phase === "done") {
+      loadWorkshop();
+      showToast(t("workshop.download_done") || "Workshop download complete", "ok");
+    }
+    return;
+  }
+  if (channel === "compile_progress") {
+    const log = $("#ws-compile-log");
+    if (log && data.message) log.textContent = (log.textContent ? log.textContent + "\n" : "") + data.message;
+  }
+}
+
+function connectEventWs() {
+  if (!state.authDisabled && !state.token) return;
+  if (state.eventWs) {
+    try { state.eventWs.close(); } catch { /* ignore */ }
+  }
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const q = state.token ? `?token=${encodeURIComponent(state.token)}` : "";
+  state.eventWs = new WebSocket(`${proto}://${location.host}/ws/events${q}`);
+  state.eventWs.onclose = (ev) => {
+    if (ev.code === 4401) return;
+    setTimeout(connectEventWs, 4000);
+  };
+  state.eventWs.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === "pong") return;
+      handleEventMessage(msg);
+    } catch { /* ignore */ }
+  };
 }
 
 async function initI18n() {
@@ -3063,16 +3248,9 @@ $("#btn-local-stop").onclick = () => stopLocal();
 
 setInterval(() => {
   if (state.ws?.readyState === WebSocket.OPEN) state.ws.send(JSON.stringify({ type: "ping" }));
+  if (state.eventWs?.readyState === WebSocket.OPEN) state.eventWs.send(JSON.stringify({ type: "ping" }));
 }, 30000);
-setInterval(pollStatus, 10000);
 setInterval(tickUptime, 1000);
-setInterval(() => {
-  if (state.logAutoRefresh && state.activeView === "logs") loadServerLog();
-}, 15000);
-setInterval(() => {
-  if (state.activeView === "workshop" && state.wsDownloadPoll) pollWorkshopDownload();
-  if (state.activeView === "workshop" && state.wsSteamcmdPoll) pollSteamcmdInstall();
-}, 2000);
 
 initTheme();
 initEditor();
