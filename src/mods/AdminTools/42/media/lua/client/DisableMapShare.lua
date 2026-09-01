@@ -87,11 +87,18 @@ function DisableMapShare.patchUIClasses()
 end
 
 Events.OnGameStart.Add(function()
+    if AdminTools.Config and AdminTools.Config.disableMapShare == false then
+        AdminTools.debugLog("DisableMapShare skipped (config)")
+        return
+    end
     DisableMapShare.patchUIClasses()
 end)
 
 Events.OnTick.Add(function()
     if not isClient() then
+        return
+    end
+    if AdminTools.Config and AdminTools.Config.disableMapShare == false then
         return
     end
     DisableMapShare._tick = (DisableMapShare._tick or 0) + 1

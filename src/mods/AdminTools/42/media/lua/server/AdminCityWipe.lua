@@ -149,7 +149,8 @@ function AdminCityWipe.startJob(player, cityId, resetLoot, reconstruct)
     if not city then
         return false, "unknown city"
     end
-    if not AdminTools.isAdminPlayer(player) then
+    -- Panel / file trigger may pass nil player (server authority).
+    if player ~= nil and not AdminTools.isAdminPlayer(player) then
         return false, "not admin"
     end
 
@@ -167,14 +168,16 @@ function AdminCityWipe.startJob(player, cityId, resetLoot, reconstruct)
         squares = 0,
         missing = 0,
         done = false,
+        source = player and "admin" or "panel",
     }
     table.insert(AdminCityWipe._jobs, job)
     AdminTools.debugLog(
         "City wipe queued: " .. city.name
+            .. " source=" .. tostring(job.source)
             .. " resetLoot=" .. tostring(job.resetLoot)
             .. " reconstruct=" .. tostring(job.reconstruct)
     )
-    if sendServerCommand then
+    if player and sendServerCommand then
         sendServerCommand(player, AdminTools.MODULE, "WipeStarted", {
             cityId = city.id,
             cityName = city.name,

@@ -81,6 +81,7 @@ from panel.slots import (  # noqa: E402
 from panel.logs_hub import catalog as logs_catalog  # noqa: E402
 from panel.logs_hub import recent_errors as logs_recent_errors
 from panel.logs_hub import tail_kind as logs_tail_kind
+from panel.services import player_access as player_access_svc  # noqa: E402
 from panel.chat import snapshot as chat_snapshot
 from panel.bans import snapshot as bans_snapshot
 from panel.bans import unban_command
@@ -122,6 +123,7 @@ from panel.auth import (  # noqa: E402
 )
 from panel.routes.auth import router as auth_router  # noqa: E402
 from panel.routes.workshop import router as workshop_router  # noqa: E402
+from panel.routes.admintools import router as admintools_router  # noqa: E402
 
 from panel.scheduler import (  # noqa: E402
     add_task,
@@ -415,9 +417,10 @@ async def lifespan(app: FastAPI):
             pass
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.13.1", lifespan=lifespan)
+app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.15.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(workshop_router)
+app.include_router(admintools_router)
 
 
 @app.middleware("http")
@@ -600,13 +603,21 @@ def parse_players_list(output: str) -> list[dict[str, str]]:
         return []
     players: list[dict[str, str]] = []
     for raw in output.splitlines():
-        line = raw.strip().lstrip("-•*").strip()
+        line = raw.strip()
         if not line:
             continue
         lower = line.lower()
         if lower.startswith("players connected") or lower.startswith("players online"):
             continue
         if lower in {"players", "(no players)"}:
+            continue
+
+        # B42 RCON prefixes player lines with "-" (list marker, not admin).
+        if line.startswith("-"):
+            line = line[1:].strip()
+
+        line = line.lstrip("•*").strip()
+        if not line:
             continue
 
         steamid = ""
@@ -626,7 +637,13 @@ def parse_players_list(output: str) -> list[dict[str, str]]:
 
         name = name.strip().strip('"').strip("'")
         if name and not name.isdigit():
-            players.append({"name": name, "steamid": steamid, "id": steamid})
+            players.append(
+                {
+                    "name": name,
+                    "steamid": steamid,
+                    "id": steamid,
+                }
+            )
     return players
 
 
@@ -712,6 +729,11 @@ def _network_meta() -> dict[str, Any]:
             "server_name": server_name,
         },
     }
+
+
+def _active_server_id() -> str:
+    sid = _network_meta().get("server_id")
+    return str(sid) if sid else "default"
 
 
 async def _tcp_probe(host: str, port: int, timeout: float = 4.0) -> dict[str, Any]:
@@ -913,6 +935,7 @@ async def server_status() -> dict[str, Any]:
         players_raw = await asyncio.to_thread(rcon_execute, "players")
         online = True
         players_list = filter_real_players(parse_players_list(players_raw))
+        players_list = player_access_svc.enrich_players(players_list, _active_server_id())
         players_count = len(players_list)
         mark_joined(players_list)
     except Exception as exc:
@@ -1383,6 +1406,7 @@ async def rcon_players() -> dict[str, Any]:
     try:
         raw = await asyncio.to_thread(rcon_execute, "players")
         players = filter_real_players(parse_players_list(raw))
+        players = player_access_svc.enrich_players(players, _active_server_id())
         founders = mark_joined(players)
         return {
             "command": "players",
@@ -1617,6 +1641,7 @@ async def save_config(body: SaveConfigBody) -> dict[str, Any]:
 async def rcon_exec_endpoint(body: RconBody) -> dict[str, str]:
     try:
         output = await asyncio.to_thread(rcon_execute, body.command)
+        player_access_svc.record_from_rcon(_active_server_id(), body.command, output)
         return {"command": body.command, "output": output}
     except Exception as exc:
         raise HTTPException(status_code=502, detail=_rcon_error_message(exc)) from exc

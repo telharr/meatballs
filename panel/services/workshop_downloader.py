@@ -148,7 +148,7 @@ def list_local_workshop_items(server_id: str | None = None) -> list[dict[str, An
 
 
 def _run_download(workshop_ids: list[str], server_id: str | None, username: str | None) -> None:
-    from workshop_downloader import download_batch, find_steamcmd
+    from workshop_downloader import download_batch
 
     paths = mirror_paths(server_id)
     paths["mirror"].mkdir(parents=True, exist_ok=True)
@@ -163,7 +163,9 @@ def _run_download(workshop_ids: list[str], server_id: str | None, username: str 
         )
 
     try:
-        steamcmd = find_steamcmd(None)
+        from panel.services.steamcmd_bootstrap import resolve_steamcmd
+
+        steamcmd = resolve_steamcmd()
     except FileNotFoundError as exc:
         _set_job(
             running=False,
@@ -270,6 +272,12 @@ def status_bundle(server_id: str | None = None) -> dict[str, Any]:
         if wid not in parsed["workshop_ids"]:
             items.append({**row, "orphan": True})
     paths = mirror_paths(server_id)
+    try:
+        from panel.services.steamcmd_bootstrap import status as steamcmd_status
+
+        sc = steamcmd_status()
+    except Exception:
+        sc = {"installed": False, "path": "", "version_hint": ""}
     return {
         "server_id": server_id or active_id(),
         "ini_path": parsed["ini_path"],
@@ -278,6 +286,7 @@ def status_bundle(server_id: str | None = None) -> dict[str, Any]:
         "items": items,
         "paths": {k: str(v) for k, v in paths.items()},
         "download": _job_snapshot(),
-        "steamcmd_hint": "Set STEAMCMD or install ./steamcmd/",
+        "steamcmd_hint": "Workshop → Install SteamCMD or set STEAMCMD",
+        "steamcmd": sc,
         "checked_at": datetime.now().isoformat(timespec="seconds"),
     }

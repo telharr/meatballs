@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from panel.services import pack_merger as pack_svc
+from panel.services import steamcmd_bootstrap as steamcmd_svc
 from panel.services import workshop_downloader as dl_svc
 from panel.services import workshop_monitor as mon_svc
 
@@ -25,6 +26,8 @@ class CompileBody(BaseModel):
     pack_id: str = Field(..., max_length=40)
     pack_name: str = Field(default="", max_length=80)
     fail_on_conflict: bool = False
+    deploy_to_server: bool = False
+    update_ini: bool = True
 
 
 class AnalyzeBody(BaseModel):
@@ -66,7 +69,26 @@ async def api_workshop_status() -> dict[str, Any]:
         item["update_available"] = bool(remote_ts and baseline and remote_ts > baseline)
     data["monitor"] = mon
     data["available_mods"] = pack_svc.list_available_mods()
+    data["steamcmd"] = steamcmd_svc.status()
     return data
+
+
+@router.get("/steamcmd/status")
+async def api_steamcmd_status() -> dict[str, Any]:
+    return steamcmd_svc.status()
+
+
+@router.post("/steamcmd/install")
+async def api_steamcmd_install() -> dict[str, Any]:
+    try:
+        return steamcmd_svc.start_install()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/steamcmd/install/status")
+async def api_steamcmd_install_status() -> dict[str, Any]:
+    return steamcmd_svc.install_status()
 
 
 @router.post("/download")
@@ -137,6 +159,8 @@ async def api_workshop_compile(body: CompileBody) -> dict[str, Any]:
             pack_id=body.pack_id,
             pack_name=body.pack_name,
             fail_on_conflict=body.fail_on_conflict,
+            deploy_to_server=body.deploy_to_server,
+            update_ini=body.update_ini,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

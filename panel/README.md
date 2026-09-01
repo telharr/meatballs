@@ -4,7 +4,9 @@ Hosting-agnostic web dashboard: **RCON** console, **FTP/local** config editor, m
 
 Read first: `docs/PRODUCT.md`, `docs/SESSION.md`. Onboarding: **`docs/ONBOARDING.md`**. Sprints: `docs/SPRINTS.md`.
 
-Panel **3.13.1**: Snapshot button (Главная) → full text dump of `panel/` into `panel/backups/panel-snapshot-*.txt`. **3.13.0**: Workshop / ModPack / update monitor, SFTP, MEATBALLS plugin toggle, JWT auth, RU/EN, Smoke test.
+Panel **3.15.0**: SteamCMD auto-bootstrap (`.cache/steamcmd/`); ModPack compile + one-click FTP/SFTP deploy; `world.ini` Mods= injection with `panel/backups/` snapshot.
+
+Panel **3.14.0**: AdminTools city wipe API + Admin Audit in Logs; Snapshot; Workshop / ModPack; SFTP; JWT; Smoke.
 
 ## Authentication (Sprint 3)
 

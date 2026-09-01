@@ -245,6 +245,50 @@ class SftpClient:
         except OSError:
             return None
 
+    def sync_modpack(
+        self,
+        local_dir: str | Path,
+        remote_dir: str,
+        *,
+        allow_protected: bool = False,
+    ):
+        from ftp_client import IntegrityError, SyncResult, is_protected_remote, join_remote, md5_file, normalize_remote
+
+        local_root = Path(local_dir)
+        if not local_root.is_dir():
+            raise NotADirectoryError(f"Local directory not found: {local_root}")
+
+        remote_dir = normalize_remote(remote_dir)
+        result = SyncResult()
+
+        with self.connect() as sftp:
+            for path in sorted(local_root.rglob("*")):
+                if not path.is_file():
+                    continue
+                rel = path.relative_to(local_root).as_posix()
+                remote_path = join_remote(remote_dir, rel)
+                if is_protected_remote(remote_path, allow_protected):
+                    result.skipped.append(f"{rel} (protected)")
+                    continue
+                local_hash = md5_file(path)
+                remote_hash = self._remote_md5(sftp, remote_path)
+                if remote_hash == local_hash:
+                    result.skipped.append(rel)
+                    continue
+                try:
+                    self._ensure_remote_dirs(sftp, remote_path)
+                    sftp.put(str(path), self._remote_path(sftp, remote_path))
+                    verify = self._remote_md5(sftp, remote_path)
+                    if verify != local_hash:
+                        raise IntegrityError(
+                            f"Upload checksum mismatch: {remote_path} local={local_hash[:8]} remote={verify or 'none'}"
+                        )
+                    result.uploaded.append(rel)
+                except Exception as exc:
+                    result.errors.append(f"{rel}: {exc}")
+
+        return result
+
     def pull_tree(
         self,
         remote_path: str,

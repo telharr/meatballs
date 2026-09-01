@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.13.1" />
+  <link rel="stylesheet" href="/static/style.css?v=3.15.0" />
 </head>
 <body>
   <header class="navbar">
@@ -452,7 +452,7 @@
         <div class="card full-height">
           <div class="card-head">
             <div class="card-head-left">
-              <h2>Логи</h2>
+              <h2 data-i18n="logs.title">Логи</h2>
               <span id="log-meta" class="hint">зеркало + console</span>
             </div>
             <div class="terminal-tools">
@@ -465,11 +465,16 @@
                 <option value="admin">админ</option>
                 <option value="cmd">команды</option>
                 <option value="pvp">PVP</option>
+                <option value="audit">Admin Audit</option>
               </select>
               <label class="toggle-label"><input type="checkbox" id="log-autorefresh" checked /> Auto 15s</label>
               <button type="button" id="btn-log-refresh" class="btn sm">Обновить</button>
               <button type="button" id="btn-log-download" class="btn ghost sm">Download</button>
             </div>
+          </div>
+          <div id="audit-panel" class="audit-panel hidden">
+            <div id="audit-meta" class="hint muted"></div>
+            <div id="audit-table" class="audit-table"></div>
           </div>
           <pre id="server-log" class="server-log">Загрузка…</pre>
         </div>
@@ -546,6 +551,15 @@
               <button type="button" id="btn-ws-check" class="btn sm" data-i18n="workshop.check">Проверить обновления</button>
             </div>
           </div>
+          <div id="ws-steamcmd-banner" class="ws-steamcmd-banner hidden">
+            <div class="ws-steamcmd-copy">
+              <strong data-i18n="workshop.steamcmd_missing">SteamCMD не найден</strong>
+              <p class="muted" data-i18n="workshop.steamcmd_missing_hint">Нужен для скачивания Workshop-модов. Установка в .cache/steamcmd/</p>
+            </div>
+            <button type="button" id="btn-ws-steamcmd-install" class="btn primary sm" data-i18n="workshop.steamcmd_install">Установить SteamCMD в один клик</button>
+          </div>
+          <div id="ws-steamcmd-progress" class="hidden"></div>
+          <p id="ws-steamcmd-status" class="muted workshop-status"></p>
           <div class="workshop-toolbar">
             <label class="toggle-label">
               <input type="checkbox" id="chk-ws-auto-restart" />
@@ -568,6 +582,8 @@
                   <input id="ws-pack-name" maxlength="80" placeholder="Server Mod Pack v1" />
                 </label>
                 <label class="toggle-label"><input type="checkbox" id="ws-fail-conflict" /> <span data-i18n="workshop.fail_conflict">Стоп при конфликтах</span></label>
+                <label class="toggle-label"><input type="checkbox" id="ws-deploy-server" /> <span data-i18n="workshop.deploy_server">Скомпилировать и сразу залить на сервер (FTP/SFTP)</span></label>
+                <label class="toggle-label"><input type="checkbox" id="ws-update-ini" checked /> <span data-i18n="workshop.update_ini">Добавить пак в Mods= в world.ini</span></label>
                 <div class="modal-actions">
                   <button type="button" id="btn-ws-analyze" class="btn sm" data-i18n="workshop.analyze">Анализ конфликтов</button>
                   <button type="submit" class="btn primary sm" data-i18n="workshop.compile">Compile</button>
@@ -600,8 +616,27 @@
           <div id="mirror-grid" class="network-grid">
             <p class="muted">Загрузка…</p>
           </div>
+          <div class="wipe-box city-wipe-box">
+            <h3 class="players-subhead" data-i18n="admintools.city_wipe_title">Точечный вайп города (AdminTools)</h3>
+            <p class="muted" data-i18n="admintools.city_wipe_hint">Пишет Lua/mb_admintools_cmd.txt + servermsg. Нужен мод AdminTools на сервере. Лутает только загруженные чанки.</p>
+            <div id="city-wipe-cities" class="city-wipe-grid"></div>
+            <div class="city-wipe-opts">
+              <label class="toggle-label"><input type="checkbox" id="city-wipe-containers" checked /> <span data-i18n="admintools.reconstruct">Восстановить контейнеры</span></label>
+              <label class="toggle-label"><input type="checkbox" id="city-wipe-loot" checked /> <span data-i18n="admintools.refill">Заспавнить лут</span></label>
+            </div>
+            <div class="modal-actions">
+              <button type="button" id="btn-city-wipe" class="btn primary sm" data-i18n="admintools.trigger">Точечный вайп города</button>
+            </div>
+            <div id="city-wipe-status" class="muted"></div>
+          </div>
           <div class="wipe-box">
-            <h3 class="players-subhead">Точечный вайп чанка</h3>
+            <h3 class="players-subhead">
+              <label class="toggle-label">
+                <input type="checkbox" id="chk-hard-fs-wipe" />
+                <span data-i18n="admintools.hard_fs">Hard FS Wipe (файлы чанка)</span>
+              </label>
+            </h3>
+            <div id="hard-fs-wipe-panel" class="hard-fs-wipe-panel hidden">
             <p class="muted">Удаляет только map/chunkdata/zpop этой клетки (256×256). WorldDictionary не трогаем. Сначала превью.</p>
             <form id="wipe-form" class="launch-form wipe-form">
               <label class="field"><span>Мир X</span><input id="wipe-x" type="number" placeholder="10707" /></label>
@@ -611,6 +646,7 @@
               <button type="button" id="btn-wipe-preview" class="btn sm">Превью файлов</button>
             </form>
             <div id="wipe-preview" class="muted">Укажи координаты и нажми превью. На живом хосте не жать «Вайп» без бэкапа.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -736,7 +772,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.13.1"></script>
-  <script src="/static/app.js?v=3.13.1"></script>
+  <script src="/static/i18n.js?v=3.15.0"></script>
+  <script src="/static/app.js?v=3.15.0"></script>
 </body>
 </html>

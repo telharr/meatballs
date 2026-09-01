@@ -128,19 +128,20 @@
 
 ---
 
-## 6. Где мы сейчас (Workshop + ModPack)
+## 6. Где мы сейчас (Workshop deploy)
 
-Панель **3.13.0** — Workshop SteamCMD, unified ModPack compiler, Steam update monitor:
+Панель **3.15.0** — SteamCMD bootstrap + ModPack deploy:
 
-- Вкладка **Workshop**: статус WorkshopItems, Download Missing, Check Updates, ModPack Builder
-- Загрузки в `.mirror/<id>/steamapps/workshop/content/108600/` + link в `.mirror/<id>/mods/` (Smoke без missing mods)
-- Конфликты: tiledef, duplicate textures, Lua `Events.*.Add`
-- Опциональный auto-restart: RCON `servermsg` → `save` → `quit` (3 мин)
-- Нужен **SteamCMD** на машине панели (`./steamcmd/` или `STEAMCMD=`)
+- `GET/POST /api/workshop/steamcmd/*` — detect / one-click install to `.cache/steamcmd/`
+- `POST /api/workshop/compile` + `deploy_to_server` — compile → FTP/SFTP upload → `Mods=` in `world.ini` (backup in `panel/backups/`)
 
-Ранее: **3.12.0** SFTP + `plugins.meatballs`; **3.11** JWT + i18n.
+Панель **3.14.0** — in-game AdminTools ↔ panel:
 
-Admin path: `docs/ONBOARDING.md`.
+- `GET /api/admintools/cities`, `POST /api/admintools/city-wipe` (file drop + RCON notify)
+- `GET /api/admintools/audit` — structured admin/cmd journal
+- Hard FS chunk wipe remains under advanced toggle on Зеркало
+
+Ранее: **3.13.x** Snapshot / Workshop; **3.12** SFTP; **3.11** JWT + i18n.
 
 ---
 

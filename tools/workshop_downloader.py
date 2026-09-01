@@ -30,13 +30,29 @@ def find_steamcmd(explicit: str | None = None) -> Path:
         path = Path(env)
         if path.exists():
             return path
+    cache_binary = (
+        Path(".cache") / "steamcmd" / ("steamcmd.exe" if os.name == "nt" else "steamcmd.sh")
+    )
+    if cache_binary.exists():
+        return cache_binary.resolve()
     if DEFAULT_STEAMCMD.exists():
         return DEFAULT_STEAMCMD
     which = shutil.which("steamcmd") or shutil.which("steamcmd.exe")
     if which:
         return Path(which)
+    try:
+        panel_root = Path(__file__).resolve().parents[1]
+        if str(panel_root) not in sys.path:
+            sys.path.insert(0, str(panel_root))
+        from panel.services.steamcmd_bootstrap import detect_steamcmd
+
+        found = detect_steamcmd()
+        if found:
+            return found
+    except Exception:
+        pass
     raise FileNotFoundError(
-        "SteamCMD not found. Install to ./steamcmd/, set STEAMCMD, or pass --steamcmd path."
+        "SteamCMD not found. Install via Workshop tab, ./steamcmd/, .cache/steamcmd/, or set STEAMCMD."
     )
 
 

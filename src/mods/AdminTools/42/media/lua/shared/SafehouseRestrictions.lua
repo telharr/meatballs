@@ -113,16 +113,27 @@ function SafehouseRestrictions.installServerHooks()
 end
 
 Events.OnGameStart.Add(function()
+    if AdminTools.Config and AdminTools.Config.safehouseRestrictions == false then
+        AdminTools.debugLog("SafehouseRestrictions client hooks skipped (config)")
+        return
+    end
     SafehouseRestrictions.installClientHooks()
 end)
 
 Events.OnServerStarted.Add(function()
+    if AdminTools.Config and AdminTools.Config.safehouseRestrictions == false then
+        AdminTools.debugLog("SafehouseRestrictions server hooks skipped (config)")
+        return
+    end
     SafehouseRestrictions.installServerHooks()
 end)
 
 -- Dedicated may not fire OnGameStart for shared; also try OnInitGlobalModData
 Events.OnInitGlobalModData.Add(function()
     if isServer() then
+        if AdminTools.Config and AdminTools.Config.safehouseRestrictions == false then
+            return
+        end
         SafehouseRestrictions.installServerHooks()
     end
 end)

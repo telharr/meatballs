@@ -4,7 +4,15 @@
 AdminTools = AdminTools or {}
 
 AdminTools.MODULE = "AdminTools"
-AdminTools.VERSION = "1.0.0"
+AdminTools.VERSION = "1.1.0"
+
+-- Feature flags (panel / server policy). Safehouse Louisville ban off by default for Phase 1.
+AdminTools.Config = AdminTools.Config or {
+    safehouseRestrictions = false,
+    disableMapShare = true,
+    cityWipe = true,
+    panelCmdFile = "mb_admintools_cmd.txt",
+}
 
 -- City AABB (world tile coords). Louisville matches product rule set.
 AdminTools.CITIES = {

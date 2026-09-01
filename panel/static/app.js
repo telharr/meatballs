@@ -21,6 +21,7 @@ const state = {
   panelStartedAt: Date.now(),
   saving: false,
   logAutoRefresh: true,
+  cityWipeId: null,
   logKind: "console",
   wipePreview: null,
   worldNotify: { local: null, remote: null },
@@ -467,7 +468,10 @@ function switchView(view) {
   if (view === "npc") loadSlots();
   if (view === "mods") loadMods();
   if (view === "workshop") loadWorkshop();
-  if (view === "mirror") loadMirror();
+  if (view === "mirror") {
+    loadMirror();
+    loadCityWipeCities();
+  }
   if (view === "smoke") loadSmoke();
   if (view === "chat") loadChat();
   if (view === "bans") loadBans();
@@ -1313,7 +1317,7 @@ function sendRcon(command) {
     .then((data) => {
       appendConsole(`❯ ${data.command}`, "cmd");
       appendConsole(data.output, classifyConsoleLine(data.output));
-      if (command.startsWith("players")) pollStatus();
+      if (command.startsWith("players") || command.startsWith("setaccesslevel")) pollStatus();
     })
     .catch((e) => appendConsole(e.message, "err"));
 }
@@ -1347,6 +1351,12 @@ function renderTrainersRoster() {
   }
 }
 
+function hasElevatedAccess(player) {
+  if (player?.is_elevated === true) return true;
+  const lvl = String(player?.access_level || "user").toLowerCase();
+  return ["admin", "moderator", "overseer", "gm", "observer", "priority"].includes(lvl);
+}
+
 function renderPlayersPage() {
   const el = $("#players-page-list");
   if (!el) return;
@@ -1356,16 +1366,21 @@ function renderPlayersPage() {
   }
   el.innerHTML = "";
   for (const p of state.players) {
+    const elevated = hasElevatedAccess(p);
+    const accessLabel = elevated ? String(p.access_level || "admin").toUpperCase() : "";
     const card = document.createElement("div");
-    card.className = "player-card";
+    card.className = `player-card${elevated ? " player-card-admin" : ""}`;
     card.innerHTML = `
-      <div class="player-name">${escapeHtml(p.name)}</div>
+      <div class="player-name">
+        ${escapeHtml(p.name)}
+        ${elevated ? `<span class="player-admin-badge">${escapeHtml(accessLabel)}</span>` : ""}
+      </div>
       <div class="player-id">${escapeHtml(p.steamid || p.id || "—")}</div>
       <div class="player-actions">
         <button type="button" class="btn xs danger" data-act="kick">Kick</button>
         <button type="button" class="btn xs danger" data-act="ban">Ban</button>
         <button type="button" class="btn xs" data-act="tp">Teleport</button>
-        <button type="button" class="btn xs" data-act="admin">Admin</button>
+        <button type="button" class="btn xs${elevated ? " admin-active" : ""}" data-act="admin">${elevated ? t("players.admin_active") : t("players.admin_grant")}</button>
       </div>`;
     card.querySelectorAll("[data-act]").forEach((btn) => {
       btn.onclick = () => playerAction(btn.dataset.act, p);
@@ -1562,17 +1577,45 @@ async function submitAnnounce(e) {
 async function playerAction(act, player) {
   const name = player.name;
   const steamid = player.steamid || "";
+  if (act === "admin") {
+    const elevated = hasElevatedAccess(player);
+    if (elevated) {
+      const msg = t("players.revoke_admin_confirm").replace("{name}", name);
+      if (!confirm(msg)) return;
+      await runPlayerRcon(`setaccesslevel "${name}" user`);
+    } else {
+      await runPlayerRcon(`setaccesslevel "${name}" admin`);
+    }
+    setTimeout(() => loadPlayers(), 900);
+    return;
+  }
   const cmds = {
     kick: `kick "${name}"`,
     ban: steamid ? `banid ${steamid}` : `banuser "${name}"`,
     tp: `teleport "${name}"`,
-    admin: `setaccesslevel "${name}" admin`,
   };
   const cmd = cmds[act];
   if (!cmd) return;
   if ((act === "kick" || act === "ban") && !confirm(`${act.toUpperCase()} ${name}?`)) return;
-  sendRcon(cmd);
-  showToast(`Sent: ${cmd}`);
+  await runPlayerRcon(cmd);
+}
+
+async function runPlayerRcon(command) {
+  try {
+    const data = await api("/api/rcon/exec", { method: "POST", body: JSON.stringify({ command }) });
+    appendConsole(`❯ ${data.command}`, "cmd");
+    appendConsole(data.output, classifyConsoleLine(data.output));
+    const out = String(data.output || "");
+    if (/access level.*unknown/i.test(out) || /^unknown command/i.test(out)) {
+      showToast(out.split("\n")[0] || "RCON error", "err");
+      return data;
+    }
+    showToast(`Sent: ${command}`);
+    return data;
+  } catch (err) {
+    showToast(err.message, "err");
+    throw err;
+  }
 }
 
 async function loadPlayers() {
@@ -1873,10 +1916,18 @@ function jumpView(view, filename) {
 async function loadServerLog() {
   const kind = $("#log-kind")?.value || state.logKind || "console";
   state.logKind = kind;
+  const auditPanel = $("#audit-panel");
+  const pre = $("#server-log");
+  if (kind === "audit") {
+    if (auditPanel) auditPanel.classList.remove("hidden");
+    if (pre) pre.classList.add("hidden");
+    return loadAdminAudit();
+  }
+  if (auditPanel) auditPanel.classList.add("hidden");
+  if (pre) pre.classList.remove("hidden");
   try {
     const data = await api(`/api/logs/tail?kind=${encodeURIComponent(kind)}&lines=500`);
     state.serverLogContent = data.content || "";
-    const pre = $("#server-log");
     pre.textContent = state.serverLogContent || "(пусто — файла ещё нет на зеркале)";
     pre.scrollTop = pre.scrollHeight;
     $("#log-meta").textContent = data.filename
@@ -1884,6 +1935,92 @@ async function loadServerLog() {
       : `${data.label || kind} · файла нет`;
   } catch (e) {
     $("#server-log").textContent = `Error: ${e.message}`;
+  }
+}
+
+async function loadAdminAudit() {
+  const box = $("#audit-table");
+  const meta = $("#audit-meta");
+  if (!box) return;
+  try {
+    const data = await api("/api/admintools/audit?limit=250");
+    const rows = data.actions || [];
+    state.serverLogContent = rows.map((r) => r.raw).join("\n");
+    if (meta) {
+      meta.textContent = `${t("admintools.audit_title")} · ${data.count || 0} · high ${data.high_risk || 0}`;
+    }
+    $("#log-meta").textContent = `audit · ${data.total_parsed || 0} parsed`;
+    box.innerHTML = rows.length
+      ? rows.map((r) => `<div class="audit-row">
+          <span>${escapeHtml(r.ts || "—")}</span>
+          <span><span class="sev sev-${escapeHtml(r.severity || "low")}">${escapeHtml(r.severity || "low")}</span></span>
+          <span>${escapeHtml(r.admin || r.steamid || "—")}</span>
+          <span><code>${escapeHtml(r.command || "")}</code> ${escapeHtml(r.args || "")}</span>
+          <span>${escapeHtml(r.target || r.coords || r.source || "")}</span>
+        </div>`).join("")
+      : `<p class="muted" style="padding:0.75rem">Нет записей — нужен Pull логов (_admin.txt / _cmd.txt)</p>`;
+  } catch (e) {
+    box.innerHTML = `<p class="err" style="padding:0.75rem">${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function loadCityWipeCities() {
+  const box = $("#city-wipe-cities");
+  if (!box) return;
+  try {
+    const data = await api("/api/admintools/cities");
+    const cities = data.cities || [];
+    box.innerHTML = cities.map((c) => {
+      const active = state.cityWipeId === c.id ? " active" : "";
+      return `<button type="button" class="city-wipe-card${active}" data-city-id="${escapeHtml(c.id)}">
+        <strong>${escapeHtml(c.name)}</strong>
+        <span class="city-bbox">${c.x1},${c.y1} → ${c.x2},${c.y2}</span>
+      </button>`;
+    }).join("");
+    box.querySelectorAll("[data-city-id]").forEach((btn) => {
+      btn.onclick = () => {
+        state.cityWipeId = btn.dataset.cityId;
+        loadCityWipeCities();
+      };
+    });
+  } catch (e) {
+    box.innerHTML = `<p class="err">${escapeHtml(e.message)}</p>`;
+  }
+}
+
+async function triggerCityWipe() {
+  if (!state.cityWipeId) {
+    showToast(t("admintools.pick_city"), "err");
+    return;
+  }
+  const status = $("#city-wipe-status");
+  const btn = $("#btn-city-wipe");
+  if (btn) btn.disabled = true;
+  try {
+    const data = await api("/api/admintools/city-wipe", {
+      method: "POST",
+      body: JSON.stringify({
+        city_id: state.cityWipeId,
+        refill_loot: !!$("#city-wipe-loot")?.checked,
+        reconstruct_containers: !!$("#city-wipe-containers")?.checked,
+        upload: true,
+        rcon_notify: true,
+      }),
+    });
+    const city = (data.city && data.city.name) || state.cityWipeId;
+    const bits = [];
+    if (data.uploaded) bits.push("FTP ok");
+    if (data.upload_error) bits.push(`upload: ${data.upload_error}`);
+    if (data.rcon != null) bits.push("RCON ok");
+    if (data.rcon_error) bits.push(`rcon: ${data.rcon_error}`);
+    const msg = `${t("admintools.queued")}: ${city} · ${bits.join(" · ") || "local only"}`;
+    if (status) status.textContent = msg;
+    showToast(msg, data.upload_error && !data.uploaded ? "warn" : "ok");
+  } catch (e) {
+    if (status) status.textContent = e.message;
+    showToast(e.message, "err");
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -2316,6 +2453,74 @@ function setWorkshopDownloadStatus(text, ok) {
   el.className = `muted workshop-status ${ok === false ? "err" : ok ? "ok" : ""}`;
 }
 
+function renderSteamcmdBanner(steamcmd) {
+  const banner = $("#ws-steamcmd-banner");
+  const statusEl = $("#ws-steamcmd-status");
+  const progress = $("#ws-steamcmd-progress");
+  const installBtn = $("#btn-ws-steamcmd-install");
+  const sc = steamcmd || {};
+  const install = sc.install || {};
+  if (banner) {
+    banner.classList.toggle("hidden", !!sc.installed);
+  }
+  if (installBtn) installBtn.disabled = !!install.running;
+  if (progress) {
+    if (install.running) {
+      progress.classList.remove("hidden");
+      progress.innerHTML = progressBar(install.percent || 0, install.message || install.phase || "");
+    } else {
+      progress.classList.add("hidden");
+      progress.innerHTML = "";
+    }
+  }
+  if (statusEl) {
+    if (sc.installed) {
+      statusEl.textContent = `${t("workshop.steamcmd_ready") || "SteamCMD"}: ${sc.path || ""}${sc.version_hint ? ` · ${sc.version_hint}` : ""}`;
+      statusEl.className = "muted workshop-status ok";
+    } else if (install.phase === "error") {
+      statusEl.textContent = install.message || "SteamCMD install failed";
+      statusEl.className = "muted workshop-status err";
+    } else if (install.running) {
+      statusEl.textContent = install.message || t("workshop.steamcmd_installing") || "Installing SteamCMD…";
+      statusEl.className = "muted workshop-status";
+    } else {
+      statusEl.textContent = t("workshop.steamcmd_missing") || "SteamCMD not found";
+      statusEl.className = "muted workshop-status err";
+    }
+  }
+}
+
+async function pollSteamcmdInstall() {
+  try {
+    const install = await api("/api/workshop/steamcmd/install/status");
+    renderSteamcmdBanner({ installed: false, install });
+    if (!install.running) {
+      state.wsSteamcmdPoll = false;
+      loadWorkshop();
+      if (install.phase === "done") showToast(t("workshop.steamcmd_done") || "SteamCMD installed", "ok");
+      if (install.phase === "error") showToast(install.message || "SteamCMD install failed", "err");
+    }
+  } catch {
+    state.wsSteamcmdPoll = false;
+  }
+}
+
+async function installSteamcmd() {
+  try {
+    const data = await api("/api/workshop/steamcmd/install", { method: "POST", body: "{}" });
+    if (data.skipped) {
+      showToast(data.message || t("workshop.steamcmd_ready") || "SteamCMD ready", "ok");
+      loadWorkshop();
+      return;
+    }
+    state.wsSteamcmdPoll = true;
+    renderSteamcmdBanner({ installed: false, install: data.status || { running: true, phase: "starting" } });
+    showToast(t("workshop.steamcmd_installing") || "Installing SteamCMD…");
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
 async function loadWorkshop() {
   try {
     const data = await api("/api/workshop/status");
@@ -2325,6 +2530,14 @@ async function loadWorkshop() {
     const auto = $("#chk-ws-auto-restart");
     if (auto) auto.checked = !!(data.monitor && data.monitor.auto_restart);
     const dl = data.download || {};
+    renderSteamcmdBanner(data.steamcmd || {});
+    const deployCb = $("#ws-deploy-server");
+    const active = (state.servers || []).find((s) => s.id === state.serversActive);
+    const remoteFiles = active && active.files && active.files.kind !== "local";
+    if (deployCb) {
+      deployCb.disabled = !remoteFiles;
+      if (!remoteFiles) deployCb.checked = false;
+    }
     if (dl.running) {
       state.wsDownloadPoll = true;
       setWorkshopDownloadStatus(`${dl.phase || "…"} · ${dl.percent || 0}% · ${dl.message || ""}`);
@@ -2440,15 +2653,28 @@ async function compileWorkshopPack(e) {
         pack_id: packId,
         pack_name: packName,
         fail_on_conflict: !!$("#ws-fail-conflict")?.checked,
+        deploy_to_server: !!$("#ws-deploy-server")?.checked,
+        update_ini: !!$("#ws-update-ini")?.checked,
       }),
     });
     const lines = [
       ...(data.log || []),
       `output: ${data.output_dir || ""}`,
+      ...(data.deploy ? [`deploy: ${data.deploy.remote_mod_dir || ""}`, `uploaded: ${(data.deploy.uploaded || []).length}`] : []),
       ...(data.conflicts || []).map((c) => `[${c.kind}] ${c.message}`),
     ];
     if (log) log.textContent = lines.join("\n");
-    showToast(data.ok ? `Compiled ${packId}` : "Compile failed", data.ok ? "ok" : "err");
+    const ok = data.ok && !data.deploy_error;
+    showToast(
+      data.deploy_error
+        ? data.deploy_error
+        : data.deploy
+          ? `${t("workshop.deploy_done") || "Deployed"} ${packId}`
+          : data.ok
+            ? `Compiled ${packId}`
+            : "Compile failed",
+      ok ? "ok" : "err",
+    );
     loadWorkshop();
   } catch (err) {
     showToast(err.message, "err");
@@ -2807,6 +3033,10 @@ $("#chat-channel").onchange = () => loadChat();
 $("#chat-announce-form").onsubmit = submitChatAnnounce;
 $("#btn-privates-refresh").onclick = () => loadPrivates();
 $("#btn-wipe-preview").onclick = () => previewWipe();
+$("#btn-city-wipe").onclick = () => triggerCityWipe();
+$("#chk-hard-fs-wipe")?.addEventListener("change", (e) => {
+  $("#hard-fs-wipe-panel")?.classList.toggle("hidden", !e.target.checked);
+});
 $("#btn-log-refresh").onclick = () => loadServerLog();
 $("#log-kind").onchange = () => loadServerLog();
 $("#btn-log-download").onclick = () => downloadText(state.serverLogContent, `${state.logKind || "log"}_${ts()}.txt`);
@@ -2818,6 +3048,7 @@ $("#mod-add-form").onsubmit = submitModAdd;
 $("#btn-mod-scaffold").onclick = () => scaffoldMod();
 $("#btn-ws-refresh").onclick = () => loadWorkshop();
 $("#btn-ws-download").onclick = () => startWorkshopDownload();
+$("#btn-ws-steamcmd-install").onclick = () => installSteamcmd();
 $("#btn-ws-check").onclick = () => checkWorkshopUpdates();
 $("#btn-ws-graceful").onclick = () => startWorkshopGraceful();
 $("#btn-ws-analyze").onclick = () => analyzeWorkshopPack();
@@ -2840,6 +3071,7 @@ setInterval(() => {
 }, 15000);
 setInterval(() => {
   if (state.activeView === "workshop" && state.wsDownloadPoll) pollWorkshopDownload();
+  if (state.activeView === "workshop" && state.wsSteamcmdPoll) pollSteamcmdInstall();
 }, 2000);
 
 initTheme();

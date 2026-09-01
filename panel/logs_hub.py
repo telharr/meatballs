@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -159,3 +160,175 @@ def recent_errors(limit: int = 5) -> list[str]:
         if "ERROR" in line.upper() or "EXCEPTION" in line.upper()
     ]
     return hits[-limit:]
+
+
+# —— Admin command audit ——
+
+_TS_RE = re.compile(
+    r"^\[(?P<ts>\d{2}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)\]\s*(?P<body>.*)$"
+)
+_STEAM_ACT_RE = re.compile(
+    r'^(?P<steamid>\d{15,20})\s+"(?P<name>[^"]+)"\s+(?P<action>.+?)(?:\s+@\s+(?P<coords>[\d,\-]+))?\s*$'
+)
+_SLASH_RE = re.compile(
+    r'(?P<name>\S+)\s+(?:used\s+command|executed|ran)[:\s]+/?(?P<cmd>\S+)(?:\s+(?P<args>.*))?$',
+    re.I,
+)
+_BARE_SLASH_RE = re.compile(r"^/?(?P<cmd>\S+)(?:\s+(?P<args>.*))?$")
+
+HIGH_RISK = frozenset(
+    {
+        "ban",
+        "banid",
+        "banuser",
+        "unban",
+        "unbanid",
+        "setaccesslevel",
+        "teleport",
+        "teleportto",
+        "gunload",
+        "additem",
+        "createhorde",
+        "removeuserfromwhitelist",
+        "adduser",
+        "kick",
+        "kickuser",
+        "godmod",
+        "invisible",
+        "noclip",
+        "citywipe",
+        "triggercitywipe",
+    }
+)
+
+MEDIUM_RISK = frozenset(
+    {
+        "alarm",
+        "chopper",
+        "thunder",
+        "chopper",
+        "reloadoptions",
+        "save",
+        "quit",
+        "servermsg",
+        "players",
+    }
+)
+
+
+def _severity_for(command: str) -> str:
+    key = (command or "").lower().lstrip("/")
+    base = key.split(".", 1)[0]
+    if base in HIGH_RISK or key in HIGH_RISK:
+        return "high"
+    if base in MEDIUM_RISK:
+        return "medium"
+    if key.startswith("admin") or "wipe" in key or "ban" in key:
+        return "high"
+    return "low"
+
+
+def _parse_audit_line(raw: str, source_kind: str) -> dict[str, Any] | None:
+    line = (raw or "").strip()
+    if not line:
+        return None
+    ts = ""
+    body = line
+    m = _TS_RE.match(line)
+    if m:
+        ts = m.group("ts")
+        body = m.group("body").strip()
+
+    admin = ""
+    steamid = ""
+    command = ""
+    args = ""
+    coords = ""
+    target = ""
+
+    sm = _STEAM_ACT_RE.match(body)
+    if sm:
+        steamid = sm.group("steamid") or ""
+        admin = sm.group("name") or ""
+        action = (sm.group("action") or "").strip()
+        coords = sm.group("coords") or ""
+        # action may be "ban Player" or "vehicle.damageWindow"
+        parts = action.split(None, 1)
+        command = parts[0] if parts else action
+        args = parts[1] if len(parts) > 1 else ""
+        if args:
+            target = args.split()[0]
+    else:
+        slash = _SLASH_RE.search(body)
+        if slash:
+            admin = slash.group("name") or ""
+            command = slash.group("cmd") or ""
+            args = (slash.group("args") or "").strip()
+            target = args.split()[0] if args.split() else ""
+        elif "AdminTools" in body or "citywipe" in body.lower():
+            command = "citywipe" if "wipe" in body.lower() else "admintools"
+            args = body
+            admin = "panel/server"
+        else:
+            # Skip noisy non-admin chatter in cmd logs (e.g. vehicle.damageWindow for players)
+            # unless kind is admin
+            if source_kind == "cmd" and "." in body and " " in body and not body.lstrip().startswith("/"):
+                # still record but mark low — filter later for high-only UIs
+                sm2 = _STEAM_ACT_RE.match(body)
+                if not sm2 and '"' not in body:
+                    return None
+            bare = _BARE_SLASH_RE.match(body.lstrip("/"))
+            if bare and source_kind == "admin":
+                command = bare.group("cmd") or ""
+                args = (bare.group("args") or "").strip()
+            else:
+                return None
+
+    command = command.lstrip("/")
+    severity = _severity_for(command)
+    # Drop ultra-noisy player actions from cmd unless high/medium
+    if source_kind == "cmd" and severity == "low" and "." in command:
+        return None
+
+    return {
+        "ts": ts,
+        "admin": admin,
+        "steamid": steamid,
+        "command": command,
+        "args": args,
+        "target": target,
+        "coords": coords,
+        "severity": severity,
+        "source": source_kind,
+        "raw": line[:400],
+    }
+
+
+def audit_actions(limit: int = 200) -> dict[str, Any]:
+    limit = max(20, min(int(limit), 1000))
+    rows: list[dict[str, Any]] = []
+    for kind in ("admin", "cmd"):
+        for row in _iter_local_logs():
+            if row["kind"] != kind:
+                continue
+            try:
+                text = Path(row["path"]).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                parsed = _parse_audit_line(line, kind)
+                if parsed:
+                    parsed["file"] = row["name"]
+                    rows.append(parsed)
+            break  # latest file per kind only
+
+    # newest first when timestamps sortable as DD-MM-YY — keep file order reverse
+    rows.reverse()
+    high = sum(1 for r in rows if r["severity"] == "high")
+    return {
+        "actions": rows[:limit],
+        "count": min(len(rows), limit),
+        "total_parsed": len(rows),
+        "high_risk": high,
+        "kinds": ["admin", "cmd"],
+    }
