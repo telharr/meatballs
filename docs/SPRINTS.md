@@ -2,7 +2,7 @@
 
 Читать после `docs/PRODUCT.md`. Статусы: `done` / `now` / `next` / `later`.
 
-Текущий фокус: **Sprint 6 — JVM process** (later). Sprint 5 (Workshop + ModPack) принят в панели **3.13.0**.
+Текущий фокус: **Sprint 6 — Zero-Touch Deployment & Packaging** (panel **3.17.0**). Sprint 5 (Workshop + ModPack) принят в **3.13–3.15**; realtime bus — **3.16.0**.
 
 ---
 
@@ -153,11 +153,28 @@
 - [x] API `panel/routes/workshop.py` + вкладка **Workshop**
 - [x] i18n RU/EN, docs ONBOARDING / PRODUCT
 
-**Приёмка:** Check Updates → metadata; Download Missing (нужен SteamCMD); Compile pack → conflict log.
+**Приёмка:** Check Updates → metadata; Download Missing (SteamCMD auto-bootstrap); Compile pack → conflict log; one-click FTP deploy — **3.15.0**.
 
 ---
 
-## Sprint 6 — процесс JVM (later)
+## Sprint 6 — Zero-Touch Deployment & Packaging (done, panel 3.17.0)
+
+**Цель:** end-user дистрибуция — документация сценариев A/B/C + Windows installer pipeline.
+
+- [x] `docs/DEPLOYMENT.md` — Local desktop, Linux VPS (systemd + Nginx WS), Docker
+- [x] `docs/ONBOARDING.md` — zero-config first boot, SteamCMD auto-download, wizard detection
+- [x] `packaging/build_exe.py` — PyInstaller onedir → `dist/PZControlPanel/`
+- [x] `packaging/installer.iss` — Inno Setup: Local vs Remote wizard, `.env` generation, desktop shortcut
+- [x] `Dockerfile` + `docker-compose.yml` — volumes `/data`, `/mirror`
+- [x] `.gitignore` — `dist/`, `build/`, `Output/`, `*.exe`
+
+**Приёмка:** `python packaging/build_exe.py` → runnable bundle; installer writes `.env`; `docker compose up` → health OK; DEPLOYMENT nginx WS config documented.
+
+**Не в scope:** code signing, auto-update channel, macOS .dmg.
+
+---
+
+## Sprint 7 — процесс JVM (later)
 
 **Цель:** Start/Stop там, где это реально.
 
@@ -171,7 +188,7 @@
 
 ---
 
-## Sprint 7 — тикеты (later, отдельная игровая система)
+## Sprint 8 — тикеты (later, отдельная игровая система)
 
 Панель только **отображает и закрывает**. Источник — мод (команда / запись в `Lua/mb_tickets.json` или лог).
 
@@ -179,7 +196,7 @@
 
 ---
 
-## Sprint 8 — качество веб-панели (сквозной)
+## Sprint 9 — качество веб-панели (сквозной)
 
 Параллельно с 1–2, не вместо:
 

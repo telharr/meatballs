@@ -128,18 +128,20 @@
 
 ---
 
-## 6. Где мы сейчас (Realtime + RBAC)
+## 6. Где мы сейчас (Deployment & packaging)
 
-Панель **3.16.0** — WebSocket event bus + telemetry + roles:
+Панель **3.17.0** — Sprint 6 distribution:
 
-- `WS /ws/events` — live `status`, `telemetry`, `pull_progress`, `compile_progress`, `console_tail`
-- `GET /api/telemetry/stats` — host CPU/RAM, GameServer RSS, optional SFTP probe
-- RBAC: `admin` (full) vs `moderator` (read + RCON/chat/bans/logs; no server edit / wipe / compile)
+- `docs/DEPLOYMENT.md` — Local desktop, Linux VPS (systemd + Nginx WS), Docker Compose
+- `packaging/build_exe.py` + `installer.iss` — PyInstaller bundle + Inno Setup wizard
+- `Dockerfile` / `docker-compose.yml` — volumes `/data`, `/mirror`
 
-Панель **3.15.0** — SteamCMD bootstrap + ModPack deploy:
+Панель **3.16.0** — WebSocket event bus + telemetry + RBAC:
 
-- `GET/POST /api/workshop/steamcmd/*` — detect / one-click install to `.cache/steamcmd/`
-- `POST /api/workshop/compile` + `deploy_to_server` — compile → FTP/SFTP upload → `Mods=` in `world.ini` (backup in `panel/backups/`)
+- `WS /ws/events` — live `status`, `telemetry`, `workshop_progress`, `console_tail`
+- RBAC: `admin` vs `moderator`
+
+Панель **3.15.0** — SteamCMD bootstrap + ModPack FTP deploy
 
 Панель **3.14.0** — in-game AdminTools ↔ panel:
 

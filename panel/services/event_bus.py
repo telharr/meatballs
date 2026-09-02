@@ -15,6 +15,7 @@ CHANNELS = frozenset(
         "telemetry",
         "pull_progress",
         "steamcmd_progress",
+        "workshop_progress",
         "compile_progress",
         "audit_log",
         "console_tail",

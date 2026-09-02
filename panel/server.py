@@ -146,6 +146,7 @@ load_dotenv()
 
 _PANEL_STARTED_AT = time.time()
 _scheduler_task: asyncio.Task | None = None
+_monitor_task: asyncio.Task | None = None
 _telemetry_task: asyncio.Task | None = None
 _status_bus_task: asyncio.Task | None = None
 _console_tail_task: asyncio.Task | None = None
@@ -440,29 +441,33 @@ async def _console_tail_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _scheduler_task, _telemetry_task, _status_bus_task, _console_tail_task
-    monitor_task: asyncio.Task | None = None
+    global _scheduler_task, _monitor_task, _telemetry_task, _status_bus_task, _console_tail_task
     event_bus.bind_loop(asyncio.get_running_loop())
     try:
         ensure_migrated()
     except Exception:
         traceback.print_exc()
     _scheduler_task = asyncio.create_task(_scheduler_loop())
-    monitor_task = asyncio.create_task(_workshop_monitor_loop())
+    _monitor_task = asyncio.create_task(_workshop_monitor_loop())
     _telemetry_task = asyncio.create_task(_telemetry_loop())
     _status_bus_task = asyncio.create_task(_status_bus_loop())
     _console_tail_task = asyncio.create_task(_console_tail_loop())
     yield
-    for task in (_scheduler_task, monitor_task, _telemetry_task, _status_bus_task, _console_tail_task):
+    for task in (_scheduler_task, _monitor_task, _telemetry_task, _status_bus_task, _console_tail_task):
         if task:
             task.cancel()
             try:
                 await task
             except asyncio.CancelledError:
                 pass
+    _scheduler_task = None
+    _monitor_task = None
+    _telemetry_task = None
+    _status_bus_task = None
+    _console_tail_task = None
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.16.0", lifespan=lifespan)
+app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.17.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(workshop_router)
 app.include_router(admintools_router)

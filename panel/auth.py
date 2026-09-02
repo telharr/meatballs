@@ -333,6 +333,8 @@ def moderator_write_forbidden(method: str, path: str) -> bool:
         return True
     if path == "/api/workshop/compile":
         return True
+    if path == "/api/admintools/city-wipe":
+        return True
     return False
 
 

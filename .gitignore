@@ -49,6 +49,9 @@ debuglog.txt
 # Build artifacts
 dist/
 build/
+packaging/Output/
+packaging/pyinstaller-spec/*.spec
+*.exe
 *.zip
 *.bin
 *.tmp

@@ -2,7 +2,9 @@
 
 Hosting-agnostic web dashboard: **RCON** console, **FTP/local** config editor, mirror pull, local **smoke test**.
 
-Read first: `docs/PRODUCT.md`, `docs/SESSION.md`. Onboarding: **`docs/ONBOARDING.md`**. Sprints: `docs/SPRINTS.md`.
+Read first: `docs/PRODUCT.md`, `docs/SESSION.md`. Onboarding: **`docs/ONBOARDING.md`**. Deployment: **`docs/DEPLOYMENT.md`**. Sprints: `docs/SPRINTS.md`.
+
+Panel **3.17.0**: Deployment guide (A/B/C), Docker Compose, PyInstaller + Inno Setup packaging (`packaging/`).
 
 Panel **3.16.0**: WebSocket event bus (`/ws/events`), live CPU/RAM telemetry, RBAC (admin / moderator).
 

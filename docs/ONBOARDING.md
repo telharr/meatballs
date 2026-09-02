@@ -1,32 +1,37 @@
-# Onboarding — Universal PZ Control Panel
+# Onboarding — Universal PZ Control Panel (v3.17.0)
 
-Step-by-step from zero to first **Smoke test** on a local mirror. No `.env` required if you use the wizard.
+Step-by-step from zero to first **Smoke test**. No `.env` required for local dev; see **`docs/DEPLOYMENT.md`** for VPS/Docker/installer paths.
 
 ## Prerequisites
 
-- Python 3.10+ with `pip`
+- Python 3.10+ with `pip` — or Windows **PZ Control Panel** installer from `packaging/` (Sprint 6)
 - Network access to your PZ host (RCON TCP + FTP/SFTP or a local cachedir path)
-- Optional for smoke test: Project Zomboid Dedicated Server or client **GameServer** (see `tools/local_server.py`)
+- Optional for smoke test: Java 17+ and PZ Dedicated / client **GameServer** (`PZ_DEDICATED_DIR`)
+- **SteamCMD:** optional pre-install — panel **auto-downloads** to `.cache/steamcmd/` on first Workshop use (3.15+)
 
 ## 1. Install
 
-From the repository root:
+**From git:**
 
 ```bash
 python -m pip install -r panel/requirements.txt
-```
-
-Start the panel:
-
-```bash
 python run_panel.py
 ```
 
+**Windows installer:** build with `python packaging/build_exe.py` + Inno Setup → run setup wizard (local or remote client mode).
+
 Open http://127.0.0.1:8000/
 
-**Admin (3.11.0):** if no credentials exist, the login modal asks to **Create admin**. Local dev only: `AUTH_DISABLED=true` in `.env`.
+### Zero-config first boot
 
-On first run with **no profiles** and **no `.env`**, the welcome modal opens and points you to **Home → Connect server**.
+| Condition | What happens |
+|-----------|----------------|
+| No profiles, no `.env` | Welcome modal → **Главная** wizard |
+| `AUTH_LOCAL_BYPASS=true` (local installer mode) | «Локальный вход» on 127.0.0.1 |
+| No admin configured | Login modal → **Create admin** |
+| Legacy `.env` only | Auto-migrates to profile `meatballs-xl`, wizard skipped |
+
+The wizard **detects capabilities** after RCON/FTP probes — tabs stay gray until the channel works (no HTTP 500).
 
 ## 2. Create a server profile (wizard)
 
@@ -82,7 +87,7 @@ Open **Зеркало** → **Pull (только новое)**. Files sync to:
 .mirror/<profile-id>/
 ```
 
-This cachedir is what the local smoke runner uses.
+Progress streams over WebSocket (`pull_progress`) when connected (3.16+).
 
 ## 5. Smoke test
 
@@ -102,52 +107,47 @@ If mirror is empty, pull first. Set `PZ_DEDICATED_DIR` or install dedicated via 
 | Save / restart / servermsg | Console | RCON |
 | Edit `world.ini` | Файлы | FTP/SFTP/local |
 | Mod list | Моды | files |
-| Workshop download / ModPack | Workshop | files + SteamCMD |
-| Logs / chat | Логи / Чат | files |
-| Players online | Игроки | RCON |
+| Workshop download / ModPack | Workshop | files + SteamCMD (auto-bootstrap) |
+| Logs / chat | Логи / Чат | files + WS `console_tail` |
+| Players online | Игроки | RCON + WS `status` |
 
 Tabs without capability stay gray with a hint — not HTTP 500.
 
-## 6b. Workshop mods & ModPack (3.13.0)
+## 6b. Workshop mods & ModPack
 
-Prerequisites on the **panel machine**:
-
-1. Install [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) into `./steamcmd/` **or** set `STEAMCMD` to the binary path.
-2. Pull the server mirror so `world.ini` (or profile `files.ini`) is under `.mirror/<id>/`.
-
-On the **Workshop** tab:
+On the **panel machine**, SteamCMD is **optional** — use **«Установить SteamCMD в один клик»** if the banner appears.
 
 | Action | Effect |
 |--------|--------|
-| **Скачать недостающие** | SteamCMD `workshop_download_item 108600 <id>` into `.mirror/<id>/steamapps/workshop/content/108600/`, then symlink/copy into `.mirror/<id>/mods/` |
-| **Проверить обновления** | Steam Web API `GetPublishedFileDetails` → UPDATE badge when remote `time_updated` is newer |
-| **ModPack Builder** | Select local mods → Compile unified pack → `.mirror/<id>/modpacks/<PackId>/` (+ link under `mods/`) |
-| Auto-restart | Optional: on update poll, RCON warning → wait 3m → `save` → `quit` |
+| **Скачать недостающие** | SteamCMD → `.mirror/<id>/steamapps/workshop/...` |
+| **Проверить обновления** | Steam API → UPDATE badge |
+| **ModPack Builder** | Compile → `.mirror/<id>/modpacks/<PackId>/`; optional FTP deploy (3.15+) |
+| Auto-restart | Optional graceful RCON restart on mod update |
 
-CLI equivalents:
-
-```bash
-python tools/workshop_downloader.py 2392709985 --output .mirror/meatballs-xl --mods-dir .mirror/meatballs-xl/mods
-python tools/pack_merger.py --source .mirror/meatballs-xl/mods --unified-id ServerModPack_v1 --output .mirror/meatballs-xl/modpacks/ServerModPack_v1
-```
+Live progress: WebSocket channels `workshop_progress`, `steamcmd_progress`, `compile_progress`.
 
 ## 7. Legacy `.env` path
 
-Existing MEATBALLS setups: keep `.env` with FTP/RCON vars. First boot migrates to profile `meatballs-xl`. Wizard is skipped when `.env` or profiles exist.
+Existing setups: keep `.env` with FTP/RCON vars. First boot migrates to profile `meatballs-xl`.
 
-## 8. Auth & VPS deployment
+## 8. Auth & production deployment
+
+Full VPS/Docker/Nginx guide: **`docs/DEPLOYMENT.md`**.
+
+Quick checklist:
 
 1. Generate hash: `python -c "from panel.auth import hash_password; print(hash_password('…'))"`
 2. Set `ADMIN_USER`, `ADMIN_PASS_HASH`, `JWT_SECRET` in `.env`
-3. Bind behind reverse proxy with HTTPS recommended
-4. Do **not** set `AUTH_DISABLED` on public hosts
+3. Bind behind reverse proxy with HTTPS and WebSocket upgrade for `/ws/events`, `/ws/console`
+4. Do **not** set `AUTH_LOCAL_BYPASS` on public hosts
 
-## 9. Next (not in v1)
+## 9. What's implemented
 
-- JWT / admin login — done in 3.11.0
-- RU/EN language switcher — done in 3.11.0
-- SFTP file channel — done in 3.12.0
-- MEATBALLS plugin toggle — done in 3.12.0
-- Workshop / ModPack / update monitor — done in 3.13.0
+- JWT / admin login — 3.11.0
+- RU/EN — 3.11.0
+- SFTP — 3.12.0
+- Workshop / ModPack — 3.13–3.15
+- WebSocket event bus + telemetry + RBAC — 3.16.0
+- Deployment docs + Windows installer pipeline — 3.17.0 (Sprint 6)
 
-See `docs/PRODUCT.md` and `docs/SPRINTS.md`.
+See `docs/PRODUCT.md`, `docs/SPRINTS.md`, `docs/DEPLOYMENT.md`.

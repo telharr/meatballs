@@ -439,6 +439,10 @@ function applyStatusPayload(status) {
   if (state.activeView === "mirror") loadMirror();
 }
 
+function eventWsConnected() {
+  return state.eventWs && state.eventWs.readyState === WebSocket.OPEN;
+}
+
 function handleEventMessage(msg) {
   const channel = msg.channel;
   const data = msg.data;
@@ -465,23 +469,32 @@ function handleEventMessage(msg) {
     }
     return;
   }
-  if (channel === "pull_progress" && state.activeView === "mirror") {
-    loadMirror();
+  if (channel === "pull_progress") {
+    if (state.activeView === "mirror") loadMirror();
     return;
   }
   if (channel === "steamcmd_progress") {
     renderSteamcmdBanner({ installed: false, install: data });
-    if (!data.running && data.phase === "done") {
-      loadWorkshop();
-      showToast(t("workshop.steamcmd_done") || "SteamCMD installed", "ok");
+    if (!data.running) {
+      if (data.phase === "done") {
+        loadWorkshop();
+        showToast(t("workshop.steamcmd_done") || "SteamCMD installed", "ok");
+      }
+      if (data.phase === "error") showToast(data.message || "SteamCMD install failed", "err");
     }
     return;
   }
-  if (channel === "pull_progress" && state.activeView === "workshop") {
-    setWorkshopDownloadStatus(`${data.phase || "…"} · ${data.percent || 0}% · ${data.message || ""}`);
-    if (!data.running && data.phase === "done") {
-      loadWorkshop();
-      showToast(t("workshop.download_done") || "Workshop download complete", "ok");
+  if (channel === "workshop_progress") {
+    setWorkshopDownloadStatus(
+      `${data.phase || "…"} · ${data.percent || 0}% · ${data.message || ""}`,
+      data.phase === "error" ? false : undefined,
+    );
+    if (!data.running) {
+      if (data.phase === "done") {
+        loadWorkshop();
+        showToast(t("workshop.download_done") || "Workshop download complete", "ok");
+      }
+      if (data.phase === "error") showToast(data.message || "download error", "err");
     }
     return;
   }
@@ -3249,7 +3262,11 @@ $("#btn-local-stop").onclick = () => stopLocal();
 setInterval(() => {
   if (state.ws?.readyState === WebSocket.OPEN) state.ws.send(JSON.stringify({ type: "ping" }));
   if (state.eventWs?.readyState === WebSocket.OPEN) state.eventWs.send(JSON.stringify({ type: "ping" }));
-}, 30000);
+  if (!eventWsConnected()) {
+    if (state.logAutoRefresh && state.activeView === "logs") loadServerLog();
+    pollStatus();
+  }
+}, 15000);
 setInterval(tickUptime, 1000);
 
 initTheme();

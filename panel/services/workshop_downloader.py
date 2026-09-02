@@ -40,7 +40,7 @@ def _set_job(**kwargs: Any) -> None:
     try:
         from panel.services.event_bus import emit
 
-        emit("pull_progress", _job_snapshot())
+        emit("workshop_progress", _job_snapshot())
     except Exception:
         pass
 
