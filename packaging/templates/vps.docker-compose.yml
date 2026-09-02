@@ -1,0 +1,36 @@
+# Remote VPS deploy template — isolated from Amnezia/Marzban Docker networks.
+# Deployed only under /opt/pz-panel/ by panel/services/vps_provisioner.py
+
+services:
+  pz-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pz-control-panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      PANEL_HOST: "0.0.0.0"
+      PANEL_PORT: "8000"
+    volumes:
+      - ./data:/data
+      - ./mirror:/mirror
+    networks:
+      - pz-panel-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+networks:
+  pz-panel-net:
+    name: pz-panel-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.200.0/24

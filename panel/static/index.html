@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.18.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.19.7" />
 </head>
 <body>
   <header class="navbar">
@@ -21,36 +21,44 @@
         <span class="led"></span>
         <span id="status-pill-text">…</span>
       </span>
-      <label class="server-switcher" data-i18n-title="nav.server">
-        <span class="pill-k" data-i18n="nav.server">Сервер</span>
-        <select id="server-switcher" aria-label="Active server"></select>
-      </label>
     </div>
     <div class="nav-pills" id="nav-pills">
-      <span id="tel-cpu" class="telemetry-badge tel-ok">CPU: —</span>
-      <span id="tel-ram" class="telemetry-badge tel-ok">RAM: —</span>
+      <span id="tel-sys" class="telemetry-badge tel-ok">CPU — · RAM —</span>
       <span id="tel-gameserver" class="telemetry-badge tel-ok hidden">JVM: —</span>
-      <span class="pill"><span class="pill-k" data-i18n="pill.ip">IP</span><span id="pill-ip" class="pill-v">—</span></span>
-      <span class="pill"><span class="pill-k" data-i18n="pill.query">Query</span><span id="pill-query" class="pill-v">—</span></span>
-      <span class="pill"><span class="pill-k" data-i18n="pill.rcon">RCON</span><span id="pill-rcon" class="pill-v">—</span></span>
+      <div class="header-endpoint-wrap">
+        <button type="button" class="header-endpoint" id="endpoint-pill" aria-expanded="false" aria-haspopup="true" title="Network endpoints">
+          <span id="endpoint-ip">—</span><span class="muted" id="endpoint-port">:—</span>
+        </button>
+        <div id="endpoint-popover" class="endpoint-popover hidden" role="dialog" aria-label="Ports">
+          <div class="endpoint-row"><span class="ep-label" data-i18n="pill.query">Query</span><span class="ep-value" id="ep-query">—</span></div>
+          <div class="endpoint-row"><span class="ep-label">Game</span><span class="ep-value" id="ep-game">—</span></div>
+          <div class="endpoint-row"><span class="ep-label">FTP</span><span class="ep-value" id="ep-ftp">—</span></div>
+        </div>
+      </div>
       <span class="pill pill-players"><span class="pill-k" data-i18n="pill.players">Players</span><span id="pill-players" class="pill-v">0/32</span></span>
       <span class="pill"><span class="pill-k" data-i18n="pill.uptime">Uptime</span><span id="pill-uptime" class="pill-v">00:00:00</span></span>
     </div>
     <div class="nav-controls">
+      <span id="user-badge" class="user-badge hidden" title=""></span>
       <div class="lang-switch" id="lang-switch" title="Language">
         <button type="button" class="lang-btn" data-lang="ru">RU</button>
         <button type="button" class="lang-btn" data-lang="en">EN</button>
       </div>
-      <span id="user-badge" class="user-badge hidden" title=""></span>
-      <button type="button" id="btn-logout" class="btn xs hidden" data-i18n="auth.logout">Выход</button>
+      <button type="button" id="btn-panel-snapshot" class="icon-btn" data-i18n-title="home.snapshot" title="Snapshot">📷</button>
       <button type="button" id="btn-sync-ftp" class="icon-btn" data-need="files" title="Force Sync FTP">⟳</button>
+      <button type="button" id="btn-logout" class="icon-btn hidden" data-i18n-title="auth.logout" title="Выход">⎋</button>
       <button type="button" id="btn-theme" class="icon-btn" title="Dark / OLED">☀</button>
     </div>
   </header>
 
   <div class="app-shell">
     <aside class="sidebar">
-      <p class="sidebar-label" data-i18n="nav.server">Сервер</p>
+      <div class="sidebar-server-block">
+        <p class="sidebar-label" data-i18n="nav.server">Сервер</p>
+        <label class="server-switcher sidebar-server-switcher" data-i18n-title="nav.server">
+          <select id="server-switcher" aria-label="Active server"></select>
+        </label>
+      </div>
       <nav class="sidebar-nav">
         <button type="button" class="nav-item active" data-view="home">
           <span class="nav-icon">⌂</span> <span data-i18n="nav.home">Главная</span>
@@ -66,6 +74,9 @@
         </button>
         <button type="button" class="nav-item" data-view="smoke" data-need="files">
           <span class="nav-icon">🧪</span> <span data-i18n="nav.smoke">Smoke test</span>
+        </button>
+        <button type="button" class="nav-item nav-item-add" id="btn-sidebar-add-server">
+          <span class="nav-icon">+</span> Добавить сервер
         </button>
       </nav>
       <p class="sidebar-label sidebar-label-gap" data-i18n="nav.people">Люди</p>
@@ -116,44 +127,55 @@
               <span class="hint" id="home-hint">профиль сервера · хостер — адаптер</span>
             </div>
             <div class="terminal-tools">
-              <button type="button" id="btn-panel-snapshot" class="btn sm" data-i18n="home.snapshot" title="Full panel source dump as .txt">Snapshot</button>
               <button type="button" id="btn-home-refresh" class="btn sm" data-i18n="home.refresh">Обновить</button>
             </div>
           </div>
           <div class="home-body">
-            <div class="amnezia-dashboard">
-              <div class="amnezia-status-ring offline" id="status-ring" aria-live="polite">
-                <div class="ring-glow"></div>
-                <div class="ring-inner">
-                  <span class="ring-label" id="ring-label">OFFLINE</span>
-                  <span class="ring-sub" id="ring-sub">RCON</span>
+            <!-- Hero: picker / meta / add server — лишнее при уже активном профиле (switcher в шапке + sidebar). Раскомментировать при необходимости
+            <div class="home-hero">
+              <div class="amnezia-dashboard">
+                <div class="amnezia-status-ring offline" id="status-ring" aria-live="polite">
+                  <div class="ring-glow"></div>
+                  <div class="ring-inner">
+                    <span class="ring-label" id="ring-label">OFFLINE</span>
+                    <span class="ring-sub" id="ring-sub">RCON</span>
+                  </div>
+                </div>
+                <div class="home-hero-title">
+                  <button type="button" class="amnezia-server-picker" id="mobile-server-picker" aria-haspopup="listbox">
+                    <span id="mobile-server-name">Нет сервера</span>
+                    <span class="chev" aria-hidden="true">⌵</span>
+                  </button>
+                  <div id="server-picker-popover" class="server-picker-popover hidden" role="listbox"></div>
+                  <p class="amnezia-dashboard-meta muted" id="dashboard-meta">Подключите VPS через SSH</p>
+                  <button type="button" class="btn primary sm" id="btn-home-add-server">+ Добавить / развернуть сервер</button>
                 </div>
               </div>
-              <button type="button" class="amnezia-server-picker" id="mobile-server-picker" aria-haspopup="listbox">
-                <span id="mobile-server-name">Нет сервера</span>
-                <span class="chev" aria-hidden="true">⌵</span>
-              </button>
-              <div id="server-picker-popover" class="server-picker-popover hidden" role="listbox"></div>
-              <p class="amnezia-dashboard-meta muted" id="dashboard-meta">Подключите VPS через SSH</p>
             </div>
-            <div id="home-status" class="home-status hidden"><p class="muted">Загрузка…</p></div>
-            <div class="home-actions">
-              <button type="button" class="btn primary" id="btn-home-save">Сохранить мир</button>
-              <button type="button" class="btn danger" id="btn-home-graceful">Рестарт 5 мин</button>
+            -->
+            <div class="home-actions action-grid">
+              <button type="button" class="btn save" id="btn-home-save">Сохранить</button>
+              <button type="button" class="btn warn" id="btn-home-graceful">Рестарт 5м</button>
               <button type="button" class="btn danger" id="btn-home-hard">Рестарт сейчас</button>
-              <button type="button" class="btn sm" id="btn-home-local-start">Local Start</button>
-              <button type="button" class="btn sm danger" id="btn-home-local-stop">Local Stop</button>
+              <button type="button" class="btn sm hidden" id="btn-home-local-start">Local Start</button>
+              <button type="button" class="btn sm danger hidden" id="btn-home-local-stop">Local Stop</button>
             </div>
             <p class="muted home-host-note" id="home-host-note">Запустить хост панель не может — после quit открой панель хостера.</p>
-            <div class="home-jumps">
-              <button type="button" class="btn sm" data-jump="files" data-need="files" data-open="world.ini">Настройки (world.ini)</button>
-              <button type="button" class="btn sm" data-jump="mods" data-need="files">Моды</button>
-              <button type="button" class="btn sm" data-jump="logs" data-need="files">Логи</button>
-              <button type="button" class="btn sm" data-jump="players" data-need="rcon">Игроки</button>
-              <button type="button" class="btn sm" data-jump="scheduler" data-need="rcon">Планировщик</button>
-              <button type="button" class="btn sm" data-jump="chat" data-need="files">Чат</button>
-              <button type="button" class="btn sm" data-jump="bans" data-need="files">Баны</button>
-              <button type="button" class="btn sm" data-jump="privates" data-need="files" data-need-plugin="meatballs">Приваты</button>
+            <div class="home-widgets">
+              <div class="home-widget home-widget-players">
+                <div class="widget-head">
+                  <h3 class="widget-title">Игроки онлайн</h3>
+                  <span class="widget-badge" id="home-players-count">0</span>
+                </div>
+                <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
+              </div>
+              <div class="home-widget home-widget-health">
+                <h3 class="widget-title">Состояние и ошибки</h3>
+                <div class="health-terminal">
+                  <div id="home-status" class="home-health-lines"><p class="muted">Загрузка…</p></div>
+                  <ul id="home-errors" class="home-errors-list"><li class="muted">нет</li></ul>
+                </div>
+              </div>
             </div>
             <h3 class="players-subhead">Подключить сервер</h3>
             <p class="muted home-wizard-lead">Быстрый VPS через SSH — кнопка «Добавить сервер» внизу. Расширенный мастер — ниже.</p>
@@ -219,10 +241,6 @@
               <p id="srv-probe" class="muted server-probe"></p>
             </form>
             </details>
-            <h3 class="players-subhead">Онлайн</h3>
-            <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
-            <h3 class="players-subhead">Последние ошибки лога</h3>
-            <ul id="home-errors" class="world-errors"><li class="muted">нет</li></ul>
           </div>
         </div>
       </section>
@@ -524,6 +542,7 @@
             </div>
             <div class="terminal-tools">
               <button type="button" id="btn-mods-refresh" class="btn sm">Обновить</button>
+              <button type="button" id="btn-mods-import-ini" class="btn sm">Импорт из world.ini</button>
               <button type="button" id="btn-mods-apply" class="btn primary sm">Записать в world.ini</button>
             </div>
           </div>
@@ -551,8 +570,8 @@
                 <button type="button" id="btn-mod-scaffold" class="btn sm">Скелет в src/mods</button>
               </div>
             </form>
-            <div id="mods-catalog" class="mods-catalog"><p class="muted">Загрузка…</p></div>
             </div>
+            <div id="mods-catalog" class="mods-catalog"><p class="muted">Загрузка…</p></div>
             <div id="mods-live" class="mods-live muted"></div>
           </div>
         </div>
@@ -618,57 +637,60 @@
 
       <!-- Mirror -->
       <section class="view" id="view-mirror">
-        <div class="card full-height">
-          <div class="card-head">
-            <div class="card-head-left">
-              <h2>Зеркало FTP + локальный сервер</h2>
-              <span class="hint">Pull качает только новое · без java / media / steamapps</span>
+        <div class="mirror-stack full-height">
+          <div class="card mirror-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <h2>Зеркало FTP</h2>
+                <span class="hint">Pull качает только новое · без java / media / steamapps</span>
+              </div>
+              <div class="terminal-tools">
+                <label class="toggle-label" title="Пока галочка включена, запись с нашей панели не затрёт правки из панели XLGAMES">
+                  <input type="checkbox" id="chk-host-wins" checked /> XLGAMES важнее
+                </label>
+                <button type="button" id="btn-mirror-pull" class="btn primary sm">Pull (только новое)</button>
+                <button type="button" id="btn-mirror-verify" class="btn sm">Проверить суммы</button>
+                <button type="button" id="btn-local-start" class="btn sm">Start local</button>
+                <button type="button" id="btn-local-stop" class="btn danger sm">Stop</button>
+              </div>
             </div>
-            <div class="terminal-tools">
-              <label class="toggle-label" title="Пока галочка включена, запись с нашей панели не затрёт правки из панели XLGAMES">
-                <input type="checkbox" id="chk-host-wins" checked /> XLGAMES важнее
-              </label>
-              <button type="button" id="btn-mirror-pull" class="btn primary sm">Pull (только новое)</button>
-              <button type="button" id="btn-mirror-verify" class="btn sm">Проверить суммы</button>
-              <button type="button" id="btn-local-start" class="btn sm">Start local</button>
-              <button type="button" id="btn-local-stop" class="btn danger sm">Stop</button>
-            </div>
-          </div>
-          <div id="mirror-grid" class="network-grid">
-            <p class="muted">Загрузка…</p>
-          </div>
-          <div class="wipe-box city-wipe-box">
-            <h3 class="players-subhead" data-i18n="admintools.city_wipe_title">Точечный вайп города (AdminTools)</h3>
-            <p class="muted" data-i18n="admintools.city_wipe_hint">Пишет Lua/mb_admintools_cmd.txt + servermsg. Нужен мод AdminTools на сервере. Лутает только загруженные чанки.</p>
-            <div id="city-wipe-cities" class="city-wipe-grid"></div>
-            <div class="city-wipe-opts">
-              <label class="toggle-label"><input type="checkbox" id="city-wipe-containers" checked /> <span data-i18n="admintools.reconstruct">Восстановить контейнеры</span></label>
-              <label class="toggle-label"><input type="checkbox" id="city-wipe-loot" checked /> <span data-i18n="admintools.refill">Заспавнить лут</span></label>
-            </div>
-            <div class="modal-actions">
-              <button type="button" id="btn-city-wipe" class="btn primary sm" data-i18n="admintools.trigger">Точечный вайп города</button>
-            </div>
-            <div id="city-wipe-status" class="muted"></div>
-          </div>
-          <div class="wipe-box">
-            <h3 class="players-subhead">
-              <label class="toggle-label">
-                <input type="checkbox" id="chk-hard-fs-wipe" />
-                <span data-i18n="admintools.hard_fs">Hard FS Wipe (файлы чанка)</span>
-              </label>
-            </h3>
-            <div id="hard-fs-wipe-panel" class="hard-fs-wipe-panel hidden">
-            <p class="muted">Удаляет только map/chunkdata/zpop этой клетки (256×256). WorldDictionary не трогаем. Сначала превью.</p>
-            <form id="wipe-form" class="launch-form wipe-form">
-              <label class="field"><span>Мир X</span><input id="wipe-x" type="number" placeholder="10707" /></label>
-              <label class="field"><span>Мир Y</span><input id="wipe-y" type="number" placeholder="9484" /></label>
-              <label class="field"><span>или cell X</span><input id="wipe-cx" type="number" placeholder="41" /></label>
-              <label class="field"><span>cell Y</span><input id="wipe-cy" type="number" placeholder="37" /></label>
-              <button type="button" id="btn-wipe-preview" class="btn sm">Превью файлов</button>
-            </form>
-            <div id="wipe-preview" class="muted">Укажи координаты и нажми превью. На живом хосте не жать «Вайп» без бэкапа.</div>
+            <div id="mirror-grid" class="network-grid mirror-grid-body">
+              <p class="muted">Загрузка…</p>
             </div>
           </div>
+          <div class="card mirror-card city-wipe-panel">
+            <div class="card-head">
+              <div class="card-head-left">
+                <h2 data-i18n="admintools.city_wipe_title">Точечный вайп города</h2>
+                <span class="hint" data-i18n="admintools.city_wipe_hint">AdminTools · только загруженные чанки</span>
+              </div>
+            </div>
+            <div class="city-wipe-body">
+              <div id="city-wipe-cities" class="city-wipe-grid"></div>
+              <div class="city-wipe-opts">
+                <label class="toggle-label"><input type="checkbox" id="city-wipe-containers" checked /> <span data-i18n="admintools.reconstruct">Восстановить контейнеры</span></label>
+                <label class="toggle-label"><input type="checkbox" id="city-wipe-loot" checked /> <span data-i18n="admintools.refill">Заспавнить лут</span></label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" id="btn-city-wipe" class="btn primary sm" data-i18n="admintools.trigger">Точечный вайп города</button>
+              </div>
+              <div id="city-wipe-status" class="muted"></div>
+            </div>
+          </div>
+          <details class="card mirror-card hard-wipe-card">
+            <summary class="hard-wipe-summary" data-i18n="admintools.hard_fs">Hard FS Wipe (файлы чанка)</summary>
+            <div class="hard-fs-wipe-panel" id="hard-fs-wipe-panel">
+              <p class="muted">Удаляет только map/chunkdata/zpop этой клетки (256×256). WorldDictionary не трогаем. Сначала превью.</p>
+              <form id="wipe-form" class="launch-form wipe-form">
+                <label class="field"><span>Мир X</span><input id="wipe-x" type="number" placeholder="10707" /></label>
+                <label class="field"><span>Мир Y</span><input id="wipe-y" type="number" placeholder="9484" /></label>
+                <label class="field"><span>или cell X</span><input id="wipe-cx" type="number" placeholder="41" /></label>
+                <label class="field"><span>cell Y</span><input id="wipe-cy" type="number" placeholder="37" /></label>
+                <button type="button" id="btn-wipe-preview" class="btn sm">Превью файлов</button>
+              </form>
+              <div id="wipe-preview" class="muted">Укажи координаты и нажми превью. На живом хосте не жать «Вайп» без бэкапа.</div>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -743,12 +765,18 @@
   </div>
 
   <div id="vps-setup-modal" class="amnezia-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vps-setup-title">
-    <div class="amnezia-sheet">
+    <div class="amnezia-sheet amnezia-sheet-wide">
       <header class="amnezia-header">
         <button type="button" class="amnezia-back" id="vps-setup-back" aria-label="Назад">←</button>
         <h2 id="vps-setup-title">Настроить ваш сервер</h2>
       </header>
-      <form id="vps-setup-form" class="amnezia-form">
+
+      <div class="amnezia-mode-tabs" role="tablist">
+        <button type="button" class="amnezia-mode-tab active" data-vps-mode="sftp" role="tab">Подключить существующий PZ сервер (SFTP)</button>
+        <button type="button" class="amnezia-mode-tab" data-vps-mode="deploy" role="tab">Развернуть панель на чистом VPS (SSH Auto-Deploy)</button>
+      </div>
+
+      <form id="vps-setup-form" class="amnezia-form" data-mode="sftp">
         <label class="amnezia-field">
           <span class="amnezia-label">IP-адрес[:порт] сервера</span>
           <input id="vps-host" type="text" inputmode="url" autocomplete="off" placeholder="255.255.255.255:22" required />
@@ -761,7 +789,34 @@
           <span class="amnezia-label">Пароль или закрытый ключ SSH</span>
           <textarea id="vps-secret" rows="5" autocomplete="off" placeholder="Пароль или -----BEGIN OPENSSH PRIVATE KEY-----" required></textarea>
         </label>
-        <div class="amnezia-notice">
+
+        <div id="vps-deploy-extra" class="vps-deploy-extra hidden">
+          <label class="amnezia-field">
+            <span class="amnezia-label">Пароль администратора новой панели</span>
+            <input id="vps-admin-pass" type="password" autocomplete="new-password" minlength="8" placeholder="минимум 8 символов" />
+          </label>
+          <label class="amnezia-field">
+            <span class="amnezia-label">Порт панели (host)</span>
+            <input id="vps-web-port" type="number" min="1" max="65535" value="8000" />
+          </label>
+          <div class="amnezia-notice">
+            <span class="amnezia-notice-icon" aria-hidden="true">!</span>
+            <p>Auto-Deploy ставит панель только в <code>/opt/pz-panel/</code>, не трогает firewall и не переустанавливает Docker, если он уже есть (Amnezia / Marzban).</p>
+          </div>
+          <div id="vps-provision-progress" class="vps-provision-progress hidden">
+            <div class="vps-prov-head">
+              <span id="vps-prov-step" class="vps-prov-badge">IDLE</span>
+              <span id="vps-prov-pct">0%</span>
+            </div>
+            <pre id="vps-prov-log" class="vps-prov-log"></pre>
+          </div>
+          <div id="vps-provision-success" class="vps-provision-success hidden">
+            <p class="vps-ok-mark">✓ Панель развёрнута</p>
+            <a id="vps-open-remote" class="amnezia-pill-btn" href="#" target="_blank" rel="noopener">Открыть панель на VPS</a>
+          </div>
+        </div>
+
+        <div class="amnezia-notice vps-sftp-only">
           <span class="amnezia-notice-icon" aria-hidden="true">!</span>
           <p>Требования к SSH-ключу: поддерживаются ключи ED25519 и RSA в формате PEM. Вставьте закрытый ключ целиком, включая строки BEGIN/END.</p>
         </div>
@@ -836,7 +891,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.18.0"></script>
-  <script src="/static/app.js?v=3.18.0"></script>
+  <script src="/static/i18n.js?v=3.19.7"></script>
+  <script src="/static/app.js?v=3.19.7"></script>
 </body>
 </html>

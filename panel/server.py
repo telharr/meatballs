@@ -42,9 +42,11 @@ from mod_catalog import (  # noqa: E402
     apply_lists_to_ini,
     catalog_loadout,
     download_workshop,
+    import_from_lists,
     parse_ini_list,
     remove_item,
     scaffold_local,
+    set_item_enabled,
     snapshot as catalog_snapshot,
 )
 from server_mirror import abort as mirror_abort  # noqa: E402
@@ -127,6 +129,7 @@ from panel.routes.auth import router as auth_router  # noqa: E402
 from panel.routes.workshop import router as workshop_router  # noqa: E402
 from panel.routes.admintools import router as admintools_router  # noqa: E402
 from panel.routes.telemetry import router as telemetry_router  # noqa: E402
+from panel.routes.provision import router as provision_router  # noqa: E402
 from panel.services.event_bus import bus as event_bus  # noqa: E402
 
 from panel.scheduler import (  # noqa: E402
@@ -232,6 +235,10 @@ class CatalogScaffoldBody(BaseModel):
     id: str = Field(..., max_length=80)
     name: str | None = Field(default=None, max_length=200)
     kind: str = Field(default="mod", max_length=20)
+
+
+class CatalogPatchBody(BaseModel):
+    enabled: bool
 
 
 class MirrorPullBody(BaseModel):
@@ -467,11 +474,12 @@ async def lifespan(app: FastAPI):
     _console_tail_task = None
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.18.0", lifespan=lifespan)
+app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.19.7", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(workshop_router)
 app.include_router(admintools_router)
 app.include_router(telemetry_router)
+app.include_router(provision_router)
 
 
 @app.middleware("http")
@@ -1300,6 +1308,44 @@ async def mods_catalog_delete(mod_id: str) -> dict[str, bool]:
     if not ok:
         raise HTTPException(status_code=404, detail="Mod not in catalog")
     return {"ok": True}
+
+
+@app.patch("/api/mods/catalog/{mod_id}")
+async def mods_catalog_patch(mod_id: str, body: CatalogPatchBody) -> dict[str, Any]:
+    try:
+        item = await asyncio.to_thread(set_item_enabled, mod_id, body.enabled)
+        return {"item": item}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Mod not in catalog") from exc
+
+
+@app.post("/api/mods/import-ini")
+async def mods_import_ini() -> dict[str, Any]:
+    data = catalog_snapshot()
+    live_mods: list[str] = []
+    live_workshop: list[str] = []
+    ini_name = data.get("catalog", {}).get("ini_filename") or "world.ini"
+    try:
+        index = await asyncio.to_thread(_refresh_config_index)
+        if ini_name not in index:
+            raise HTTPException(status_code=404, detail=f"{ini_name} not in file index")
+        client = _files_client()
+        content = await asyncio.to_thread(client.read_file, index[ini_name])
+        if isinstance(content, bytes):
+            content = content.decode("utf-8", errors="replace")
+        live_mods = parse_ini_list(content, "Mods")
+        live_workshop = parse_ini_list(content, "WorkshopItems")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if not live_mods and not live_workshop:
+        raise HTTPException(status_code=400, detail="world.ini has no Mods= or WorkshopItems=")
+    result = await asyncio.to_thread(import_from_lists, live_mods, live_workshop)
+    result["live_mods"] = len(live_mods)
+    result["live_workshop"] = len(live_workshop)
+    result["ini"] = ini_name
+    return result
 
 
 @app.post("/api/mods/apply-ini")

@@ -1,4 +1,4 @@
-"""Sandbox clean-install validation for v3.18.0 (Scenario A)."""
+"""Sandbox clean-install validation for v3.19.7 (Scenario A)."""
 from __future__ import annotations
 
 import http.cookiejar
@@ -182,7 +182,7 @@ def main() -> int:
             )
 
         health = http_get("/api/health")
-        record("health_version", health.get("version") == "3.18.0", health.get("version"))
+        record("health_version", health.get("version") == "3.19.7", health.get("version"))
 
     except Exception as exc:
         record("exception", False, str(exc))

@@ -58,6 +58,11 @@ def _copy_runtime_extras(target: Path) -> None:
             dest = panel_data / keep
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
+    catalog_seed = panel_data / "mods.catalog.json"
+    if not catalog_seed.exists():
+        legacy = ROOT / "src" / "modpacks" / "meatballs.catalog.json"
+        if legacy.is_file():
+            shutil.copy2(legacy, catalog_seed)
 
 
 def build(*, clean: bool) -> Path:

@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-02 (panel 3.18.0 Amnezia UI + zero-click installer)
+Last updated: 2026-09-02 (panel 3.19.7 — VPS provisioner, mods catalog toggles, sidebar server switcher)
 
 ## Host (do not commit secrets)
 
@@ -18,6 +18,8 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. Next sprint: **6 — JVM process**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.19.7**: VPS Auto-Deploy; mods On/Off + import from world.ini; sidebar server switcher; Amnezia modal dual mode
+- Panel **3.19.1**: UI declutter — unified endpoint pill, compact telemetry, hero dashboard widgets, mirror/city-wipe cards
 - Panel **3.18.0**: zero-click Inno installer; Amnezia-style VPS SSH onboarding; status ring dashboard
 - Panel **3.16.0**: `/ws/events` event bus; live telemetry bar; RBAC admin/moderator
 - Panel **3.15.0**: SteamCMD auto-bootstrap; ModPack compile + FTP/SFTP deploy + world.ini Mods= injection

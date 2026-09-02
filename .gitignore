@@ -14,6 +14,7 @@ panel/data/.mb_slots.txt
 panel/data/servers.json
 panel/data/servers/*
 !panel/data/servers/.gitkeep
+panel/data/mods.catalog.json
 
 # Backups & Snapshots
 panel/backups/

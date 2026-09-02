@@ -20,22 +20,42 @@ if str(TOOLS) not in sys.path:
 from pack_merger import parse_mod_info, scan_mods  # noqa: E402
 from workshop_downloader import DEFAULT_OUTPUT, download_mod, find_steamcmd  # noqa: E402
 
-CATALOG_PATH = ROOT / "src" / "modpacks" / "meatballs.catalog.json"
+LEGACY_CATALOG_PATH = ROOT / "src" / "modpacks" / "meatballs.catalog.json"
+PANEL_CATALOG_PATH = ROOT / "panel" / "data" / "mods.catalog.json"
 TEMPLATE = ROOT / "templates" / "mod"
 LOCAL_MODS = ROOT / "src" / "mods"
 WORKSHOP_CACHE = ROOT / ".cache" / "workshop"
 INI_KEYS = ("Mods", "WorkshopItems")
 
 
+def _default_catalog() -> dict[str, Any]:
+    return {"name": "default", "ini_filename": "world.ini", "items": []}
+
+
+def _ensure_catalog_file() -> None:
+    if PANEL_CATALOG_PATH.exists():
+        return
+    PANEL_CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if LEGACY_CATALOG_PATH.exists():
+        PANEL_CATALOG_PATH.write_text(
+            LEGACY_CATALOG_PATH.read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        return
+    save_catalog(_default_catalog())
+
+
 def load_catalog() -> dict[str, Any]:
-    if not CATALOG_PATH.exists():
-        return {"name": "meatballs", "ini_filename": "world.ini", "items": []}
-    return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    _ensure_catalog_file()
+    return json.loads(PANEL_CATALOG_PATH.read_text(encoding="utf-8"))
 
 
 def save_catalog(data: dict[str, Any]) -> None:
-    CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    CATALOG_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    PANEL_CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    PANEL_CATALOG_PATH.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def list_local_mods() -> list[dict[str, Any]]:
@@ -116,6 +136,85 @@ def remove_item(mod_id: str) -> bool:
     catalog["items"] = [i for i in catalog.get("items", []) if i.get("id") != mod_id]
     save_catalog(catalog)
     return len(catalog["items"]) < before
+
+
+def set_item_enabled(mod_id: str, enabled: bool) -> dict[str, Any]:
+    catalog = load_catalog()
+    for item in catalog.get("items", []):
+        if item.get("id") == mod_id:
+            item["enabled"] = bool(enabled)
+            save_catalog(catalog)
+            return item
+    raise KeyError(mod_id)
+
+
+def _lookup_known_mod(mod_id: str) -> dict[str, Any] | None:
+    for row in list_local_mods() + list_workshop_cache():
+        if row.get("id") == mod_id:
+            return row
+    return None
+
+
+def _lookup_workshop_mod(workshop_id: str) -> dict[str, Any] | None:
+    for row in list_workshop_cache():
+        if str(row.get("workshop_id") or "") == str(workshop_id):
+            return row
+    return None
+
+
+def import_from_lists(mods: list[str], workshop_ids: list[str]) -> dict[str, Any]:
+    catalog = load_catalog()
+    existing_ids = {str(i.get("id")) for i in catalog.get("items", []) if i.get("id")}
+    existing_ws = {
+        str(i.get("workshop_id"))
+        for i in catalog.get("items", [])
+        if i.get("workshop_id")
+    }
+    added: list[str] = []
+
+    for mod_id in mods:
+        mid = str(mod_id).strip()
+        if not mid or mid in existing_ids:
+            continue
+        known = _lookup_known_mod(mid)
+        add_item(
+            kind="mod",
+            mod_id=mid,
+            name=(known or {}).get("name") or mid,
+            workshop_id=(known or {}).get("workshop_id"),
+            source=(known or {}).get("source") or "local",
+            enabled=True,
+        )
+        existing_ids.add(mid)
+        added.append(mid)
+
+    for ws_id in workshop_ids:
+        wid = str(ws_id).strip()
+        if not wid or wid in existing_ws:
+            continue
+        known = _lookup_workshop_mod(wid)
+        mod_id = (known or {}).get("id") or wid
+        if mod_id in existing_ids:
+            existing_ws.add(wid)
+            continue
+        add_item(
+            kind="mod",
+            mod_id=mod_id,
+            name=(known or {}).get("name") or mod_id,
+            workshop_id=wid,
+            source="workshop" if known else "workshop",
+            enabled=True,
+        )
+        existing_ids.add(mod_id)
+        existing_ws.add(wid)
+        added.append(mod_id)
+
+    return {"added": added, "count": len(added)}
+
+
+def catalog_path() -> Path:
+    _ensure_catalog_file()
+    return PANEL_CATALOG_PATH
 
 
 def scaffold_local(mod_id: str, name: str | None = None, kind: str = "mod") -> dict[str, Any]:
@@ -205,8 +304,8 @@ def apply_lists_to_ini(content: str, mods: list[str], workshop_ids: list[str]) -
 
 def catalog_loadout() -> dict[str, list[str]]:
     items = [i for i in load_catalog().get("items", []) if i.get("enabled", True)]
-    mods = [i["id"] for i in items]
-    workshop = [i["workshop_id"] for i in items if i.get("workshop_id")]
+    mods = [i["id"] for i in items if i.get("kind", "mod") != "library"]
+    workshop = [str(i["workshop_id"]) for i in items if i.get("workshop_id")]
     return {"mods": mods, "workshop_ids": workshop}
 
 
@@ -214,6 +313,7 @@ def snapshot() -> dict[str, Any]:
     catalog = load_catalog()
     return {
         "catalog": catalog,
+        "catalog_path": str(catalog_path().relative_to(ROOT)).replace("\\", "/"),
         "local_mods": list_local_mods(),
         "workshop_cache": list_workshop_cache(),
         "loadout": catalog_loadout(),

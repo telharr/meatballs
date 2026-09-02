@@ -14,6 +14,8 @@ Maintain this repo as a **modding framework + distribution pipeline** for Projec
 | Local machine setup | `docs/setup.md`, `scripts/setup.ps1` / `scripts/setup.sh` |
 | Game/Lua architecture | `docs/architecture.md`, `docs/lua-api.md` |
 | Workshop download | `tools/workshop_downloader.py` |
+| **Deployment (A/B/C)** | `docs/DEPLOYMENT.md` |
+| **Packaging / installer** | `packaging/build_exe.py`, `packaging/installer.iss` |
 | Conflict / merge | `tools/pack_merger.py` |
 | Workshop VDF / publish | `tools/uploader.py` |
 | FTP pull / push mods | `tools/ftp_manager.py`, `.cursor/rules/ftp-deploy.mdc` |
