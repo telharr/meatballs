@@ -1,6 +1,6 @@
 # Packaging — PZ Control Panel
 
-Build standalone Windows distribution (Sprint 6 / v3.17.0).
+Build standalone Windows distribution (Sprint 6 / v3.18.0).
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ cd dist/PZControlPanel
 1. Complete PyInstaller step above.
 2. Open Inno Setup → Compile `packaging/installer.iss`  
    Or CLI: `"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\installer.iss`
-3. Installer output: `packaging/Output/PZControlPanel-3.17.0-setup.exe`
+3. Installer output: `packaging/Output/PZControlPanel-3.18.0-setup.exe`
 
 ### Installer modes
 

@@ -467,7 +467,7 @@ async def lifespan(app: FastAPI):
     _console_tail_task = None
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.17.0", lifespan=lifespan)
+app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.18.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(workshop_router)
 app.include_router(admintools_router)

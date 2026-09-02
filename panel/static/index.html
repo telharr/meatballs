@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.17.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.18.0" />
 </head>
 <body>
   <header class="navbar">
@@ -121,7 +121,22 @@
             </div>
           </div>
           <div class="home-body">
-            <div id="home-status" class="home-status"><p class="muted">Загрузка…</p></div>
+            <div class="amnezia-dashboard">
+              <div class="amnezia-status-ring offline" id="status-ring" aria-live="polite">
+                <div class="ring-glow"></div>
+                <div class="ring-inner">
+                  <span class="ring-label" id="ring-label">OFFLINE</span>
+                  <span class="ring-sub" id="ring-sub">RCON</span>
+                </div>
+              </div>
+              <button type="button" class="amnezia-server-picker" id="mobile-server-picker" aria-haspopup="listbox">
+                <span id="mobile-server-name">Нет сервера</span>
+                <span class="chev" aria-hidden="true">⌵</span>
+              </button>
+              <div id="server-picker-popover" class="server-picker-popover hidden" role="listbox"></div>
+              <p class="amnezia-dashboard-meta muted" id="dashboard-meta">Подключите VPS через SSH</p>
+            </div>
+            <div id="home-status" class="home-status hidden"><p class="muted">Загрузка…</p></div>
             <div class="home-actions">
               <button type="button" class="btn primary" id="btn-home-save">Сохранить мир</button>
               <button type="button" class="btn danger" id="btn-home-graceful">Рестарт 5 мин</button>
@@ -141,12 +156,14 @@
               <button type="button" class="btn sm" data-jump="privates" data-need="files" data-need-plugin="meatballs">Приваты</button>
             </div>
             <h3 class="players-subhead">Подключить сервер</h3>
-            <p class="muted home-wizard-lead">Мастер: хостер подставляет пути, пробы пишут capabilities. Без FTP вкладки логов серые, не падают.</p>
-            <div id="cap-strip" class="cap-strip"></div>
+            <p class="muted home-wizard-lead">Быстрый VPS через SSH — кнопка «Добавить сервер» внизу. Расширенный мастер — ниже.</p>
+            <div class="cap-strip" id="cap-strip"></div>
             <div class="profile-crud">
               <button type="button" class="btn sm" id="btn-profile-edit">Редактировать профиль</button>
               <button type="button" class="btn sm danger" id="btn-profile-delete">Удалить профиль</button>
             </div>
+            <details class="advanced-server-form">
+              <summary>Расширенная настройка профиля</summary>
             <form id="server-form" class="server-form">
               <input type="hidden" id="srv-edit-id" value="" />
               <p class="wizard-step">1. Имя и хостер</p>
@@ -201,6 +218,7 @@
               </div>
               <p id="srv-probe" class="muted server-probe"></p>
             </form>
+            </details>
             <h3 class="players-subhead">Онлайн</h3>
             <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
             <h3 class="players-subhead">Последние ошибки лога</h3>
@@ -713,17 +731,60 @@
   </div>
 
   <div id="onboarding-modal" class="modal hidden">
-    <div class="modal-card modal-wide">
+    <div class="modal-card modal-wide amnezia-card">
       <div class="modal-head"><h3 data-i18n="onboarding.title">Добро пожаловать</h3></div>
       <div class="modal-body">
-        <p data-i18n="onboarding.body">Профилей серверов пока нет. Подключите первый PZ-сервер на Главной: RCON + FTP или local path, затем Pull и Smoke test.</p>
-        <p class="muted">См. <code>docs/ONBOARDING.md</code> в репозитории.</p>
+        <p data-i18n="onboarding.body">Профилей серверов пока нет. Подключите VPS через SSH — как в AmneziaVPN.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn primary" id="btn-onboarding-go" data-i18n="onboarding.go">Подключить сервер</button>
+        <button type="button" class="btn primary amnezia-pill-btn" id="btn-onboarding-go" data-i18n="onboarding.go">Настроить сервер</button>
       </div>
     </div>
   </div>
+
+  <div id="vps-setup-modal" class="amnezia-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vps-setup-title">
+    <div class="amnezia-sheet">
+      <header class="amnezia-header">
+        <button type="button" class="amnezia-back" id="vps-setup-back" aria-label="Назад">←</button>
+        <h2 id="vps-setup-title">Настроить ваш сервер</h2>
+      </header>
+      <form id="vps-setup-form" class="amnezia-form">
+        <label class="amnezia-field">
+          <span class="amnezia-label">IP-адрес[:порт] сервера</span>
+          <input id="vps-host" type="text" inputmode="url" autocomplete="off" placeholder="255.255.255.255:22" required />
+        </label>
+        <label class="amnezia-field">
+          <span class="amnezia-label">Имя пользователя SSH</span>
+          <input id="vps-user" type="text" autocomplete="username" placeholder="root" required />
+        </label>
+        <label class="amnezia-field">
+          <span class="amnezia-label">Пароль или закрытый ключ SSH</span>
+          <textarea id="vps-secret" rows="5" autocomplete="off" placeholder="Пароль или -----BEGIN OPENSSH PRIVATE KEY-----" required></textarea>
+        </label>
+        <div class="amnezia-notice">
+          <span class="amnezia-notice-icon" aria-hidden="true">!</span>
+          <p>Требования к SSH-ключу: поддерживаются ключи ED25519 и RSA в формате PEM. Вставьте закрытый ключ целиком, включая строки BEGIN/END.</p>
+        </div>
+        <p id="vps-setup-error" class="err hidden"></p>
+        <button type="submit" class="amnezia-pill-btn" id="vps-setup-submit">Продолжить</button>
+      </form>
+    </div>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Основная навигация">
+    <button type="button" class="bottom-nav-item active" data-bottom-view="home">
+      <span class="bottom-nav-icon">⌂</span>
+      <span class="bottom-nav-label">Home</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-bottom-view="files">
+      <span class="bottom-nav-icon">⚙</span>
+      <span class="bottom-nav-label">Config</span>
+    </button>
+    <button type="button" class="bottom-nav-item bottom-nav-add" id="btn-bottom-add-server">
+      <span class="bottom-nav-icon">+</span>
+      <span class="bottom-nav-label">Add Server</span>
+    </button>
+  </nav>
 
   <!-- Scheduler modal -->
   <div id="task-modal" class="modal hidden">
@@ -775,7 +836,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.17.0"></script>
-  <script src="/static/app.js?v=3.17.0"></script>
+  <script src="/static/i18n.js?v=3.18.0"></script>
+  <script src="/static/app.js?v=3.18.0"></script>
 </body>
 </html>

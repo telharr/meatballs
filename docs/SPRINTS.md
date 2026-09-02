@@ -2,7 +2,7 @@
 
 Читать после `docs/PRODUCT.md`. Статусы: `done` / `now` / `next` / `later`.
 
-Текущий фокус: **Sprint 6 — Zero-Touch Deployment & Packaging** (panel **3.17.0**). Sprint 5 (Workshop + ModPack) принят в **3.13–3.15**; realtime bus — **3.16.0**.
+Текущий фокус: **Sprint 6 — Zero-Touch Deployment & Packaging** (panel **3.18.0**). Sprint 5 (Workshop + ModPack) принят в **3.13–3.15**; realtime bus — **3.16.0**; installer polish — **3.17–3.18**.
 
 ---
 
@@ -157,7 +157,7 @@
 
 ---
 
-## Sprint 6 — Zero-Touch Deployment & Packaging (done, panel 3.17.0)
+## Sprint 6 — Zero-Touch Deployment & Packaging (done, panel 3.18.0)
 
 **Цель:** end-user дистрибуция — документация сценариев A/B/C + Windows installer pipeline.
 

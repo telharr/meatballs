@@ -130,7 +130,7 @@
 
 ## 6. Где мы сейчас (Deployment & packaging)
 
-Панель **3.17.0** — Sprint 6 distribution:
+Панель **3.18.0** — zero-click installer + Amnezia-style VPS onboarding:
 
 - `docs/DEPLOYMENT.md` — Local desktop, Linux VPS (systemd + Nginx WS), Docker Compose
 - `packaging/build_exe.py` + `installer.iss` — PyInstaller bundle + Inno Setup wizard

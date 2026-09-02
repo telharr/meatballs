@@ -1,4 +1,4 @@
-# Deployment Guide — PZ Server Control Panel v3.17.0
+# Deployment Guide — PZ Server Control Panel v3.18.0
 
 Multi-scenario reference for operators and packagers. No real credentials belong in this file.
 
@@ -48,7 +48,7 @@ PANEL_PORT=8000
 
 1. Build bundle: `python packaging/build_exe.py`
 2. Compile installer (Inno Setup 6): `ISCC packaging/installer.iss`
-3. Run `Output/PZControlPanel-3.17.0-setup.exe`
+3. Run `Output/PZControlPanel-3.18.0-setup.exe`
 
 **Wizard modes:**
 
@@ -329,4 +329,4 @@ Artifacts (gitignored): `dist/`, `build/`, `packaging/Output/`, `*.exe`.
 
 ## Version
 
-Panel **3.17.0** — Sprint 6 packaging + deployment docs. API version in `GET /api/health`.
+Panel **3.18.0** — zero-click installer + Amnezia-style VPS onboarding. API version in `GET /api/health`.

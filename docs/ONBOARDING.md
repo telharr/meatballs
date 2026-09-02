@@ -1,4 +1,4 @@
-# Onboarding — Universal PZ Control Panel (v3.17.0)
+# Onboarding — Universal PZ Control Panel (v3.18.0)
 
 Step-by-step from zero to first **Smoke test**. No `.env` required for local dev; see **`docs/DEPLOYMENT.md`** for VPS/Docker/installer paths.
 
@@ -148,6 +148,6 @@ Quick checklist:
 - SFTP — 3.12.0
 - Workshop / ModPack — 3.13–3.15
 - WebSocket event bus + telemetry + RBAC — 3.16.0
-- Deployment docs + Windows installer pipeline — 3.17.0 (Sprint 6)
+- Deployment docs + Windows installer pipeline — 3.18.0 (zero-click + Amnezia UI)
 
 See `docs/PRODUCT.md`, `docs/SPRINTS.md`, `docs/DEPLOYMENT.md`.

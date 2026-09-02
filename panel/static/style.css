@@ -1,16 +1,16 @@
 :root {
-  --bg: #0d1117;
-  --bg-elevated: #161b22;
-  --bg-panel: #161b22;
-  --bg-input: #0d1117;
-  --bg-hover: #21262d;
-  --border: #30363d;
-  --border-muted: #21262d;
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --accent: #e63946;
-  --accent-bright: #ff5555;
-  --accent-soft: rgba(230, 57, 70, 0.15);
+  --bg: #0E0F12;
+  --bg-elevated: #18191E;
+  --bg-panel: #18191E;
+  --bg-input: #18191E;
+  --bg-hover: #1f2128;
+  --border: #262830;
+  --border-muted: #1f2128;
+  --text: #f2f3f5;
+  --muted: #9aa0ad;
+  --accent: #E28743;
+  --accent-bright: #F08C35;
+  --accent-soft: rgba(226, 135, 67, 0.18);
   --success: #3fb950;
   --warn: #d29922;
   --info: #58a6ff;
@@ -1625,4 +1625,335 @@ body.auth-locked #auth-modal { pointer-events: auto; }
   .workshop-builder-grid { grid-template-columns: 1fr; }
 }
 
+/* —— Amnezia-style onboarding & dashboard —— */
+.amnezia-dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 0 1.5rem;
+  position: relative;
+}
+
+.amnezia-status-ring {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--border);
+  background: radial-gradient(circle at 30% 25%, #22242b 0%, var(--bg-panel) 70%);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.amnezia-status-ring .ring-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.amnezia-status-ring.online {
+  border-color: var(--success);
+  box-shadow: 0 0 28px rgba(63, 185, 80, 0.35);
+}
+.amnezia-status-ring.online .ring-glow {
+  opacity: 1;
+  box-shadow: 0 0 40px rgba(63, 185, 80, 0.45);
+}
+
+.amnezia-status-ring.offline {
+  border-color: #3a3d48;
+}
+.amnezia-status-ring.degraded {
+  border-color: var(--warn);
+  box-shadow: 0 0 24px rgba(210, 153, 34, 0.25);
+}
+
+.ring-inner {
+  text-align: center;
+  z-index: 1;
+}
+.ring-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.ring-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.amnezia-server-picker {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
+  min-width: min(100%, 320px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.amnezia-server-picker:hover,
+.amnezia-server-picker:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+.amnezia-server-picker .chev {
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.amnezia-dashboard-meta {
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0;
+}
+
+.server-picker-popover {
+  position: absolute;
+  z-index: 50;
+  min-width: min(100%, 320px);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.35rem;
+  box-shadow: var(--shadow);
+  top: calc(100% - 0.5rem);
+}
+.server-picker-popover.hidden { display: none; }
+.server-picker-item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.server-picker-item:hover,
+.server-picker-item.active {
+  background: var(--bg-hover);
+  color: var(--accent-bright);
+}
+
+.amnezia-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(8, 9, 12, 0.92);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+.amnezia-overlay.hidden { display: none; }
+
+.amnezia-sheet {
+  width: min(100%, 440px);
+  margin-top: 0.5rem;
+}
+
+.amnezia-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.amnezia-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.amnezia-back {
+  border: none;
+  background: var(--bg-panel);
+  color: var(--text);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+.amnezia-back:hover { border-color: var(--accent); }
+
+.amnezia-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.amnezia-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.amnezia-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.amnezia-field input,
+.amnezia-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.amnezia-field input:focus,
+.amnezia-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.amnezia-notice {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  background: rgba(226, 135, 67, 0.08);
+  border: 1px solid rgba(226, 135, 67, 0.25);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.amnezia-notice p { margin: 0; }
+.amnezia-notice-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.amnezia-pill-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.95rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--accent-bright) 0%, var(--accent) 100%);
+  color: #111;
+  margin-top: 0.35rem;
+  transition: filter 0.2s, transform 0.15s;
+}
+.amnezia-pill-btn:hover { filter: brightness(1.06); }
+.amnezia-pill-btn:active { transform: scale(0.99); }
+.amnezia-pill-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.amnezia-card {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.advanced-server-form {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.85rem;
+  background: rgba(0,0,0,0.12);
+}
+.advanced-server-form summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--muted);
+  user-select: none;
+}
+.advanced-server-form[open] summary {
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  display: none;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.25rem;
+  padding: 0.45rem 0.65rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+  background: rgba(14, 15, 18, 0.96);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+.bottom-nav-item {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.bottom-nav-item.active {
+  color: var(--accent-bright);
+  background: var(--accent-soft);
+}
+.bottom-nav-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.bottom-nav-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.bottom-nav-add .bottom-nav-icon {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+@media (max-width: 960px) {
+  .bottom-nav { display: grid; }
+  .main-content { padding-bottom: 4.5rem; }
+  .sidebar { display: none; }
+  .app-shell { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 961px) {
+  .amnezia-dashboard { padding-top: 0.5rem; }
+}
 

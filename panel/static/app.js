@@ -674,12 +674,18 @@ function switchView(view) {
   if (view === "chat") loadChat();
   if (view === "bans") loadBans();
   if (view === "privates") loadPrivates();
+  if (view === "home" || view === "files") {
+    setBottomNavActive(view === "files" ? "files" : "home");
+  }
   location.hash = view;
 }
 
 function initNavigation() {
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.onclick = () => switchView(btn.dataset.view);
+  });
+  document.querySelectorAll(".bottom-nav-item[data-bottom-view]").forEach((btn) => {
+    btn.onclick = () => switchView(btn.dataset.bottomView);
   });
   const hash = (location.hash || "#home").replace("#", "");
   if (document.getElementById(`view-${hash}`)) switchView(hash);
@@ -748,6 +754,36 @@ function updateStatusPill(online, error) {
     pill.className = "status-pill offline";
     text.textContent = "OFFLINE";
     pill.title = error || "RCON unreachable";
+  }
+  updateStatusRing(online, error);
+}
+
+function updateStatusRing(online, error) {
+  const ring = $("#status-ring");
+  const label = $("#ring-label");
+  const sub = $("#ring-sub");
+  if (!ring || !label) return;
+  const caps = activeCapabilities();
+  const hasServer = !!(state.serversActive || (state.servers || []).length);
+  if (online) {
+    ring.className = "amnezia-status-ring online";
+    label.textContent = "ONLINE";
+    if (sub) sub.textContent = "RCON · Game";
+  } else if (hasServer && caps.files) {
+    ring.className = "amnezia-status-ring degraded";
+    label.textContent = "PARTIAL";
+    if (sub) sub.textContent = error ? String(error).slice(0, 40) : "Files ok · RCON down";
+  } else {
+    ring.className = "amnezia-status-ring offline";
+    label.textContent = hasServer ? "OFFLINE" : "NO SERVER";
+    if (sub) sub.textContent = hasServer ? (error || "RCON") : "Add VPS";
+  }
+  const meta = $("#dashboard-meta");
+  if (meta) {
+    const active = (state.servers || []).find((s) => s.id === state.serversActive);
+    meta.textContent = active
+      ? `${active.name} · ${(active.files && active.files.kind) || "?"} · ${online ? "online" : "offline"}`
+      : "Подключите VPS через SSH";
   }
 }
 
@@ -825,6 +861,7 @@ async function loadHealth() {
     state.health = await api("/api/health");
     updateHeaderFromHealth();
     applyCapabilities();
+    updateStatusRing(false);
     if (!state.health.rcon_configured) showToast("RCON password не задан в профиле", "err");
   } catch {
     updateStatusPill(false, "Backend offline");
@@ -846,6 +883,188 @@ function renderServerSwitcher() {
       ? `${active.name} · ${active.hoster || "?"} · files=${(active.files && active.files.kind) || "?"} · process=${(active.process && active.process.kind) || "none"}`
       : "профиль сервера · хостер — адаптер";
   }
+  const mobileName = $("#mobile-server-name");
+  if (mobileName) {
+    const active = rows.find((s) => s.id === state.serversActive);
+    mobileName.textContent = active ? (active.name || active.id) : "Нет сервера";
+  }
+  renderServerPickerPopover();
+}
+
+function renderServerPickerPopover() {
+  const pop = $("#server-picker-popover");
+  if (!pop) return;
+  const rows = state.servers || [];
+  if (!rows.length) {
+    pop.innerHTML = "";
+    pop.classList.add("hidden");
+    return;
+  }
+  pop.innerHTML = rows.map((s) => `
+    <button type="button" class="server-picker-item${s.id === state.serversActive ? " active" : ""}" data-server-id="${escapeHtml(s.id)}">
+      ${escapeHtml(s.name || s.id)}
+    </button>`).join("");
+  pop.querySelectorAll(".server-picker-item").forEach((btn) => {
+    btn.onclick = () => {
+      switchServer(btn.dataset.serverId);
+      pop.classList.add("hidden");
+    };
+  });
+}
+
+function toggleServerPickerPopover() {
+  const pop = $("#server-picker-popover");
+  if (!pop) return;
+  const rows = state.servers || [];
+  if (!rows.length) {
+    openVpsSetupModal();
+    return;
+  }
+  pop.classList.toggle("hidden");
+}
+
+function parseSshEndpoint(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return { host: "", port: 22 };
+  if (text.startsWith("[")) {
+    const m = text.match(/^\[([^\]]+)\](?::(\d+))?$/);
+    if (m) return { host: m[1], port: Number(m[2]) || 22 };
+  }
+  const lastColon = text.lastIndexOf(":");
+  if (lastColon > 0 && /^\d+$/.test(text.slice(lastColon + 1))) {
+    return { host: text.slice(0, lastColon), port: Number(text.slice(lastColon + 1)) || 22 };
+  }
+  return { host: text, port: 22 };
+}
+
+function isSshPrivateKey(text) {
+  const t = String(text || "").trim();
+  return t.includes("BEGIN") && t.includes("PRIVATE KEY");
+}
+
+function detectRemoteRoot(probe) {
+  const names = (probe.entries || []).map((n) => String(n));
+  if (names.includes("ServerWorld")) return "/ServerWorld";
+  const lower = names.map((n) => n.toLowerCase());
+  const idx = lower.indexOf("serverworld");
+  if (idx >= 0) return `/${names[idx]}`;
+  const checks = probe.checks || {};
+  if (checks.server_dir || checks.logs_dir) return "/ServerWorld";
+  return "/";
+}
+
+function openVpsSetupModal() {
+  const modal = $("#vps-setup-modal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  const err = $("#vps-setup-error");
+  if (err) {
+    err.textContent = "";
+    err.classList.add("hidden");
+  }
+  $("#vps-host")?.focus();
+}
+
+function closeVpsSetupModal() {
+  $("#vps-setup-modal")?.classList.add("hidden");
+  $("#server-picker-popover")?.classList.add("hidden");
+}
+
+async function submitVpsSetup(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const errEl = $("#vps-setup-error");
+  const btn = $("#vps-setup-submit");
+  const hostRaw = $("#vps-host")?.value.trim() || "";
+  const user = $("#vps-user")?.value.trim() || "";
+  const secret = $("#vps-secret")?.value || "";
+  const { host, port } = parseSshEndpoint(hostRaw);
+  if (!host || !user || !secret.trim()) {
+    if (errEl) {
+      errEl.textContent = "Заполните IP, пользователя и пароль/ключ";
+      errEl.classList.remove("hidden");
+    }
+    return;
+  }
+  const keyMode = isSshPrivateKey(secret);
+  const probePayload = {
+    kind: "sftp",
+    host,
+    user,
+    port,
+    root: "/",
+    password: keyMode ? "" : secret,
+    sftp_private_key: keyMode ? secret.trim() : "",
+  };
+  if (btn) btn.disabled = true;
+  if (errEl) errEl.classList.add("hidden");
+  try {
+    const probe = await api("/api/servers/probe/files", {
+      method: "POST",
+      body: JSON.stringify(probePayload),
+    });
+    if (!probe.ok) {
+      throw new Error(probe.error || "SSH/SFTP недоступен");
+    }
+    const root = detectRemoteRoot(probe);
+    const serverPayload = {
+      name: host,
+      hoster: "vps",
+      game_version: "",
+      rcon: { host, port: 16284 },
+      files: {
+        kind: "sftp",
+        host,
+        user,
+        root,
+        ini: "world.ini",
+        port,
+        sftp_key_path: "",
+      },
+      plugins: { meatballs: false },
+      public: { host, game_port: 16282, query_port: 16281 },
+      process: { kind: "none" },
+      authority: "panel_wins",
+      secrets: {
+        rcon_password: "",
+        ftp_password: keyMode ? "" : secret,
+        sftp_private_key: keyMode ? secret.trim() : "",
+      },
+      capabilities: {
+        rcon: false,
+        files: true,
+        query: false,
+        process: false,
+        inferred: false,
+        probed_at: new Date().toISOString().slice(0, 19),
+        notes: { files: (probe.checks && probe.checks.ok) ? `root=${root}` : "ssh ok" },
+      },
+    };
+    const created = await api("/api/servers", { method: "POST", body: JSON.stringify(serverPayload) });
+    await api(`/api/servers/${encodeURIComponent(created.id)}/activate`, { method: "POST", body: "{}" });
+    $("#vps-secret").value = "";
+    closeVpsSetupModal();
+    $("#onboarding-modal")?.classList.add("hidden");
+    await loadServers();
+    await loadHealth();
+    await pollStatus();
+    applyCapabilities();
+    showToast(`Сервер подключён: ${created.name || host}`);
+    switchView("home");
+  } catch (exc) {
+    if (errEl) {
+      errEl.textContent = exc.message || String(exc);
+      errEl.classList.remove("hidden");
+    }
+    showToast(exc.message || "Ошибка подключения", "err");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function setBottomNavActive(view) {
+  document.querySelectorAll(".bottom-nav-item[data-bottom-view]").forEach((el) => {
+    el.classList.toggle("active", el.dataset.bottomView === view);
+  });
 }
 
 async function loadServers() {
@@ -3215,9 +3434,25 @@ $("#btn-profile-edit").onclick = () => editActiveProfile();
 $("#btn-profile-delete").onclick = () => deleteActiveProfile();
 $("#btn-onboarding-go").onclick = () => {
   $("#onboarding-modal")?.classList.add("hidden");
-  switchView("home");
-  document.getElementById("server-form")?.scrollIntoView({ behavior: "smooth" });
+  openVpsSetupModal();
 };
+$("#vps-setup-form").onsubmit = submitVpsSetup;
+$("#vps-setup-back").onclick = closeVpsSetupModal;
+$("#mobile-server-picker").onclick = (e) => {
+  e.stopPropagation();
+  toggleServerPickerPopover();
+};
+$("#btn-bottom-add-server").onclick = () => openVpsSetupModal();
+document.addEventListener("click", (e) => {
+  const pop = $("#server-picker-popover");
+  const picker = $("#mobile-server-picker");
+  if (!pop || pop.classList.contains("hidden")) return;
+  if (pop.contains(e.target) || picker?.contains(e.target)) return;
+  pop.classList.add("hidden");
+});
+$("#vps-setup-modal")?.addEventListener("click", (e) => {
+  if (e.target === $("#vps-setup-modal")) closeVpsSetupModal();
+});
 $("#btn-smoke-refresh").onclick = () => loadSmoke();
 $("#btn-smoke-start").onclick = () => startSmoke();
 $("#btn-smoke-stop").onclick = () => stopSmoke();
