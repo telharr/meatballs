@@ -136,7 +136,7 @@ def build(*, clean: bool) -> Path:
         raise SystemExit(f"Expected output directory missing: {DIST_DIR}")
 
     _copy_runtime_extras(DIST_DIR)
-    print(f"\nBuild OK → {DIST_DIR}")
+    print(f"\nBuild OK -> {DIST_DIR}")
     print("Run: dist/PZControlPanel/PZControlPanel.exe  (Windows)")
     print("     dist/PZControlPanel/PZControlPanel       (Linux/macOS)")
     return DIST_DIR
