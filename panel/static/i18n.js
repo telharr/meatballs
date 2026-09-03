@@ -5,7 +5,7 @@
   let dict = {};
 
   async function loadLocale(code) {
-    const res = await fetch(`/static/locales/${code}.json?v=3.20.3`);
+    const res = await fetch(`/static/locales/${code}.json?v=3.20.6`);
     if (!res.ok) throw new Error(`Locale ${code} missing`);
     dict = await res.json();
     lang = code;

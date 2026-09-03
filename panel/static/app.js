@@ -21,6 +21,9 @@ const state = {
   serverLogContent: "",
   maxPlayers: 32,
   panelStartedAt: Date.now(),
+  serverUptimeSeconds: null,
+  serverUptimeFetchedAt: null,
+  serverUptimeSource: null,
   saving: false,
   logAutoRefresh: true,
   cityWipeId: null,
@@ -30,6 +33,7 @@ const state = {
   servers: [],
   serversActive: null,
   serversPresets: {},
+  switchingServer: false,
   wizardCaps: { rcon: null, files: null, query: null, process: false },
   vpsSetupMode: "sftp",
   vpsProvisionPoll: null,
@@ -525,6 +529,7 @@ function applyStatusPayload(status) {
   if (!status) return;
   updateStatusPill(status.rcon_online, status.error);
   updatePlayersPill(status.players ? realPlayers(status.players).length : (status.players_online || 0));
+  applyServerUptime(status);
   if (status.players) {
     state.players = realPlayers(status.players);
     if (state.activeView === "players") renderPlayersPage();
@@ -699,8 +704,10 @@ function syncServerChrome() {
   });
   const switcher = $(".sidebar-server-switcher");
   if (switcher) switcher.classList.toggle("hidden", false);
+  const dd = $("#server-dd");
+  if (dd) dd.hidden = !saved;
   const chips = $("#server-switcher-chips");
-  if (chips) chips.hidden = !saved;
+  if (chips) chips.hidden = true;
   const noSrv = $("#sidebar-no-server");
   if (noSrv) noSrv.classList.toggle("hidden", saved);
   if (!live) {
@@ -972,10 +979,46 @@ function updatePlayersPill(count) {
   pill.title = `Живые игроки ${real} · тренеры во вкладке NPC`;
 }
 
+function applyServerUptime(status) {
+  if (!status || typeof status !== "object") return;
+  const secs = status.server_uptime_seconds;
+  if (secs == null && status.uptime_seconds != null && status.uptime_source && status.uptime_source !== "panel") {
+    // legacy alias
+  }
+  const value = status.server_uptime_seconds;
+  if (value == null || Number.isNaN(Number(value))) {
+    if (status.rcon_online === false) {
+      state.serverUptimeSeconds = null;
+      state.serverUptimeFetchedAt = null;
+      state.serverUptimeSource = status.uptime_source || "offline";
+      tickUptime();
+    }
+    return;
+  }
+  state.serverUptimeSeconds = Number(value);
+  state.serverUptimeFetchedAt = Date.now();
+  state.serverUptimeSource = status.uptime_source || "server";
+  tickUptime();
+}
+
 function tickUptime() {
-  if (!hasActiveServerProfile()) return;
   const el = $("#pill-uptime");
-  if (el) el.textContent = formatUptime(Date.now() - state.panelStartedAt);
+  if (!el) return;
+  if (!hasActiveServerProfile()) {
+    el.textContent = "—";
+    el.title = "";
+    return;
+  }
+  if (state.serverUptimeSeconds == null || state.serverUptimeFetchedAt == null) {
+    el.textContent = "—";
+    el.title = "Uptime сервера ещё не получен";
+    return;
+  }
+  const elapsed = Math.max(0, Math.floor((Date.now() - state.serverUptimeFetchedAt) / 1000));
+  const total = Math.max(0, Math.floor(Number(state.serverUptimeSeconds) + elapsed));
+  el.textContent = formatUptime(total * 1000);
+  const src = state.serverUptimeSource || "server";
+  el.title = `Аптайм игрового сервера (${src})`;
 }
 
 function renderTelemetryBar(data) {
@@ -1096,6 +1139,7 @@ async function pollStatus() {
     const status = await api("/api/status");
     updateStatusPill(status.rcon_online, status.error);
     updatePlayersPill(status.players ? realPlayers(status.players).length : (status.players_online || 0));
+    applyServerUptime(status);
     if (status.players) {
       state.players = realPlayers(status.players);
       if (state.activeView === "players") renderPlayersPage();
@@ -1137,35 +1181,113 @@ async function loadHealth() {
 }
 
 /* —— Server profiles —— */
+function serverHostHint(s) {
+  if (!s) return "";
+  const pub = (s.public && s.public.host) || "";
+  const files = (s.files && s.files.host) || "";
+  const rcon = (s.rcon && s.rcon.host) || "";
+  return pub || files || rcon || (s.hoster || "");
+}
+
+function closeServerDropdown() {
+  const dd = $("#server-dd");
+  const menu = $("#server-dd-menu");
+  const toggle = $("#server-dd-toggle");
+  if (dd) dd.classList.remove("open");
+  if (menu) menu.classList.add("hidden");
+  if (toggle) toggle.setAttribute("aria-expanded", "false");
+}
+
+function openServerDropdown() {
+  const dd = $("#server-dd");
+  const menu = $("#server-dd-menu");
+  const toggle = $("#server-dd-toggle");
+  if (!dd || dd.hidden || !menu) return;
+  dd.classList.add("open");
+  menu.classList.remove("hidden");
+  if (toggle) toggle.setAttribute("aria-expanded", "true");
+}
+
+function toggleServerDropdown() {
+  const menu = $("#server-dd-menu");
+  if (!menu) return;
+  if (menu.classList.contains("hidden")) openServerDropdown();
+  else closeServerDropdown();
+}
+
+function closeServerContextMenu() {
+  const ctx = $("#server-ctx");
+  if (!ctx) return;
+  ctx.classList.add("hidden");
+  ctx.hidden = true;
+  ctx.dataset.serverId = "";
+}
+
+function openServerContextMenu(serverId, clientX, clientY) {
+  const ctx = $("#server-ctx");
+  if (!ctx || !serverId) return;
+  closeServerDropdown();
+  ctx.dataset.serverId = serverId;
+  ctx.classList.remove("hidden");
+  ctx.hidden = false;
+  const pad = 8;
+  const w = ctx.offsetWidth || 180;
+  const h = ctx.offsetHeight || 80;
+  let x = Number(clientX) || 0;
+  let y = Number(clientY) || 0;
+  if (x + w > window.innerWidth - pad) x = window.innerWidth - w - pad;
+  if (y + h > window.innerHeight - pad) y = window.innerHeight - h - pad;
+  ctx.style.left = `${Math.max(pad, x)}px`;
+  ctx.style.top = `${Math.max(pad, y)}px`;
+}
+
 function renderServerSwitcher() {
   const sel = $("#server-switcher");
-  const chips = $("#server-switcher-chips");
+  const dd = $("#server-dd");
+  const current = $("#server-dd-current");
+  const menu = $("#server-dd-menu");
   const rows = state.servers || [];
   if (sel) {
     sel.innerHTML = rows.length
       ? rows.map((s) => `<option value="${escapeHtml(s.id)}"${s.id === state.serversActive ? " selected" : ""}>${escapeHtml(s.name || s.id)}</option>`).join("")
       : "";
   }
-  if (chips) {
-    chips.hidden = !rows.length;
-    chips.innerHTML = rows.map((s) => `
-      <button type="button" class="server-chip${s.id === state.serversActive ? " active" : ""}" data-server-id="${escapeHtml(s.id)}">
-        ${escapeHtml(s.name || s.id)}
-      </button>`).join("");
-    chips.querySelectorAll("[data-server-id]").forEach((btn) => {
-      btn.onclick = () => switchServer(btn.dataset.serverId);
+  const active = rows.find((s) => s.id === state.serversActive) || rows[0] || null;
+  if (current) {
+    current.textContent = active ? (active.name || active.id) : "—";
+    current.title = active
+      ? `${active.name || active.id}${serverHostHint(active) ? ` · ${serverHostHint(active)}` : ""} · ПКМ — меню`
+      : "";
+  }
+  if (dd) dd.hidden = !rows.length;
+  if (menu) {
+    menu.innerHTML = rows.map((s) => {
+      const host = serverHostHint(s);
+      return `<button type="button" class="server-dd-item${s.id === state.serversActive ? " active" : ""}" role="option" data-server-id="${escapeHtml(s.id)}" aria-selected="${s.id === state.serversActive ? "true" : "false"}">
+        <span>${escapeHtml(s.name || s.id)}</span>
+        ${host ? `<span class="server-dd-item-host">${escapeHtml(host)}</span>` : ""}
+      </button>`;
+    }).join("");
+    menu.querySelectorAll("[data-server-id]").forEach((btn) => {
+      btn.onclick = () => {
+        closeServerDropdown();
+        switchServer(btn.dataset.serverId);
+      };
+      btn.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openServerContextMenu(btn.dataset.serverId, e.clientX, e.clientY);
+      };
     });
   }
   const mobileName = $("#mobile-server-name");
   if (mobileName) {
-    const active = rows.find((s) => s.id === state.serversActive);
     mobileName.textContent = active ? (active.name || active.id) : "Нет сервера";
   }
   renderServerPickerPopover();
   syncServerChrome();
   if (hasActiveServerProfile()) {
     const hint = $("#home-hint");
-    const active = rows.find((s) => s.id === state.serversActive);
     if (hint && active) {
       hint.textContent = `${active.name} · ${active.hoster || "?"} · files=${(active.files && active.files.kind) || "?"} · process=${(active.process && active.process.kind) || "none"}`;
     }
@@ -1494,17 +1616,25 @@ async function loadServers() {
   } catch (e) {
     const sel = $("#server-switcher");
     if (sel) sel.innerHTML = `<option value="">${escapeHtml(e.message)}</option>`;
-    const chips = $("#server-switcher-chips");
-    if (chips) {
-      chips.hidden = false;
-      chips.innerHTML = `<p class="muted">${escapeHtml(e.message)}</p>`;
-    }
+    const current = $("#server-dd-current");
+    if (current) current.textContent = e.message;
+    const dd = $("#server-dd");
+    if (dd) dd.hidden = false;
     showToast(e.message, "err");
   }
 }
 
 async function switchServer(serverId) {
-  if (!serverId || serverId === state.serversActive) return;
+  if (!serverId || serverId === state.serversActive || state.switchingServer) return;
+  const target = (state.servers || []).find((s) => s.id === serverId);
+  const label = (target && (target.name || target.id)) || serverId;
+  const SWITCH_MS = 3000;
+  const started = Date.now();
+  state.switchingServer = true;
+  closeServerDropdown();
+  closeServerContextMenu();
+  showServerSwitchOverlay(label);
+  softClearLiveChrome();
   try {
     await api(`/api/servers/${encodeURIComponent(serverId)}/activate`, { method: "POST", body: "{}" });
     await loadServers();
@@ -1512,12 +1642,102 @@ async function switchServer(serverId) {
     await pollStatus();
     applyCapabilities();
     if (state.activeView && viewGate(state.activeView).ok === false) switchView("home");
-    if (state.activeView === "home") loadHome();
+    if (state.activeView === "home") await loadHome();
     if (activeCapabilities().files) loadConfigs().catch(() => {});
-    showToast(`Активен: ${serverId}`);
+    // Second status pass near end of settle window (RCON/query catch-up).
+    const elapsed = Date.now() - started;
+    const remaining = Math.max(0, SWITCH_MS - elapsed);
+    if (remaining > 400) {
+      await sleep(Math.min(900, remaining / 2));
+      await pollStatus();
+      if (state.activeView === "home") await loadHome().catch(() => {});
+    }
+    const left = SWITCH_MS - (Date.now() - started);
+    if (left > 0) await sleep(left);
+    showToast(t("server.switched", { name: label }));
   } catch (e) {
     showToast(e.message, "err");
     renderServerSwitcher();
+  } finally {
+    state.switchingServer = false;
+    await hideServerSwitchOverlay();
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function softClearLiveChrome() {
+  state.serverUptimeSeconds = null;
+  state.serverUptimeFetchedAt = null;
+  state.serverUptimeSource = null;
+  state.players = [];
+  const pill = $("#status-pill");
+  const text = $("#status-pill-text");
+  if (pill && text) {
+    pill.className = "status-pill unknown";
+    text.textContent = "…";
+    pill.title = t("server.switching_hint");
+  }
+  const players = $("#pill-players");
+  if (players) {
+    players.textContent = "—";
+    players.title = "";
+  }
+  const uptime = $("#pill-uptime");
+  if (uptime) {
+    uptime.textContent = "—";
+    uptime.title = "";
+  }
+  const cpu = $("#tel-sys");
+  if (cpu) cpu.textContent = "CPU — · RAM —";
+  const jvm = $("#tel-gameserver");
+  if (jvm) jvm.textContent = "JVM: —";
+}
+
+function showServerSwitchOverlay(name) {
+  const overlay = $("#server-switch-overlay");
+  const title = $("#server-switch-title");
+  const hint = $("#server-switch-hint");
+  const fill = $("#server-switch-bar-fill");
+  if (!overlay) return;
+  document.body.classList.add("server-switching");
+  document.querySelector(".navbar")?.classList.add("server-switching-pulse");
+  if (title) {
+    const msg = t("server.switching", { name });
+    title.textContent = msg === "server.switching" ? `Переключение на ${name}…` : msg;
+  }
+  if (hint) {
+    const h = t("server.switching_hint");
+    hint.textContent = h === "server.switching_hint" ? "Подтягиваем статус и телеметрию…" : h;
+  }
+  if (fill) {
+    fill.style.transition = "none";
+    fill.style.width = "0%";
+    // force reflow then animate to 100% over ~3s
+    void fill.offsetWidth;
+    fill.style.transition = "width 3s linear";
+    fill.style.width = "100%";
+  }
+  overlay.classList.remove("leaving", "hidden");
+  overlay.setAttribute("aria-hidden", "false");
+}
+
+async function hideServerSwitchOverlay() {
+  const overlay = $("#server-switch-overlay");
+  document.body.classList.remove("server-switching");
+  document.querySelector(".navbar")?.classList.remove("server-switching-pulse");
+  if (!overlay || overlay.classList.contains("hidden")) return;
+  overlay.classList.add("leaving");
+  await sleep(280);
+  overlay.classList.add("hidden");
+  overlay.classList.remove("leaving");
+  overlay.setAttribute("aria-hidden", "true");
+  const fill = $("#server-switch-bar-fill");
+  if (fill) {
+    fill.style.transition = "none";
+    fill.style.width = "0%";
   }
 }
 
@@ -1814,33 +2034,56 @@ function fillFormFromProfile(p) {
   toggleServerFormKind();
 }
 
+async function editProfileById(serverId) {
+  const profile = (state.servers || []).find((s) => s.id === serverId);
+  if (!profile) {
+    showToast(t("toast.no_profile") || "Профиль не найден", "err");
+    return;
+  }
+  const name = profile.name || profile.id;
+  if (!confirm(t("confirm.edit_profile", { name }) || `Открыть настройки «${name}» для редактирования?`)) {
+    return;
+  }
+  fillFormFromProfile(profile);
+  switchView("home");
+  document.getElementById("server-form")?.scrollIntoView({ behavior: "smooth" });
+  showToast(`Редактирование: ${name}`);
+}
+
+async function deleteProfileById(serverId) {
+  const profile = (state.servers || []).find((s) => s.id === serverId);
+  if (!profile || !serverId) return;
+  const name = profile.name || profile.id;
+  if (!confirm(t("confirm.delete_profile", { id: name }) || `Удалить профиль «${name}»?`)) return;
+  if (!confirm(t("confirm.delete_profile_again", { name }) || `Точно удалить «${name}»? Это нельзя отменить из панели.`)) return;
+  try {
+    await apiStepUp(`/api/servers/${encodeURIComponent(serverId)}`, { method: "DELETE" });
+    if (state.editingServerId === serverId) {
+      state.editingServerId = null;
+      if ($("#srv-edit-id")) $("#srv-edit-id").value = "";
+    }
+    await loadServers();
+    await loadHealth();
+    applyCapabilities();
+    showToast(t("toast.profile_deleted") || "Профиль удалён");
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
 async function editActiveProfile() {
-  const active = (state.servers || []).find((s) => s.id === state.serversActive);
-  if (!active) {
+  const id = state.serversActive;
+  if (!id) {
     showToast("Нет активного профиля", "err");
     return;
   }
-  fillFormFromProfile(active);
-  switchView("home");
-  document.getElementById("server-form")?.scrollIntoView({ behavior: "smooth" });
-  showToast(`Редактирование: ${active.name}`);
+  return editProfileById(id);
 }
 
 async function deleteActiveProfile() {
   const id = state.serversActive;
   if (!id) return;
-  if (!confirm(t("confirm.delete_profile", { id }))) return;
-  try {
-    await apiStepUp(`/api/servers/${encodeURIComponent(id)}`, { method: "DELETE" });
-    state.editingServerId = null;
-    if ($("#srv-edit-id")) $("#srv-edit-id").value = "";
-    await loadServers();
-    await loadHealth();
-    applyCapabilities();
-    showToast("Профиль удалён");
-  } catch (e) {
-    showToast(e.message, "err");
-  }
+  return deleteProfileById(id);
 }
 
 async function checkOnboarding() {
@@ -3962,6 +4205,33 @@ const serverSwitcher = $("#server-switcher");
 if (serverSwitcher) {
   serverSwitcher.onchange = () => switchServer(serverSwitcher.value);
 }
+$("#server-dd-toggle")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleServerDropdown();
+});
+$("#server-dd-toggle")?.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const id = state.serversActive || (state.servers[0] && state.servers[0].id);
+  if (id) openServerContextMenu(id, e.clientX, e.clientY);
+});
+$("#server-ctx")?.querySelectorAll("[data-action]").forEach((btn) => {
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const id = $("#server-ctx")?.dataset.serverId;
+    const action = btn.dataset.action;
+    closeServerContextMenu();
+    if (!id) return;
+    if (action === "edit") await editProfileById(id);
+    if (action === "delete") await deleteProfileById(id);
+  });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeServerDropdown();
+    closeServerContextMenu();
+  }
+});
 $("#srv-hoster").onchange = applyHosterPreset;
 $("#srv-files-kind").onchange = toggleServerFormKind;
 $("#btn-srv-probe-rcon").onclick = probeServerRcon;
@@ -3995,9 +4265,17 @@ $("#btn-home-add-server")?.addEventListener("click", () => openVpsSetupModal());
 document.addEventListener("click", (e) => {
   const pop = $("#server-picker-popover");
   const picker = $("#mobile-server-picker");
-  if (!pop || pop.classList.contains("hidden")) return;
-  if (pop.contains(e.target) || picker?.contains(e.target)) return;
-  pop.classList.add("hidden");
+  if (pop && !pop.classList.contains("hidden")) {
+    if (!(pop.contains(e.target) || picker?.contains(e.target))) {
+      pop.classList.add("hidden");
+    }
+  }
+  const dd = $("#server-dd");
+  if (dd && !dd.contains(e.target)) closeServerDropdown();
+  const ctx = $("#server-ctx");
+  if (ctx && !ctx.classList.contains("hidden") && !ctx.contains(e.target)) {
+    closeServerContextMenu();
+  }
 });
 $("#vps-setup-modal")?.addEventListener("click", (e) => {
   if (e.target === $("#vps-setup-modal")) closeVpsSetupModal();

@@ -1061,6 +1061,14 @@ async def server_status() -> dict[str, Any]:
     except Exception as exc:
         error = _rcon_error_message(exc)
 
+    from panel.services.server_uptime import resolve_uptime
+
+    uptime = await asyncio.to_thread(
+        resolve_uptime,
+        _active_server_id(),
+        rcon_online=online,
+    )
+    server_secs = uptime.get("seconds")
     return {
         "rcon_online": online,
         "players_online": players_count,
@@ -1074,7 +1082,10 @@ async def server_status() -> dict[str, Any]:
         "rcon_port": meta["rcon_port"],
         "query_port": meta["query_port"],
         "game_port": meta["game_port"],
-        "uptime_seconds": int(time.time() - _PANEL_STARTED_AT),
+        "panel_uptime_seconds": int(time.time() - _PANEL_STARTED_AT),
+        "server_uptime_seconds": server_secs,
+        "uptime_seconds": server_secs if server_secs is not None else None,
+        "uptime_source": uptime.get("source"),
         "error": error,
     }
 

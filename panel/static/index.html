@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.20.3" />
+  <link rel="stylesheet" href="/static/style.css?v=3.20.6" />
 </head>
 <body class="no-server">
   <header class="navbar">
@@ -56,10 +56,19 @@
     <aside class="sidebar">
       <div class="sidebar-server-block">
         <p class="sidebar-label" data-i18n="nav.server">Сервер</p>
-        <label class="server-switcher sidebar-server-switcher" data-i18n-title="nav.server">
+        <label class="server-switcher sidebar-server-switcher sr-only" data-i18n-title="nav.server">
           <select id="server-switcher" aria-label="Active server"></select>
         </label>
-        <div id="server-switcher-chips" class="server-switcher-chips" hidden></div>
+        <div id="server-dd" class="server-dd" hidden>
+          <button type="button" id="server-dd-toggle" class="server-dd-toggle" aria-haspopup="listbox" aria-expanded="false" title="Выбрать сервер · ПКМ — меню">
+            <span class="server-dd-meta">
+              <span class="server-dd-label" data-i18n="server.current">Сейчас</span>
+              <span id="server-dd-current" class="server-dd-current">—</span>
+            </span>
+            <span class="server-dd-chev" aria-hidden="true">▾</span>
+          </button>
+          <div id="server-dd-menu" class="server-dd-menu hidden" role="listbox"></div>
+        </div>
         <p id="sidebar-no-server" class="sidebar-no-server muted hidden">Нет сохранённых профилей</p>
       </div>
       <nav class="sidebar-nav">
@@ -913,14 +922,28 @@
     </div>
   </div>
 
+  <div id="server-ctx" class="server-ctx hidden" role="menu" hidden>
+    <button type="button" class="server-ctx-item" data-action="edit" role="menuitem">✎ Редактировать</button>
+    <button type="button" class="server-ctx-item danger" data-action="delete" role="menuitem">🗑 Удалить</button>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
+
+  <div id="server-switch-overlay" class="server-switch-overlay hidden" aria-hidden="true" role="status" aria-live="polite">
+    <div class="server-switch-card">
+      <div class="server-switch-spinner" aria-hidden="true"></div>
+      <p id="server-switch-title" class="server-switch-title">Переключение…</p>
+      <p id="server-switch-hint" class="server-switch-hint" data-i18n="server.switching_hint">Подтягиваем статус и телеметрию…</p>
+      <div class="server-switch-bar" aria-hidden="true"><span id="server-switch-bar-fill"></span></div>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.20.3"></script>
-  <script src="/static/app.js?v=3.20.3"></script>
+  <script src="/static/i18n.js?v=3.20.6"></script>
+  <script src="/static/app.js?v=3.20.6"></script>
 </body>
 </html>

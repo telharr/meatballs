@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-03 (panel 3.20.3 — CSP allowed cdnjs CodeMirror; initEditor no longer blocks auth)
+Last updated: 2026-09-03 (panel 3.20.6 — server switch overlay ~3s)
 
 ## Host (do not commit secrets)
 

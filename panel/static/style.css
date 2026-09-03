@@ -282,11 +282,256 @@ body {
   font-size: 0.72rem;
   line-height: 1.35;
 }
-.server-switcher-chips {
+
+/* Custom server dropdown (sidebar) */
+.server-dd {
+  position: relative;
+  width: 100%;
+}
+.server-dd-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-input);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.server-dd-toggle:hover,
+.server-dd-toggle:focus-visible,
+.server-dd.open .server-dd-toggle {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+.server-dd-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.08rem;
+  min-width: 0;
+  flex: 1;
+}
+.server-dd-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+.server-dd-current {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.server-dd-chev {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+  transition: transform 0.12s ease;
+}
+.server-dd.open .server-dd-chev { transform: rotate(180deg); }
+.server-dd-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elevated, #1a1b20);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  max-height: 14rem;
+  overflow-y: auto;
+}
+.server-dd-menu.hidden { display: none; }
+.server-dd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
   width: 100%;
+  padding: 0.42rem 0.55rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.server-dd-item:hover,
+.server-dd-item:focus-visible {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+.server-dd-item.active {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.server-dd-item-host {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+  font-family: var(--mono);
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Context menu (right-click on server) */
+.server-ctx {
+  position: fixed;
+  z-index: 80;
+  min-width: 11rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elevated, #1a1b20);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.server-ctx.hidden,
+.server-ctx[hidden] { display: none !important; }
+
+/* Server switch overlay (~3s settle) */
+.server-switch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(6, 7, 10, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 1;
+  transition: opacity 0.28s ease;
+}
+.server-switch-overlay.hidden {
+  display: none;
+}
+.server-switch-overlay.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+.server-switch-card {
+  width: min(100%, 22rem);
+  padding: 1.35rem 1.5rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated, #16171c);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+  text-align: center;
+  animation: server-switch-pop 0.35s ease;
+}
+@keyframes server-switch-pop {
+  from { transform: translateY(10px) scale(0.96); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.server-switch-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0 auto 0.9rem;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--accent-bright, #6ee7a8);
+  animation: server-switch-spin 0.75s linear infinite;
+}
+@keyframes server-switch-spin {
+  to { transform: rotate(360deg); }
+}
+.server-switch-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.server-switch-hint {
+  margin: 0 0 1rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.server-switch-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.server-switch-bar > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent, #3d9b6e), var(--accent-bright, #6ee7a8));
+  transition: width 0.05s linear;
+}
+body.server-switching .server-dd-toggle,
+body.server-switching #server-switcher {
+  pointer-events: none;
+  opacity: 0.65;
+}
+.navbar.server-switching-pulse .nav-pills {
+  animation: server-switch-pulse 1.1s ease-in-out infinite;
+}
+@keyframes server-switch-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+.server-ctx-item {
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.server-ctx-item:hover,
+.server-ctx-item:focus-visible {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+.server-ctx-item.danger { color: #f85149; }
+.server-ctx-item.danger:hover { background: rgba(248, 81, 73, 0.12); }
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.server-switcher-chips {
+  display: none;
 }
 .server-chip {
   width: 100%;
@@ -324,11 +569,7 @@ body.no-server .status-pill.unknown .led {
   border-color: var(--border);
 }
 .sidebar-server-switcher {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
+  /* kept for legacy select sync; visually hidden via .sr-only */
 }
 .sidebar-server-switcher select {
   width: 100%;
