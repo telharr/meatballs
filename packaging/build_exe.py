@@ -48,10 +48,21 @@ def _scrub_runtime_secrets(target: Path) -> None:
         "scheduler.json",
         "update_check.json",
         "local-dedi.json",
+        "_vps_pass.tmp",
+        "_extract_vps_pass.py",
+        "_check_vps_env.py",
     }
     for path in list(target.rglob("*")):
         name = path.name
-        if name in banned_names or name.startswith("data._") or name.endswith(".bak"):
+        if (
+            name in banned_names
+            or name.startswith("data._")
+            or name.endswith(".bak")
+            or name.endswith(".tmp")
+            or name.startswith("_vps_")
+            or name.startswith("_extract_vps")
+            or name.startswith("_check_vps")
+        ):
             if path.is_dir():
                 shutil.rmtree(path, ignore_errors=True)
             elif path.is_file():
