@@ -2,7 +2,7 @@
 
 Читать после `docs/PRODUCT.md`. Статусы: `done` / `now` / `next` / `later`.
 
-Текущий фокус: **Sprint 6 — Zero-Touch Deployment & Packaging** (panel **3.18.0**). Sprint 5 (Workshop + ModPack) принят в **3.13–3.15**; realtime bus — **3.16.0**; installer polish — **3.17–3.18**.
+Текущий фокус: **Sprint 11 — обновления панели с GitHub** (panel **3.22.0**). Sprint 10 (единый мастер) — implementing/почти done; Sprint 7 (JVM) — later.
 
 ---
 
@@ -171,6 +171,80 @@
 **Приёмка:** `python packaging/build_exe.py` → runnable bundle; installer writes `.env`; `docker compose up` → health OK; DEPLOYMENT nginx WS config documented.
 
 **Не в scope:** code signing, auto-update channel, macOS .dmg.
+
+---
+
+## Sprint 10 — единый мастер «Добавить сервер» (now → implementing, panel 3.21.0)
+
+**Цель:** одна явная точка входа «Добавить сервер»; оба режима (VPS/SSH и хостинг вручную) живут в одном продуктовом мастере, а не в двух местах UI.
+
+**Контекст:** раньше сайдбар «+ Добавить сервер» открывал только Amnezia/VPS, а длинная форма на Главной («Подключить сервер») дублировала создание профиля. Пользователь не понимал, куда идти.
+
+**UX-контракт**
+
+```text
+[+ у переключателя серверов]  →  шаг 0 «Как подключаем?»
+                                      ├─ VPS / Linux     → существующий VPS-модал (SFTP | Auto-Deploy)
+                                      ├─ Хостинг вручную → шаги B1–B5 (имя → RCON → файлы → порты → JVM)
+                                      └─ Локальный дедик → короткий B с preset local
+ПКМ / «Изменить профиль»     →  тот же shell, без шага 0 (edit)
+Главная                      →  карточка «Подключение» активного профиля (не второй create)
+0 серверов                   →  empty state с тем же CTA
+```
+
+**Код / UI**
+
+- [x] Модал `#add-server-wizard`: path picker + stepped `#server-form`
+- [x] CTA: `+` рядом с `#server-dd`; убрать nav-item «+ Добавить сервер» из списка вкладок
+- [x] Bottom-nav / onboarding / empty state → `openAddServerWizard()`
+- [x] Главная: карточка подключения + Edit/Delete; форма create только в мастере
+- [x] Edit профиля открывает мастер на шаге B1 (все шаги доступны Назад/Далее)
+- [x] i18n RU/EN для шага 0 и кнопок мастера
+- [x] `docs/ONBOARDING.md` / `PRODUCT.md` §5–6: один вход, две ветки
+- [x] Static cache-bust `?v=3.21.0`
+
+**Приёмка**
+
+- [x] Один понятный «Добавить сервер» (сайдбар `+` или empty state)
+- [x] Шаг 0 предлагает VPS / хостинг / local; VPS и ручной путь оба работают
+- [x] На Главной нет второго мастера создания; Edit открывает тот же wizard
+- [ ] После Save+Activate — профиль в списке, оверлей переключения как сейчас *(ручная проверка в UI)*
+
+**Не в scope:** новый backend API; code signing; объединение Auto-Deploy и игрового профиля в один POST.
+
+---
+
+## Sprint 11 — обновления панели (GitHub Releases) (now, panel 3.22.0)
+
+**Цель:** уведомлять о новых релизах и обновлять панель **без затирания** профилей, secrets и `.env`.
+
+**Контракт state**
+
+```text
+App (заменяемо)     panel/*.py, static/, tools/, exe
+State (persist)     PANEL_DATA_DIR | %LOCALAPPDATA%/PZControlPanel/data | panel/data (dev/docker)
+                    backups/, updates/ рядом
+.env                onlyifdoesntexist в Inno; не в GitHub zip
+```
+
+**Код / UI**
+
+- [x] `panel/paths.py` — `DATA_DIR` / миграция с legacy `panel/data` для frozen
+- [x] Все writers читают `DATA_DIR` (servers, auth, prefs, scheduler, …)
+- [x] `GET /api/panel/updates` — GitHub `releases/latest` (`PANEL_UPDATE_REPO`)
+- [x] Banner + «Обновить» / «Позже» (snooze в prefs)
+- [x] Windows frozen: download setup → SHA256 (если есть) → backup zip → launch Inno
+- [x] Inno: `.env` `onlyifdoesntexist`; version 3.22.0
+- [x] Docker/git: подсказка в API (не silent destroy volumes)
+- [x] `panel/version.py` = semver релиза
+
+**Приёмка**
+
+- [ ] После обновления installer профили на месте; `.env` не перезаписан
+- [ ] Banner при `latest > current`; snooze скрывает до следующего тега
+- [ ] Docker: `compose pull && up -d` без `-v` сохраняет `/data`
+
+**Не в scope:** silent auto-update без клика; code signing; macOS.
 
 ---
 

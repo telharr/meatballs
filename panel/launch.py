@@ -15,7 +15,9 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 PANEL = Path(__file__).resolve().parent
-FOUNDERS_FILE = PANEL / "data" / "founders.json"
+from panel.paths import DATA_DIR  # noqa: E402
+
+FOUNDERS_FILE = DATA_DIR / "founders.json"
 
 NAME_RE = re.compile(r"^[A-Za-z0-9_\-.]{2,24}$")
 STEAM_RE = re.compile(r"^7656\d{13}$")

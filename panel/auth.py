@@ -28,7 +28,9 @@ from panel.security_hardening import (
 )
 
 PANEL = Path(__file__).resolve().parent
-AUTH_FILE = PANEL / "data" / "auth.json"
+from panel.paths import DATA_DIR  # noqa: E402
+
+AUTH_FILE = DATA_DIR / "auth.json"
 TOKEN_COOKIE = "pz_panel_token"
 ALGORITHM = "HS256"
 # Short-lived access tokens; bump token_version to revoke all sessions

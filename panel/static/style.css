@@ -55,6 +55,35 @@ body {
   max-height: 100vh;
 }
 
+.update-banner {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: linear-gradient(90deg, rgba(226, 135, 67, 0.2), rgba(61, 155, 110, 0.18));
+  border-bottom: 1px solid var(--accent, #E28743);
+  padding: 0.45rem 0.85rem;
+}
+.update-banner.hidden { display: none; }
+.update-banner-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.update-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+#update-banner-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 /* —— Navbar —— */
 .navbar {
   height: var(--nav-h);
@@ -286,7 +315,116 @@ body {
 /* Custom server dropdown (sidebar) */
 .server-dd {
   position: relative;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.sidebar-server-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+.btn-server-add {
+  flex: 0 0 2.35rem;
+  width: 2.35rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-panel);
+  color: var(--accent-bright, #6ee7a8);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-server-add:hover,
+.btn-server-add:focus-visible {
+  border-color: var(--accent, #3d9b6e);
+  background: var(--bg-hover);
+}
+.home-empty-add {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+.home-empty-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.home-connection-card {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+}
+.home-connection-summary {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+.wizard-sheet .amnezia-header {
+  gap: 0.5rem;
+}
+.add-wiz-close {
+  margin-left: auto;
+}
+.add-wiz-progress {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.78rem;
+}
+.wiz-lead {
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+.wiz-path-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.wiz-path-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  text-align: left;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.wiz-path-card:hover,
+.wiz-path-card:focus-visible {
+  border-color: var(--accent, #3d9b6e);
+  background: var(--bg-hover);
+}
+.wiz-path-card-wide {
+  grid-column: 1 / -1;
+}
+.wiz-path-ico { font-size: 1.35rem; }
+.wiz-path-title { font-weight: 700; font-size: 0.95rem; }
+.wiz-path-desc { font-size: 0.75rem; line-height: 1.35; }
+.wiz-panel.hidden { display: none; }
+.wiz-step-block.hidden { display: none; }
+.add-wiz-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.add-wiz-footer.hidden { display: none; }
+.add-wiz-footer #add-wiz-cancel { margin-right: auto; }
+.wiz-server-form .server-form-actions {
+  margin-top: 0.75rem;
+}
+@media (max-width: 560px) {
+  .wiz-path-grid { grid-template-columns: 1fr; }
+  .wiz-path-card-wide { grid-column: auto; }
 }
 .server-dd-toggle {
   width: 100%;
@@ -1357,6 +1495,30 @@ code {
 }
 .field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.65rem; }
 .field span { font-size: 0.72rem; color: var(--muted); }
+.field.field-ok input,
+.field.field-ok textarea,
+.field.field-ok select {
+  border-color: var(--success, #3d9b6e) !important;
+  box-shadow: 0 0 0 1px rgba(61, 155, 110, 0.35);
+  background: rgba(61, 155, 110, 0.08);
+}
+.field.field-bad input,
+.field.field-bad textarea,
+.field.field-bad select {
+  border-color: var(--danger, #e35d5d) !important;
+  box-shadow: 0 0 0 1px rgba(227, 93, 93, 0.35);
+  background: rgba(227, 93, 93, 0.06);
+}
+.field.field-ok > span::after {
+  content: " ✓";
+  color: var(--success, #3d9b6e);
+  font-weight: 700;
+}
+.field.field-bad > span::after {
+  content: " ✕";
+  color: var(--danger, #e35d5d);
+  font-weight: 700;
+}
 .field input, .field select {
   background: var(--bg-input);
   border: 1px solid var(--border);

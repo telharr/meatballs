@@ -17,9 +17,10 @@ from typing import Any
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-PANEL = Path(__file__).resolve().parent
-RATE_FILE = PANEL / "data" / "login_rate.json"
-REVOKED_FILE = PANEL / "data" / "revoked_jti.json"
+from panel.paths import DATA_DIR
+
+RATE_FILE = DATA_DIR / "login_rate.json"
+REVOKED_FILE = DATA_DIR / "revoked_jti.json"
 
 # Login brute-force
 LOGIN_WINDOW_SEC = 15 * 60

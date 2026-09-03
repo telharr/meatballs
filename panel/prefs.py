@@ -8,8 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-PANEL = Path(__file__).resolve().parent
-PREFS_FILE = PANEL / "data" / "prefs.json"
+from panel.paths import DATA_DIR
+
+PREFS_FILE = DATA_DIR / "prefs.json"
 
 HOST_WATCH = frozenset(
     {

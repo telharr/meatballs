@@ -26,7 +26,7 @@ Open http://127.0.0.1:8000/
 
 | Condition | What happens |
 |-----------|----------------|
-| No profiles, no `.env` | Welcome modal → **Главная** wizard |
+| No profiles, no `.env` | Welcome modal → **Добавить сервер** (единый мастер) |
 | `AUTH_LOCAL_BYPASS=true` (local installer mode) | «Локальный вход» on 127.0.0.1 |
 | No admin configured | Login modal → **Create admin** |
 | Legacy `.env` only | Auto-migrates to profile `meatballs-xl`, wizard skipped |
@@ -35,7 +35,15 @@ The wizard **detects capabilities** after RCON/FTP probes — tabs stay gray unt
 
 ## 2. Create a server profile (wizard)
 
-On **Главная**, fill the wizard:
+**Один вход:** кнопка **`+`** у переключателя серверов (или empty state / Welcome). На шаге 0 выберите ветку:
+
+| Ветка | Когда |
+|-------|--------|
+| **VPS / Linux** | SSH → существующий PZ (SFTP) или Auto-Deploy панели на чистый VPS |
+| **Хостинг вручную** | XLGAMES / G-Portal и т.п. — RCON + FTP/SFTP из панели хостера |
+| **Локальный дедик** | Путь на этой машине |
+
+Для **хостинг / local** мастер ведёт по шагам:
 
 | Step | Fields | Required |
 |------|--------|----------|
@@ -50,13 +58,15 @@ Use **Проверить RCON** / **Проверить файлы** / **Пров
 - **Сохранить черновик** — saves without requiring FTP user/password or activation.
 - **Сохранить и активировать** — full profile; becomes active in the header switcher.
 
+**Редактирование:** «Изменить профиль» на Главной или ПКМ по серверу — тот же мастер без шага 0. Главная больше не дублирует create-form.
+
 For **Local path**, confirm the warning: direct edits on live cachedir are risky; prefer mirror workflow.
 
 Profiles live in `panel/data/servers/<id>.json` (gitignored). Passwords in `panel/data/secrets/<id>.json`.
 
 ### SFTP (Linux VPS)
 
-In step 3, choose **SFTP (SSH)**:
+In step 3 (or VPS branch), choose **SFTP (SSH)**:
 
 | Field | Notes |
 |-------|--------|

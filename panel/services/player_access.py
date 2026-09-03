@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 PANEL = Path(__file__).resolve().parents[1]
-DATA_DIR = PANEL / "data" / "player_access"
+from panel.paths import DATA_DIR as PANEL_DATA  # noqa: E402
+
+DATA_DIR = PANEL_DATA / "player_access"
 
 ELEVATED_LEVELS = frozenset({"admin", "moderator", "overseer", "gm", "observer", "priority"})
 DEFAULT_LEVEL = "user"

@@ -7,10 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from panel.logs_hub import latest_text
+from panel.paths import DATA_DIR
 
 ROOT = Path(__file__).resolve().parents[1]
 def _dump_candidates() -> list[Path]:
-    found = [Path(__file__).resolve().parent / "data" / "mb_safehouses.json"]
+    found = [DATA_DIR / "mb_safehouses.json"]
     try:
         from panel.servers import cachedir_paths
 

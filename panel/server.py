@@ -25,7 +25,9 @@ from pydantic import BaseModel, Field
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
 PANEL = Path(__file__).resolve().parent
-BACKUPS = PANEL / "backups"
+from panel.paths import BACKUPS_DIR, DATA_DIR, UPDATES_DIR, ensure_state_dirs  # noqa: E402
+
+BACKUPS = BACKUPS_DIR
 STATIC = PANEL / "static"
 SERVER_LOG_CANDIDATES = ("server-console.txt",)
 
@@ -131,6 +133,8 @@ from panel.routes.workshop import router as workshop_router  # noqa: E402
 from panel.routes.admintools import router as admintools_router  # noqa: E402
 from panel.routes.telemetry import router as telemetry_router  # noqa: E402
 from panel.routes.provision import router as provision_router  # noqa: E402
+from panel.routes.updates import router as updates_router  # noqa: E402
+from panel.version import __version__ as PANEL_VERSION  # noqa: E402
 from panel.services.event_bus import bus as event_bus  # noqa: E402
 from panel.security_hardening import (  # noqa: E402
     SecurityHeadersMiddleware,
@@ -458,6 +462,7 @@ async def lifespan(app: FastAPI):
     global _scheduler_task, _monitor_task, _telemetry_task, _status_bus_task, _console_tail_task
     event_bus.bind_loop(asyncio.get_running_loop())
     try:
+        ensure_state_dirs()
         ensure_migrated()
     except Exception:
         traceback.print_exc()
@@ -484,7 +489,7 @@ async def lifespan(app: FastAPI):
 _PUBLIC = is_public_deployment()
 app = FastAPI(
     title="MEATBALLS PZ Control Panel",
-    version="3.20.0",
+    version=PANEL_VERSION,
     lifespan=lifespan,
     docs_url=None if _PUBLIC else "/docs",
     redoc_url=None if _PUBLIC else "/redoc",
@@ -496,6 +501,7 @@ app.include_router(workshop_router)
 app.include_router(admintools_router)
 app.include_router(telemetry_router)
 app.include_router(provision_router)
+app.include_router(updates_router)
 
 
 @app.middleware("http")

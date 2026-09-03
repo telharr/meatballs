@@ -10,9 +10,11 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 PANEL = Path(__file__).resolve().parents[1]
+from panel.paths import DATA_DIR  # noqa: E402
+
 CMD_FILE = "mb_admintools_cmd.txt"
 REMOTE_DEFAULT = "/ServerWorld/Lua/mb_admintools_cmd.txt"
-QUEUE_DIR = PANEL / "data" / "admintools_queue"
+QUEUE_DIR = DATA_DIR / "admintools_queue"
 
 # Keep in sync with src/mods/AdminTools/.../AdminTools.lua
 CITIES: list[dict[str, Any]] = [

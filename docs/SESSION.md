@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-03 (panel 3.20.6 — server switch overlay ~3s)
+Last updated: 2026-09-03 (Sprint 11 now — panel updates via GitHub, 3.22.0)
 
 ## Host (do not commit secrets)
 
@@ -16,8 +16,12 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 ## Panel
 
-- Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. Next sprint: **6 — JVM process**
+- Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. **Now: Sprint 11** — обновления с GitHub; Sprint 10 мастер почти закрыт; later: **7 — JVM**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.22.0**: `PANEL_DATA_DIR` / frozen `%LocalAppData%\PZControlPanel\data`; banner обновлений; `/api/panel/updates*`; Inno `.env` onlyifdoesntexist
+- Panel **3.21.1**: мастер — нельзя «Далее» без полей; RCON/файлы авто-probe; зелёная/красная подсветка после проверки
+- Panel **3.21.0**: один CTA «Добавить сервер» → шаг 0 (VPS / хостинг / local); форма create уехала с Главной в мастер; Edit = тот же shell
+- Panel **3.20.6**: header Uptime = game server; overlay ~3s при переключении профиля
 - Panel **3.20.2**: список серверов — кнопки; reconcile индекса с `servers/*.json`; при `AUTH_DISABLED` авто `enterLocalAuth()` (раньше SPA зависала на модалке → пустой сайдбар / NO SERVER при живом API)
 - Panel **3.20.1**: сохранённые профили снова в сайдбаре (switcher больше не прячется вместе с телеметрией)
 - Panel **3.20.0**: VPS hardening — login lockout, cookie-only JWT, CSRF, step-up, TOTP, encrypted secrets, security headers, public health redact; see `docs/SECURITY.md`

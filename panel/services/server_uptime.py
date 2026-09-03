@@ -15,8 +15,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-PANEL = Path(__file__).resolve().parents[1]
-STATE_FILE = PANEL / "data" / "server_uptime.json"
+from panel.paths import DATA_DIR
+
+STATE_FILE = DATA_DIR / "server_uptime.json"
 
 # LOG  : General      f:0 st:188\xa0400\xa0465> ...
 _ST_RE = re.compile(r"\bst:([0-9\s\u00a0\u202f\u2009]+)\s*>", re.I)

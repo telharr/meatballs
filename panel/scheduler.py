@@ -9,7 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
+from panel.paths import DATA_DIR
+
 SCHEDULER_FILE = DATA_DIR / "scheduler.json"
 
 DEFAULT_TASKS: list[dict[str, Any]] = [

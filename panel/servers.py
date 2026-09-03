@@ -13,13 +13,14 @@ from typing import Any
 
 from ftp_client import FtpClient, FtpConfig, load_dotenv
 from panel.prefs import load_prefs, save_prefs
+from panel.paths import DATA_DIR
 from panel.rcon_client import RconClient, RconConfig
 
 PANEL = Path(__file__).resolve().parent
 ROOT = PANEL.parent
-INDEX_FILE = PANEL / "data" / "servers.json"
-PROFILES_DIR = PANEL / "data" / "servers"
-SECRETS_DIR = PANEL / "data" / "secrets"
+INDEX_FILE = DATA_DIR / "servers.json"
+PROFILES_DIR = DATA_DIR / "servers"
+SECRETS_DIR = DATA_DIR / "secrets"
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,40}$")
 
 VIEW_REQUIREMENTS: dict[str, str] = {

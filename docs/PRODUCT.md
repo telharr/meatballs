@@ -126,9 +126,25 @@
 4. Записать `capabilities`: `{ rcon, files, query, process }`
 5. Вкладки без capability — disabled с текстом «нужен FTP», не 500
 
+### Единый вход (Sprint 10)
+
+Одна кнопка **«Добавить сервер»** (у переключателя профилей / empty state). Дальше шаг 0 выбирает ветку:
+
+| Ветка | Для кого | UI |
+|-------|----------|-----|
+| VPS / Linux | Свой сервер, SSH | SFTP к существующему PZ **или** Auto-Deploy панели |
+| Хостинг вручную | XLGAMES и аналоги | Шаги имя → RCON → файлы → порты → JVM |
+| Локальный дедик | Эта машина | Preset `local` + путь |
+
+**Редактирование** профиля — тот же мастер без шага 0. Главная показывает карточку подключения активного сервера, а не второй create-form.
+
 ---
 
 ## 6. Где мы сейчас (Deployment & packaging)
+
+Панель **3.22.0** — Sprint 11: обновления с GitHub Releases; state вне app (`PANEL_DATA_DIR` / LocalAppData); banner в UI.
+
+Панель **3.21.0** — Sprint 10: единый мастер добавления сервера (path picker + VPS/ручной/local).
 
 Панель **3.18.0** — zero-click installer + Amnezia-style VPS onboarding:
 

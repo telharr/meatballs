@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Any
 
 from panel.prefs import load_prefs, save_prefs
+from panel.paths import DATA_DIR
 
 PANEL = Path(__file__).resolve().parent
 ROOT = PANEL.parent
-DATA_FILE = PANEL / "data" / "slots.json"
+DATA_FILE = DATA_DIR / "slots.json"
 MOD_DIR = ROOT / "src" / "mods" / "MeatballsSlots"
 REMOTE_SLOTS = "/ServerWorld/Lua/mb_slots.txt"
 REMOTE_MOD = "/ServerWorld/mods/MeatballsSlots"
@@ -158,7 +159,7 @@ def set_slots(count: int, x: int = 0, y: int = 0, z: int = 0, prefix: str = "Dum
 
 def write_temp_line(data: dict[str, Any] | None = None) -> Path:
     snap = data or snapshot()
-    path = PANEL / "data" / ".mb_slots.txt"
+    path = DATA_DIR / ".mb_slots.txt"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         encode_line(snap["count"], snap["x"], snap["y"], snap["z"]),

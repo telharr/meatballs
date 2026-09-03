@@ -10,9 +10,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.20.6" />
+  <link rel="stylesheet" href="/static/style.css?v=3.22.0" />
 </head>
 <body class="no-server">
+  <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+    <div class="update-banner-inner">
+      <span id="update-banner-text">Доступно обновление панели</span>
+      <div class="update-banner-actions">
+        <a id="update-banner-notes" class="btn sm ghost" href="#" target="_blank" rel="noopener">Что нового</a>
+        <button type="button" class="btn sm primary" id="update-banner-install">Обновить</button>
+        <button type="button" class="btn sm ghost" id="update-banner-later">Позже</button>
+      </div>
+    </div>
+  </div>
   <header class="navbar">
     <div class="nav-brand">
       <img src="/static/assets/icon.ico" alt="" class="nav-logo" width="28" height="28" />
@@ -59,15 +69,18 @@
         <label class="server-switcher sidebar-server-switcher sr-only" data-i18n-title="nav.server">
           <select id="server-switcher" aria-label="Active server"></select>
         </label>
-        <div id="server-dd" class="server-dd" hidden>
-          <button type="button" id="server-dd-toggle" class="server-dd-toggle" aria-haspopup="listbox" aria-expanded="false" title="Выбрать сервер · ПКМ — меню">
-            <span class="server-dd-meta">
-              <span class="server-dd-label" data-i18n="server.current">Сейчас</span>
-              <span id="server-dd-current" class="server-dd-current">—</span>
-            </span>
-            <span class="server-dd-chev" aria-hidden="true">▾</span>
-          </button>
-          <div id="server-dd-menu" class="server-dd-menu hidden" role="listbox"></div>
+        <div class="sidebar-server-row">
+          <div id="server-dd" class="server-dd" hidden>
+            <button type="button" id="server-dd-toggle" class="server-dd-toggle" aria-haspopup="listbox" aria-expanded="false" title="Выбрать сервер · ПКМ — меню">
+              <span class="server-dd-meta">
+                <span class="server-dd-label" data-i18n="server.current">Сейчас</span>
+                <span id="server-dd-current" class="server-dd-current">—</span>
+              </span>
+              <span class="server-dd-chev" aria-hidden="true">▾</span>
+            </button>
+            <div id="server-dd-menu" class="server-dd-menu hidden" role="listbox"></div>
+          </div>
+          <button type="button" id="btn-server-add" class="btn-server-add" data-i18n-title="server.add" title="Добавить сервер" aria-label="Добавить сервер">+</button>
         </div>
         <p id="sidebar-no-server" class="sidebar-no-server muted hidden">Нет сохранённых профилей</p>
       </div>
@@ -86,9 +99,6 @@
         </button>
         <button type="button" class="nav-item" data-view="smoke" data-need="files">
           <span class="nav-icon">🧪</span> <span data-i18n="nav.smoke">Smoke test</span>
-        </button>
-        <button type="button" class="nav-item nav-item-add" id="btn-sidebar-add-server">
-          <span class="nav-icon">+</span> Добавить сервер
         </button>
       </nav>
       <p class="sidebar-label sidebar-label-gap" data-i18n="nav.world">Мир</p>
@@ -195,70 +205,20 @@
                 </div>
               </div>
             </div>
-            <h3 class="players-subhead">Подключить сервер</h3>
-            <p class="muted home-wizard-lead">Быстрый VPS через SSH — кнопка «Добавить сервер» внизу. Расширенный мастер — ниже.</p>
-            <div class="cap-strip" id="cap-strip"></div>
-            <div class="profile-crud">
-              <button type="button" class="btn sm" id="btn-profile-edit">Редактировать профиль</button>
-              <button type="button" class="btn sm danger" id="btn-profile-delete">Удалить профиль</button>
+            <div id="home-empty-add" class="home-empty-add hidden">
+              <p class="home-empty-title" data-i18n="server.empty_title">Нет подключённых серверов</p>
+              <p class="muted" data-i18n="server.empty_hint">Добавьте профиль — VPS по SSH, хостинг вручную или локальный дедик.</p>
+              <button type="button" class="btn primary" id="btn-home-empty-add" data-i18n="server.add">Добавить сервер</button>
             </div>
-            <details class="advanced-server-form">
-              <summary>Расширенная настройка профиля</summary>
-            <form id="server-form" class="server-form">
-              <input type="hidden" id="srv-edit-id" value="" />
-              <p class="wizard-step">1. Имя и хостер</p>
-              <label class="field"><span>Имя</span><input id="srv-name" required maxlength="80" placeholder="MEATBALLS" /></label>
-              <label class="field"><span>Хостер</span>
-                <select id="srv-hoster">
-                  <option value="xlgames">XLGAMES</option>
-                  <option value="vps">VPS / vanilla</option>
-                  <option value="local">Local dedi</option>
-                </select>
-              </label>
-              <label class="field"><span>Версия PZ</span><input id="srv-version" maxlength="20" placeholder="42.20.4" /></label>
-              <p class="wizard-step">2. RCON</p>
-              <label class="field"><span>RCON host</span><input id="srv-rcon-host" maxlength="200" placeholder="your.server.example" /></label>
-              <label class="field"><span>RCON port</span><input id="srv-rcon-port" type="number" value="16284" /></label>
-              <label class="field"><span>RCON password</span><input id="srv-rcon-pass" type="password" autocomplete="new-password" /></label>
-              <p class="wizard-step" data-i18n="wizard.step3">3. Файлы (FTP, SFTP или local path)</p>
-              <label class="field"><span data-i18n="wizard.files_kind">Файлы</span>
-                <select id="srv-files-kind">
-                  <option value="ftp">FTP</option>
-                  <option value="sftp">SFTP (SSH)</option>
-                  <option value="local">Local path</option>
-                </select>
-              </label>
-              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_host">Host</span><input id="srv-ftp-host" maxlength="200" /></label>
-              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_user">User</span><input id="srv-ftp-user" maxlength="120" /></label>
-              <label class="field srv-remote-only"><span data-i18n="wizard.ftp_pass">Password</span><input id="srv-ftp-pass" type="password" autocomplete="new-password" /></label>
-              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_port">SFTP port</span><input id="srv-sftp-port" type="number" value="22" /></label>
-              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_path">SSH key path</span><input id="srv-sftp-key-path" maxlength="500" placeholder="C:\Users\you\.ssh\id_ed25519" /></label>
-              <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_inline">Inline private key</span><textarea id="srv-sftp-key-inline" rows="3" maxlength="16000" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea></label>
-              <label class="field"><span data-i18n="wizard.root">Root / путь</span><input id="srv-files-root" maxlength="300" placeholder="/ServerWorld" /></label>
-              <label class="field"><span data-i18n="wizard.ini">INI</span><input id="srv-files-ini" maxlength="80" placeholder="world.ini" /></label>
-              <label class="toggle-label plugin-toggle"><input type="checkbox" id="srv-plugin-meatballs" /> <span data-i18n="wizard.plugin_meatballs">Включить модуль MEATBALLS</span></label>
-              <p class="wizard-step">4. Публичные порты</p>
-              <label class="field"><span>Публичный IP</span><input id="srv-public-host" maxlength="200" /></label>
-              <label class="field"><span>Game UDP</span><input id="srv-game-port" type="number" value="16282" /></label>
-              <label class="field"><span>Query UDP</span><input id="srv-query-port" type="number" value="16281" /></label>
-              <p class="wizard-step">5. Кто поднимает JVM</p>
-              <label class="field"><span>Процесс</span>
-                <select id="srv-process">
-                  <option value="none">none — хостер сам</option>
-                  <option value="local">local — эта машина</option>
-                </select>
-              </label>
-              <div class="server-form-actions">
-                <button type="button" class="btn sm" id="btn-srv-probe-rcon">Проверить RCON</button>
-                <button type="button" class="btn sm" id="btn-srv-probe-files">Проверить файлы</button>
-                <button type="button" class="btn sm" id="btn-srv-probe-query">Проверить Query</button>
-                <button type="button" class="btn sm" id="btn-srv-probe-all">Проверить каналы</button>
-                <button type="button" class="btn sm" id="btn-srv-save-draft">Сохранить черновик</button>
-                <button type="submit" class="btn primary sm">Сохранить и сделать активным</button>
+            <div id="home-connection-card" class="home-connection-card">
+              <h3 class="players-subhead" data-i18n="server.connection">Подключение</h3>
+              <p id="home-connection-summary" class="muted home-connection-summary">—</p>
+              <div class="cap-strip" id="cap-strip"></div>
+              <div class="profile-crud">
+                <button type="button" class="btn sm" id="btn-profile-edit" data-i18n="server.edit_profile">Изменить профиль</button>
+                <button type="button" class="btn sm danger" id="btn-profile-delete" data-i18n="server.delete_profile">Удалить профиль</button>
               </div>
-              <p id="srv-probe" class="muted server-probe"></p>
-            </form>
-            </details>
+            </div>
           </div>
         </div>
       </section>
@@ -794,10 +754,115 @@
     <div class="modal-card modal-wide amnezia-card">
       <div class="modal-head"><h3 data-i18n="onboarding.title">Добро пожаловать</h3></div>
       <div class="modal-body">
-        <p data-i18n="onboarding.body">Профилей серверов пока нет. Подключите VPS через SSH — как в AmneziaVPN.</p>
+        <p data-i18n="onboarding.body">Профилей серверов пока нет. Нажмите «Добавить сервер» — выберите VPS, хостинг или локальный дедик.</p>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn primary amnezia-pill-btn" id="btn-onboarding-go" data-i18n="onboarding.go">Настроить сервер</button>
+        <button type="button" class="btn primary amnezia-pill-btn" id="btn-onboarding-go" data-i18n="onboarding.go">Добавить сервер</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-server-wizard" class="amnezia-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="add-wiz-title">
+    <div class="amnezia-sheet amnezia-sheet-wide wizard-sheet">
+      <header class="amnezia-header">
+        <button type="button" class="amnezia-back" id="add-wiz-back" aria-label="Назад">←</button>
+        <h2 id="add-wiz-title" data-i18n="server.add">Добавить сервер</h2>
+        <button type="button" class="icon-btn add-wiz-close" id="add-wiz-close" aria-label="Закрыть">✕</button>
+      </header>
+      <p id="add-wiz-progress" class="add-wiz-progress muted"></p>
+
+      <div id="add-wiz-panel-path" class="wiz-panel" data-wiz-panel="path">
+        <p class="wiz-lead" data-i18n="server.path_lead">Как подключаем этот сервер?</p>
+        <div class="wiz-path-grid">
+          <button type="button" class="wiz-path-card" data-wiz-path="vps">
+            <span class="wiz-path-ico" aria-hidden="true">🖥</span>
+            <span class="wiz-path-title" data-i18n="server.path_vps">VPS / Linux</span>
+            <span class="wiz-path-desc muted" data-i18n="server.path_vps_desc">SSH: существующий PZ или Auto-Deploy панели</span>
+          </button>
+          <button type="button" class="wiz-path-card" data-wiz-path="hosting">
+            <span class="wiz-path-ico" aria-hidden="true">🎮</span>
+            <span class="wiz-path-title" data-i18n="server.path_hosting">Хостинг вручную</span>
+            <span class="wiz-path-desc muted" data-i18n="server.path_hosting_desc">RCON + FTP/SFTP и порты из панели хостера</span>
+          </button>
+          <button type="button" class="wiz-path-card wiz-path-card-wide" data-wiz-path="local">
+            <span class="wiz-path-ico" aria-hidden="true">📂</span>
+            <span class="wiz-path-title" data-i18n="server.path_local">Локальный дедик</span>
+            <span class="wiz-path-desc muted" data-i18n="server.path_local_desc">Путь на этой машине</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="add-wiz-panel-manual" class="wiz-panel hidden" data-wiz-panel="manual">
+        <form id="server-form" class="server-form wiz-server-form">
+          <input type="hidden" id="srv-edit-id" value="" />
+          <div class="wiz-step-block" data-wiz-step="1">
+            <p class="wizard-step">1. Имя и хостер</p>
+            <label class="field"><span>Имя</span><input id="srv-name" required maxlength="80" placeholder="MEATBALLS" /></label>
+            <label class="field"><span>Хостер</span>
+              <select id="srv-hoster">
+                <option value="xlgames">XLGAMES</option>
+                <option value="vps">VPS / vanilla</option>
+                <option value="local">Local dedi</option>
+              </select>
+            </label>
+            <label class="field"><span>Версия PZ</span><input id="srv-version" maxlength="20" placeholder="42.20.4" /></label>
+          </div>
+          <div class="wiz-step-block" data-wiz-step="2">
+            <p class="wizard-step">2. RCON</p>
+            <label class="field"><span>RCON host</span><input id="srv-rcon-host" maxlength="200" placeholder="your.server.example" /></label>
+            <label class="field"><span>RCON port</span><input id="srv-rcon-port" type="number" value="16284" /></label>
+            <label class="field"><span>RCON password</span><input id="srv-rcon-pass" type="password" autocomplete="new-password" /></label>
+            <button type="button" class="btn sm" id="btn-srv-probe-rcon">Проверить RCON</button>
+          </div>
+          <div class="wiz-step-block" data-wiz-step="3">
+            <p class="wizard-step" data-i18n="wizard.step3">3. Файлы (FTP, SFTP или local path)</p>
+            <label class="field"><span data-i18n="wizard.files_kind">Файлы</span>
+              <select id="srv-files-kind">
+                <option value="ftp">FTP</option>
+                <option value="sftp">SFTP (SSH)</option>
+                <option value="local">Local path</option>
+              </select>
+            </label>
+            <label class="field srv-remote-only"><span data-i18n="wizard.ftp_host">Host</span><input id="srv-ftp-host" maxlength="200" /></label>
+            <label class="field srv-remote-only"><span data-i18n="wizard.ftp_user">User</span><input id="srv-ftp-user" maxlength="120" /></label>
+            <label class="field srv-remote-only"><span data-i18n="wizard.ftp_pass">Password</span><input id="srv-ftp-pass" type="password" autocomplete="new-password" /></label>
+            <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_port">SFTP port</span><input id="srv-sftp-port" type="number" value="22" /></label>
+            <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_path">SSH key path</span><input id="srv-sftp-key-path" maxlength="500" placeholder="C:\Users\you\.ssh\id_ed25519" /></label>
+            <label class="field srv-sftp-only hidden"><span data-i18n="wizard.sftp_key_inline">Inline private key</span><textarea id="srv-sftp-key-inline" rows="3" maxlength="16000" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea></label>
+            <label class="field"><span data-i18n="wizard.root">Root / путь</span><input id="srv-files-root" maxlength="300" placeholder="/ServerWorld" /></label>
+            <label class="field"><span data-i18n="wizard.ini">INI</span><input id="srv-files-ini" maxlength="80" placeholder="world.ini" /></label>
+            <label class="toggle-label plugin-toggle"><input type="checkbox" id="srv-plugin-meatballs" /> <span data-i18n="wizard.plugin_meatballs">Включить модуль MEATBALLS</span></label>
+            <button type="button" class="btn sm" id="btn-srv-probe-files">Проверить файлы</button>
+          </div>
+          <div class="wiz-step-block" data-wiz-step="4">
+            <p class="wizard-step">4. Публичные порты</p>
+            <label class="field"><span>Публичный IP</span><input id="srv-public-host" maxlength="200" /></label>
+            <label class="field"><span>Game UDP</span><input id="srv-game-port" type="number" value="16282" /></label>
+            <label class="field"><span>Query UDP</span><input id="srv-query-port" type="number" value="16281" /></label>
+            <button type="button" class="btn sm" id="btn-srv-probe-query">Проверить Query</button>
+          </div>
+          <div class="wiz-step-block" data-wiz-step="5">
+            <p class="wizard-step">5. Кто поднимает JVM</p>
+            <label class="field"><span>Процесс</span>
+              <select id="srv-process">
+                <option value="none">none — хостер сам</option>
+                <option value="local">local — эта машина</option>
+              </select>
+            </label>
+            <div class="server-form-actions">
+              <button type="button" class="btn sm" id="btn-srv-probe-all">Проверить каналы</button>
+              <button type="button" class="btn sm" id="btn-srv-save-draft">Сохранить черновик</button>
+              <button type="submit" class="btn primary sm" id="btn-srv-save-active">Сохранить и сделать активным</button>
+            </div>
+          </div>
+          <p id="srv-probe" class="muted server-probe"></p>
+        </form>
+      </div>
+
+      <div id="add-wiz-footer" class="add-wiz-footer hidden">
+        <button type="button" class="btn ghost" id="add-wiz-cancel" data-i18n="common.cancel">Отмена</button>
+        <button type="button" class="btn" id="add-wiz-prev" data-i18n="wizard.prev">← Назад</button>
+        <button type="button" class="btn primary" id="add-wiz-next" data-i18n="wizard.next">Далее →</button>
       </div>
     </div>
   </div>
@@ -943,7 +1008,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.20.6"></script>
-  <script src="/static/app.js?v=3.20.6"></script>
+  <script src="/static/i18n.js?v=3.22.0"></script>
+  <script src="/static/app.js?v=3.22.0"></script>
 </body>
 </html>

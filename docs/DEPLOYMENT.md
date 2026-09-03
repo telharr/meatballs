@@ -304,6 +304,30 @@ Artifacts (gitignored): `dist/`, `build/`, `packaging/Output/`, `*.exe`.
 
 ---
 
+## Panel self-update (Sprint 11 / 3.22.0)
+
+Source of truth: **GitHub Releases** on `PANEL_UPDATE_REPO` (default `telharr/meatballs`). Tag `vX.Y.Z` must match `panel/version.py`.
+
+| Install | How state is kept | How to update |
+|---------|-------------------|---------------|
+| **Windows setup** | `%LOCALAPPDATA%\PZControlPanel\data` (migrated from `{app}\panel\data` once) | Banner → download setup → Inno; `.env` uses `onlyifdoesntexist` |
+| **Docker** | volumes `panel-data` → `/data`, `panel-mirror` → `/mirror` | `docker compose pull && docker compose up -d` (**never** `down -v`) |
+| **git + python** | `panel/data/` (gitignored) | `git fetch && git checkout vX.Y.Z` + restart |
+
+API (admin): `GET /api/panel/updates`, `POST .../download`, `POST .../apply`, `POST .../snooze`.
+
+Optional env:
+
+```ini
+PANEL_UPDATE_REPO=telharr/meatballs
+PANEL_DATA_DIR=C:\path\to\data
+PANEL_STATE_DIR=%LOCALAPPDATA%\PZControlPanel
+```
+
+Release checklist: publish setup.exe + optional `SHA256SUMS`; bump `panel/version.py` and Inno `MyAppVersion`.
+
+---
+
 ## Security checklist
 
 See **[docs/SECURITY.md](SECURITY.md)** for VPS hardening (TLS, rate limits, 2FA, firewall, prebuilt images).

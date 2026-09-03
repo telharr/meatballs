@@ -14,9 +14,9 @@ from typing import Any
 
 from panel.servers import active_id, mirror_root
 from panel.services.workshop_downloader import list_local_workshop_items, read_workshop_ids
+from panel.paths import DATA_DIR
 
-ROOT = Path(__file__).resolve().parents[2]
-STATE_DIR = ROOT / "panel" / "data"
+STATE_DIR = DATA_DIR
 STATE_FILE = STATE_DIR / "workshop_monitor.json"
 STEAM_API = "https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/"
 

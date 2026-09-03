@@ -38,6 +38,12 @@ const state = {
   vpsSetupMode: "sftp",
   vpsProvisionPoll: null,
   editingServerId: null,
+  addWizard: {
+    mode: "create", // create | edit
+    path: null, // path | vps | hosting | local
+    step: 0, // 0 = path picker; 1..5 = manual steps
+    fromWizard: false,
+  },
   smokePoll: null,
   sessionOk: false,
   csrf: null,
@@ -48,6 +54,7 @@ const state = {
   authMode: "login",
   appBootstrapped: false,
   localBypass: false,
+  panelUpdate: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -516,6 +523,94 @@ async function bootstrapApp() {
   connectEventWs();
   api("/api/telemetry/stats").then(renderTelemetryBar).catch(() => {});
   api("/api/status").then(applyStatusPayload).catch(() => {});
+  checkPanelUpdates().catch(() => {});
+}
+
+async function checkPanelUpdates(force = false) {
+  try {
+    const q = force ? "?force=true" : "";
+    const data = await api(`/api/panel/updates${q}`);
+    state.panelUpdate = data;
+    renderUpdateBanner(data);
+  } catch {
+    /* non-admin or offline */
+  }
+}
+
+function renderUpdateBanner(data) {
+  const banner = $("#update-banner");
+  if (!banner) return;
+  const show = !!(data && data.ok && data.update_available && !data.snoozed);
+  banner.classList.toggle("hidden", !show);
+  if (!show) return;
+  const text = $("#update-banner-text");
+  if (text) {
+    text.textContent = t("update.available", {
+      latest: data.latest,
+      current: data.current,
+    });
+  }
+  const notes = $("#update-banner-notes");
+  if (notes) {
+    if (data.html_url) {
+      notes.href = data.html_url;
+      notes.classList.remove("hidden");
+    } else {
+      notes.classList.add("hidden");
+    }
+  }
+  const install = $("#update-banner-install");
+  if (install) {
+    install.textContent = t("update.install");
+    install.disabled = false;
+  }
+}
+
+async function installPanelUpdate() {
+  const data = state.panelUpdate || {};
+  const btn = $("#update-banner-install");
+  if (btn) btn.disabled = true;
+  try {
+    if (data.apply_supported) {
+      showToast(t("update.downloading"));
+      await api("/api/panel/updates/download", { method: "POST", body: "{}" });
+      showToast(t("update.launching"));
+      await api("/api/panel/updates/apply", { method: "POST", body: "{}" });
+      showToast("Установщик запущен — перезапустите панель после setup");
+      return;
+    }
+    if (data.channel === "docker_or_git" || !data.asset) {
+      const hint = data.docker_hint || data.git_hint || "";
+      showToast(hint ? `Обновление: ${hint}` : `Доступна ${data.latest} — см. GitHub Releases`, "ok");
+      if (data.html_url) window.open(data.html_url, "_blank", "noopener");
+      return;
+    }
+    // Non-frozen Windows with asset: open download URL
+    if (data.asset && data.asset.url) {
+      window.open(data.asset.url, "_blank", "noopener");
+      showToast("Скачайте setup и установите поверх — профили в data не в дистрибутиве");
+      return;
+    }
+    showToast("Автоустановка недоступна на этой сборке — обновите вручную", "err");
+  } catch (e) {
+    showToast(e.message || String(e), "err");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function snoozePanelUpdate() {
+  try {
+    const latest = state.panelUpdate?.latest || "";
+    await api("/api/panel/updates/snooze", {
+      method: "POST",
+      body: JSON.stringify({ version: latest }),
+    });
+    $("#update-banner")?.classList.add("hidden");
+    showToast(t("update.later"));
+  } catch (e) {
+    showToast(e.message, "err");
+  }
 }
 
 function telemetryClass(percent) {
@@ -728,13 +823,40 @@ function syncServerChrome() {
     if (note) {
       note.textContent = saved
         ? "Выберите сохранённый сервер в списке слева — статус и порты появятся после активации."
-        : "Сначала добавьте сервер (сайдбар «+ Добавить сервер»), затем появятся статус, порты и игроки.";
+        : "Сначала нажмите «+» у списка серверов и добавьте профиль — затем появятся статус, порты и игроки.";
     }
+    const empty = $("#home-empty-add");
+    const conn = $("#home-connection-card");
+    if (empty) empty.classList.toggle("hidden", saved);
+    if (conn) conn.classList.toggle("hidden", !saved);
+    updateHomeConnectionSummary();
     const players = $("#pill-players");
     if (players) players.textContent = "—";
     const uptime = $("#pill-uptime");
     if (uptime) uptime.textContent = "—";
+    return;
   }
+  const emptyLive = $("#home-empty-add");
+  const connLive = $("#home-connection-card");
+  if (emptyLive) emptyLive.classList.toggle("hidden", true);
+  if (connLive) connLive.classList.toggle("hidden", false);
+  updateHomeConnectionSummary();
+}
+
+function updateHomeConnectionSummary() {
+  const el = $("#home-connection-summary");
+  if (!el) return;
+  const active = (state.servers || []).find((s) => s.id === state.serversActive);
+  if (!active) {
+    el.textContent = hasSavedServers()
+      ? "Выберите сервер в списке слева"
+      : "—";
+    return;
+  }
+  const files = (active.files && active.files.kind) || "?";
+  const proc = (active.process && active.process.kind) || "none";
+  const host = serverHostHint(active);
+  el.textContent = `${active.name || active.id} · ${active.hoster || "?"} · files=${files} · process=${proc}${host ? ` · ${host}` : ""}`;
 }
 
 function applyCapabilities() {
@@ -1320,7 +1442,7 @@ function toggleServerPickerPopover() {
   if (!pop) return;
   const rows = state.servers || [];
   if (!rows.length) {
-    openVpsSetupModal();
+    openAddServerWizard();
     return;
   }
   pop.classList.toggle("hidden");
@@ -1376,6 +1498,327 @@ function closeVpsSetupModal() {
   if (state.vpsProvisionPoll) {
     clearInterval(state.vpsProvisionPoll);
     state.vpsProvisionPoll = null;
+  }
+  if (state.addWizard?.fromWizard) {
+    state.addWizard.fromWizard = false;
+    openAddServerWizard({ resumePath: true });
+  }
+}
+
+function clearServerForm() {
+  state.editingServerId = null;
+  if ($("#srv-edit-id")) $("#srv-edit-id").value = "";
+  if ($("#srv-name")) $("#srv-name").value = "";
+  if ($("#srv-version")) $("#srv-version").value = "";
+  if ($("#srv-rcon-host")) $("#srv-rcon-host").value = "";
+  if ($("#srv-rcon-pass")) $("#srv-rcon-pass").value = "";
+  if ($("#srv-ftp-host")) $("#srv-ftp-host").value = "";
+  if ($("#srv-ftp-user")) $("#srv-ftp-user").value = "";
+  if ($("#srv-ftp-pass")) $("#srv-ftp-pass").value = "";
+  if ($("#srv-sftp-key-inline")) $("#srv-sftp-key-inline").value = "";
+  if ($("#srv-sftp-key-path")) $("#srv-sftp-key-path").value = "";
+  if ($("#srv-public-host")) $("#srv-public-host").value = "";
+  if ($("#srv-probe")) $("#srv-probe").textContent = "";
+  if ($("#srv-hoster")) $("#srv-hoster").value = "xlgames";
+  if ($("#srv-files-kind")) $("#srv-files-kind").value = "ftp";
+  if ($("#srv-process")) $("#srv-process").value = "none";
+  if ($("#srv-plugin-meatballs")) $("#srv-plugin-meatballs").checked = false;
+  state.wizardCaps = { rcon: null, files: null, query: null, process: false, notes: {} };
+  clearFieldVerdicts();
+  applyHosterPreset();
+}
+
+const FIELD_VERDICT_GROUPS = {
+  name: ["srv-name"],
+  rcon: ["srv-rcon-host", "srv-rcon-port", "srv-rcon-pass"],
+  files: ["srv-ftp-host", "srv-ftp-user", "srv-ftp-pass", "srv-sftp-port", "srv-sftp-key-path", "srv-sftp-key-inline", "srv-files-root", "srv-files-ini"],
+  query: ["srv-public-host", "srv-game-port", "srv-query-port"],
+};
+
+function fieldLabelOf(el) {
+  return el?.closest?.(".field") || null;
+}
+
+function setFieldVerdict(ids, status) {
+  (ids || []).forEach((id) => {
+    const el = document.getElementById(id);
+    const field = fieldLabelOf(el);
+    if (!field) return;
+    field.classList.remove("field-ok", "field-bad");
+    if (status === "ok") field.classList.add("field-ok");
+    if (status === "bad") field.classList.add("field-bad");
+  });
+}
+
+function clearFieldVerdicts(group) {
+  const ids = group ? (FIELD_VERDICT_GROUPS[group] || []) : Object.values(FIELD_VERDICT_GROUPS).flat();
+  setFieldVerdict(ids, null);
+}
+
+function invalidateWizardProbe(channel) {
+  if (!state.wizardCaps) state.wizardCaps = { rcon: null, files: null, query: null, process: false, notes: {} };
+  if (channel === "rcon") {
+    state.wizardCaps.rcon = null;
+    clearFieldVerdicts("rcon");
+  } else if (channel === "files") {
+    state.wizardCaps.files = null;
+    clearFieldVerdicts("files");
+  } else if (channel === "query") {
+    state.wizardCaps.query = null;
+    clearFieldVerdicts("query");
+  }
+}
+
+function wizardMsg(key, fallback) {
+  const msg = t(key);
+  return msg === key ? fallback : msg;
+}
+
+function filesAuthFilled() {
+  const kind = $("#srv-files-kind")?.value || "ftp";
+  if (kind === "local") return true;
+  const pass = ($("#srv-ftp-pass")?.value || "").trim();
+  const keyPath = ($("#srv-sftp-key-path")?.value || "").trim();
+  const keyInline = ($("#srv-sftp-key-inline")?.value || "").trim();
+  if (kind === "sftp") return !!(pass || keyPath || keyInline);
+  return !!pass;
+}
+
+function validateWizardStep(step) {
+  const editing = state.addWizard?.mode === "edit";
+  if (step === 1) {
+    const name = ($("#srv-name")?.value || "").trim();
+    if (!name) {
+      setFieldVerdict(["srv-name"], "bad");
+      return { ok: false, message: wizardMsg("wizard.need_name", "Укажите имя сервера") };
+    }
+    setFieldVerdict(["srv-name"], "ok");
+    return { ok: true };
+  }
+  if (step === 2) {
+    const host = ($("#srv-rcon-host")?.value || "").trim();
+    const pass = ($("#srv-rcon-pass")?.value || "").trim();
+    if (!host || (!pass && !editing)) {
+      const bad = [];
+      if (!host) bad.push("srv-rcon-host");
+      if (!pass && !editing) bad.push("srv-rcon-pass");
+      setFieldVerdict(bad, "bad");
+      return { ok: false, message: wizardMsg("wizard.need_rcon", "Заполните RCON host и пароль") };
+    }
+    if (pass && state.wizardCaps.rcon !== true) {
+      return { ok: false, needProbe: "rcon", message: wizardMsg("wizard.need_rcon_probe", "Сначала проверьте RCON") };
+    }
+    if (!pass && editing && state.wizardCaps.rcon !== true) {
+      setFieldVerdict(["srv-rcon-host", "srv-rcon-port"], "ok");
+      return { ok: true, skippedProbe: true };
+    }
+    return { ok: true };
+  }
+  if (step === 3) {
+    const kind = $("#srv-files-kind")?.value || "ftp";
+    const root = ($("#srv-files-root")?.value || "").trim();
+    if (!root) {
+      setFieldVerdict(["srv-files-root"], "bad");
+      return { ok: false, message: wizardMsg("wizard.need_files_root", "Укажите root / путь") };
+    }
+    if (kind !== "local") {
+      const host = ($("#srv-ftp-host")?.value || "").trim();
+      const user = ($("#srv-ftp-user")?.value || "").trim();
+      if (!host || !user) {
+        if (!host) setFieldVerdict(["srv-ftp-host"], "bad");
+        if (!user) setFieldVerdict(["srv-ftp-user"], "bad");
+        return { ok: false, message: wizardMsg("wizard.need_files", "Заполните доступ к файлам") };
+      }
+      if (!filesAuthFilled() && !editing) {
+        setFieldVerdict(["srv-ftp-pass", "srv-sftp-key-path", "srv-sftp-key-inline"], "bad");
+        return { ok: false, message: wizardMsg("wizard.need_files_auth", "Укажите пароль или SSH-ключ") };
+      }
+    }
+    if ((filesAuthFilled() || kind === "local") && state.wizardCaps.files !== true) {
+      return { ok: false, needProbe: "files", message: wizardMsg("wizard.need_files_probe", "Сначала проверьте файлы") };
+    }
+    if (editing && !filesAuthFilled() && kind !== "local" && state.wizardCaps.files !== true) {
+      setFieldVerdict(["srv-files-root", "srv-ftp-host", "srv-ftp-user"], "ok");
+      return { ok: true, skippedProbe: true };
+    }
+    return { ok: true };
+  }
+  if (step === 4) {
+    const host = ($("#srv-public-host")?.value || "").trim();
+    if (!host) {
+      setFieldVerdict(["srv-public-host"], "bad");
+      return { ok: false, message: wizardMsg("wizard.need_public", "Укажите публичный IP") };
+    }
+    if (state.wizardCaps.query === true) setFieldVerdict(FIELD_VERDICT_GROUPS.query, "ok");
+    else setFieldVerdict(["srv-public-host", "srv-game-port", "srv-query-port"], "ok");
+    return { ok: true };
+  }
+  return { ok: true };
+}
+
+async function ensureWizardStepReady(step) {
+  let gate = validateWizardStep(step);
+  if (gate.ok) return gate;
+  if (gate.needProbe === "rcon") {
+    setServerProbe(wizardMsg("wizard.checking", "Проверяем…"), true);
+    await probeServerRcon();
+    gate = validateWizardStep(step);
+    if (!gate.ok) {
+      return { ok: false, message: gate.message || wizardMsg("wizard.need_rcon_probe", "Сначала проверьте RCON") };
+    }
+    return gate;
+  }
+  if (gate.needProbe === "files") {
+    setServerProbe(wizardMsg("wizard.checking", "Проверяем…"), true);
+    await probeServerFiles();
+    gate = validateWizardStep(step);
+    if (!gate.ok) {
+      return { ok: false, message: gate.message || wizardMsg("wizard.need_files_probe", "Сначала проверьте файлы") };
+    }
+    return gate;
+  }
+  return gate;
+}
+
+function openAddServerWizard(opts = {}) {
+  const modal = $("#add-server-wizard");
+  if (!modal) return;
+  const mode = opts.mode === "edit" ? "edit" : "create";
+  state.addWizard.mode = mode;
+  state.addWizard.fromWizard = false;
+  if (opts.resumePath) {
+    state.addWizard.path = null;
+    state.addWizard.step = 0;
+  } else if (mode === "edit") {
+    state.addWizard.path = "hosting";
+    state.addWizard.step = 1;
+  } else {
+    state.addWizard.path = null;
+    state.addWizard.step = 0;
+    clearServerForm();
+  }
+  modal.classList.remove("hidden");
+  renderAddServerWizard();
+  if (window.I18n && typeof I18n.applyI18n === "function") I18n.applyI18n(modal);
+}
+
+function closeAddServerWizard() {
+  $("#add-server-wizard")?.classList.add("hidden");
+  state.addWizard.path = null;
+  state.addWizard.step = 0;
+  state.addWizard.fromWizard = false;
+  state.addWizard.mode = "create";
+  clearFieldVerdicts();
+}
+
+function renderAddServerWizard() {
+  const wiz = state.addWizard;
+  const pathPanel = $("#add-wiz-panel-path");
+  const manualPanel = $("#add-wiz-panel-manual");
+  const footer = $("#add-wiz-footer");
+  const title = $("#add-wiz-title");
+  const progress = $("#add-wiz-progress");
+  const nextBtn = $("#add-wiz-next");
+  const prevBtn = $("#add-wiz-prev");
+  const onPath = wiz.step === 0 && wiz.mode === "create";
+  if (pathPanel) pathPanel.classList.toggle("hidden", !onPath);
+  if (manualPanel) manualPanel.classList.toggle("hidden", onPath);
+  if (footer) footer.classList.toggle("hidden", onPath);
+  if (title) {
+    if (wiz.mode === "edit") {
+      const name = ($("#srv-name")?.value || "").trim() || "…";
+      const msg = t("server.edit_title", { name });
+      title.textContent = msg === "server.edit_title" ? `Профиль: ${name}` : msg;
+    } else {
+      const msg = t("server.add");
+      title.textContent = msg === "server.add" ? "Добавить сервер" : msg;
+    }
+  }
+  if (onPath) {
+    if (progress) progress.textContent = "";
+    return;
+  }
+  const step = Math.min(5, Math.max(1, wiz.step || 1));
+  wiz.step = step;
+  document.querySelectorAll(".wiz-step-block").forEach((el) => {
+    const n = Number(el.dataset.wizStep);
+    el.classList.toggle("hidden", n !== step);
+  });
+  if (progress) {
+    const msg = t("wizard.step_of", { step, total: 5 });
+    progress.textContent = msg === "wizard.step_of" ? `Шаг ${step}/5` : msg;
+  }
+  if (prevBtn) prevBtn.classList.toggle("hidden", step <= 1 && wiz.mode === "edit");
+  if (nextBtn) {
+    nextBtn.classList.toggle("hidden", step >= 5);
+    nextBtn.disabled = false;
+    nextBtn.textContent = t("wizard.next") === "wizard.next" ? "Далее →" : t("wizard.next");
+  }
+  toggleServerFormKind();
+}
+
+function selectAddServerPath(path) {
+  if (path === "vps") {
+    state.addWizard.path = "vps";
+    state.addWizard.fromWizard = true;
+    $("#add-server-wizard")?.classList.add("hidden");
+    openVpsSetupModal();
+    return;
+  }
+  state.addWizard.path = path === "local" ? "local" : "hosting";
+  state.addWizard.step = 1;
+  if (path === "local") {
+    if ($("#srv-hoster")) $("#srv-hoster").value = "local";
+    applyHosterPreset();
+  } else if (path === "hosting") {
+    if ($("#srv-hoster")) $("#srv-hoster").value = "xlgames";
+    applyHosterPreset();
+  }
+  clearFieldVerdicts();
+  state.wizardCaps = { rcon: null, files: null, query: null, process: false, notes: {} };
+  renderAddServerWizard();
+}
+
+function addWizardBack() {
+  const wiz = state.addWizard;
+  if (wiz.mode === "edit") {
+    if (wiz.step > 1) {
+      wiz.step -= 1;
+      renderAddServerWizard();
+      return;
+    }
+    closeAddServerWizard();
+    return;
+  }
+  if (wiz.step > 1) {
+    wiz.step -= 1;
+    renderAddServerWizard();
+    return;
+  }
+  if (wiz.step === 1) {
+    wiz.step = 0;
+    wiz.path = null;
+    renderAddServerWizard();
+    return;
+  }
+  closeAddServerWizard();
+}
+
+async function addWizardNext() {
+  const wiz = state.addWizard;
+  if (wiz.step >= 5) return;
+  const nextBtn = $("#add-wiz-next");
+  if (nextBtn) nextBtn.disabled = true;
+  try {
+    const gate = await ensureWizardStepReady(wiz.step);
+    if (!gate.ok) {
+      showToast(gate.message || "Заполните шаг", "err");
+      return;
+    }
+    wiz.step += 1;
+    renderAddServerWizard();
+  } finally {
+    if (nextBtn) nextBtn.disabled = false;
   }
 }
 
@@ -1576,7 +2019,9 @@ async function submitVpsSetup(e) {
     const created = await apiStepUp("/api/servers", { method: "POST", body: JSON.stringify(serverPayload) });
     await api(`/api/servers/${encodeURIComponent(created.id)}/activate`, { method: "POST", body: "{}" });
     $("#vps-secret").value = "";
+    state.addWizard.fromWizard = false;
     closeVpsSetupModal();
+    closeAddServerWizard();
     $("#onboarding-modal")?.classList.add("hidden");
     await loadServers();
     await loadHealth();
@@ -1612,6 +2057,7 @@ async function loadServers() {
     state.serversPresets = data.presets || {};
     renderServerSwitcher();
     applyCapabilities();
+    updateHomeConnectionSummary();
     if (state.activeView && viewGate(state.activeView).ok === false) switchView("home");
   } catch (e) {
     const sel = $("#server-switcher");
@@ -1874,12 +2320,14 @@ async function probeServerRcon() {
     });
     state.wizardCaps.rcon = true;
     state.wizardCaps.notes = { ...(state.wizardCaps.notes || {}), rcon: data.output || "players ok" };
+    setFieldVerdict(FIELD_VERDICT_GROUPS.rcon, "ok");
     renderWizardCaps();
-    setServerProbe(data.output || "RCON ok", true);
+    setServerProbe(data.output || wizardMsg("wizard.verified", "Данные подтверждены"), true);
     showToast("RCON отвечает");
   } catch (e) {
     state.wizardCaps.rcon = false;
     state.wizardCaps.notes = { ...(state.wizardCaps.notes || {}), rcon: e.message };
+    setFieldVerdict(FIELD_VERDICT_GROUPS.rcon, "bad");
     renderWizardCaps();
     setServerProbe(e.message, false);
     showToast(e.message, "err");
@@ -1911,12 +2359,17 @@ async function probeServerFiles() {
     ].filter(Boolean).join(" · ");
     state.wizardCaps.files = !!data.ok;
     state.wizardCaps.notes = { ...(state.wizardCaps.notes || {}), files: detail || names || data.error || (data.ok ? "ok" : "нет") };
+    const fileIds = kind === "local"
+      ? ["srv-files-root", "srv-files-ini"]
+      : FIELD_VERDICT_GROUPS.files;
+    setFieldVerdict(fileIds, data.ok ? "ok" : "bad");
     renderWizardCaps();
     setServerProbe(data.ok ? `Файлы: ${detail || names || "ok"}` : (data.error || "нет каталога"), data.ok);
     showToast(data.ok ? "Файлы доступны" : (data.error || "файлы недоступны"), data.ok ? "ok" : "err");
   } catch (e) {
     state.wizardCaps.files = false;
     state.wizardCaps.notes = { ...(state.wizardCaps.notes || {}), files: e.message };
+    setFieldVerdict(FIELD_VERDICT_GROUPS.files, "bad");
     renderWizardCaps();
     setServerProbe(e.message, false);
     showToast(e.message, "err");
@@ -1933,10 +2386,12 @@ async function probeServerQuery() {
     });
     state.wizardCaps.query = !!data.ok;
     state.wizardCaps.notes = { ...(state.wizardCaps.notes || {}), query: data.ok ? "A2S ok" : (data.error || "нет ответа") };
+    setFieldVerdict(FIELD_VERDICT_GROUPS.query, data.ok ? "ok" : "bad");
     renderWizardCaps();
     setServerProbe(data.ok ? "Query A2S отвечает" : (data.error || "Query молчит"), !!data.ok);
   } catch (e) {
     state.wizardCaps.query = false;
+    setFieldVerdict(FIELD_VERDICT_GROUPS.query, "bad");
     setServerProbe(e.message, false);
     showToast(e.message, "err");
   }
@@ -1953,6 +2408,9 @@ async function probeServerAll() {
       process: !!data.process,
       notes: data.notes || {},
     };
+    setFieldVerdict(FIELD_VERDICT_GROUPS.rcon, data.rcon ? "ok" : "bad");
+    setFieldVerdict(FIELD_VERDICT_GROUPS.files, data.files ? "ok" : "bad");
+    setFieldVerdict(FIELD_VERDICT_GROUPS.query, data.query ? "ok" : "bad");
     renderWizardCaps();
     const parts = ["rcon", "files", "query", "process"].map((k) => `${k}:${data[k] ? "да" : "нет"}`);
     setServerProbe(parts.join(" · "), !!(data.rcon || data.files));
@@ -1999,6 +2457,7 @@ async function submitServerForm(e, { draft = false } = {}) {
     if (activeCapabilities().files) loadConfigs().catch(() => {});
     applyCapabilities();
     showToast(draft ? `Черновик: ${created.name}` : `Сохранён и активен: ${created.name}`);
+    if (!draft) closeAddServerWizard();
   } catch (err) {
     showToast(err.message, "err");
   }
@@ -2031,6 +2490,14 @@ function fillFormFromProfile(p) {
   $("#srv-game-port").value = (p.public && p.public.game_port) || 16282;
   $("#srv-query-port").value = (p.public && p.public.query_port) || 16281;
   $("#srv-process").value = (p.process && p.process.kind) || "none";
+  state.wizardCaps = {
+    rcon: null,
+    files: null,
+    query: null,
+    process: (p.process && p.process.kind) === "local",
+    notes: {},
+  };
+  clearFieldVerdicts();
   toggleServerFormKind();
 }
 
@@ -2045,8 +2512,7 @@ async function editProfileById(serverId) {
     return;
   }
   fillFormFromProfile(profile);
-  switchView("home");
-  document.getElementById("server-form")?.scrollIntoView({ behavior: "smooth" });
+  openAddServerWizard({ mode: "edit" });
   showToast(`Редактирование: ${name}`);
 }
 
@@ -4230,10 +4696,14 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeServerDropdown();
     closeServerContextMenu();
+    if (!$("#add-server-wizard")?.classList.contains("hidden")) closeAddServerWizard();
   }
 });
 $("#srv-hoster").onchange = applyHosterPreset;
-$("#srv-files-kind").onchange = toggleServerFormKind;
+$("#srv-files-kind").onchange = () => {
+  invalidateWizardProbe("files");
+  toggleServerFormKind();
+};
 $("#btn-srv-probe-rcon").onclick = probeServerRcon;
 $("#btn-srv-probe-files").onclick = probeServerFiles;
 $("#btn-srv-probe-query").onclick = probeServerQuery;
@@ -4241,11 +4711,35 @@ $("#btn-srv-probe-all").onclick = probeServerAll;
 $("#srv-process").onchange = renderWizardCaps;
 $("#server-form").onsubmit = (e) => submitServerForm(e, { draft: false });
 $("#btn-srv-save-draft").onclick = (e) => submitServerForm(e, { draft: true });
-$("#btn-profile-edit").onclick = () => editActiveProfile();
+
+function bindWizardFieldInvalidation() {
+  const map = [
+    [["srv-name"], null],
+    [["srv-rcon-host", "srv-rcon-port", "srv-rcon-pass"], "rcon"],
+    [["srv-ftp-host", "srv-ftp-user", "srv-ftp-pass", "srv-sftp-port", "srv-sftp-key-path", "srv-sftp-key-inline", "srv-files-root", "srv-files-ini"], "files"],
+    [["srv-public-host", "srv-game-port", "srv-query-port"], "query"],
+  ];
+  map.forEach(([ids, channel]) => {
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.wizBound) return;
+      el.dataset.wizBound = "1";
+      el.addEventListener("input", () => {
+        if (channel) invalidateWizardProbe(channel);
+        else clearFieldVerdicts("name");
+      });
+      el.addEventListener("change", () => {
+        if (channel) invalidateWizardProbe(channel);
+        else clearFieldVerdicts("name");
+      });
+    });
+  });
+}
+bindWizardFieldInvalidation();$("#btn-profile-edit").onclick = () => editActiveProfile();
 $("#btn-profile-delete").onclick = () => deleteActiveProfile();
 $("#btn-onboarding-go").onclick = () => {
   $("#onboarding-modal")?.classList.add("hidden");
-  openVpsSetupModal();
+  openAddServerWizard();
 };
 $("#vps-setup-form").onsubmit = submitVpsSetup;
 $("#vps-setup-back").onclick = closeVpsSetupModal;
@@ -4259,9 +4753,21 @@ if (mobileServerPicker) {
     toggleServerPickerPopover();
   };
 }
-$("#btn-bottom-add-server").onclick = () => openVpsSetupModal();
-$("#btn-sidebar-add-server")?.addEventListener("click", () => openVpsSetupModal());
-$("#btn-home-add-server")?.addEventListener("click", () => openVpsSetupModal());
+$("#btn-bottom-add-server").onclick = () => openAddServerWizard();
+$("#btn-server-add")?.addEventListener("click", () => openAddServerWizard());
+$("#btn-home-empty-add")?.addEventListener("click", () => openAddServerWizard());
+$("#btn-home-add-server")?.addEventListener("click", () => openAddServerWizard());
+document.querySelectorAll("[data-wiz-path]").forEach((btn) => {
+  btn.addEventListener("click", () => selectAddServerPath(btn.dataset.wizPath));
+});
+$("#add-wiz-close")?.addEventListener("click", () => closeAddServerWizard());
+$("#add-wiz-cancel")?.addEventListener("click", () => closeAddServerWizard());
+$("#add-wiz-back")?.addEventListener("click", () => addWizardBack());
+$("#add-wiz-prev")?.addEventListener("click", () => addWizardBack());
+$("#add-wiz-next")?.addEventListener("click", () => addWizardNext());
+$("#add-server-wizard")?.addEventListener("click", (e) => {
+  if (e.target === $("#add-server-wizard")) closeAddServerWizard();
+});
 document.addEventListener("click", (e) => {
   const pop = $("#server-picker-popover");
   const picker = $("#mobile-server-picker");
@@ -4271,7 +4777,7 @@ document.addEventListener("click", (e) => {
     }
   }
   const dd = $("#server-dd");
-  if (dd && !dd.contains(e.target)) closeServerDropdown();
+  if (dd && !dd.contains(e.target) && !e.target.closest?.("#btn-server-add")) closeServerDropdown();
   const ctx = $("#server-ctx");
   if (ctx && !ctx.classList.contains("hidden") && !ctx.contains(e.target)) {
     closeServerContextMenu();
@@ -4329,6 +4835,12 @@ setInterval(() => {
   }
 }, 15000);
 setInterval(tickUptime, 1000);
+setInterval(() => {
+  if (state.appBootstrapped) checkPanelUpdates().catch(() => {});
+}, 6 * 60 * 60 * 1000);
+
+$("#update-banner-install")?.addEventListener("click", () => installPanelUpdate());
+$("#update-banner-later")?.addEventListener("click", () => snoozePanelUpdate());
 
 initTheme();
 try { initEditor(); } catch (e) { console.warn("initEditor failed", e); }
