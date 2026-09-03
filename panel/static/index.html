@@ -10,16 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.22.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.22.1" />
 </head>
 <body class="no-server">
-  <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+      <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
     <div class="update-banner-inner">
-      <span id="update-banner-text">Доступно обновление панели</span>
+      <span id="update-banner-text" data-i18n="update.banner_default">Доступно обновление панели</span>
       <div class="update-banner-actions">
-        <a id="update-banner-notes" class="btn sm ghost" href="#" target="_blank" rel="noopener">Что нового</a>
-        <button type="button" class="btn sm primary" id="update-banner-install">Обновить</button>
-        <button type="button" class="btn sm ghost" id="update-banner-later">Позже</button>
+        <a id="update-banner-notes" class="btn sm ghost" href="#" target="_blank" rel="noopener" data-i18n="update.notes">Что нового</a>
+        <button type="button" class="btn sm primary" id="update-banner-install" data-i18n="update.install">Обновить</button>
+        <button type="button" class="btn sm ghost" id="update-banner-later" data-i18n="update.later">Позже</button>
       </div>
     </div>
   </div>
@@ -82,7 +82,7 @@
           </div>
           <button type="button" id="btn-server-add" class="btn-server-add" data-i18n-title="server.add" title="Добавить сервер" aria-label="Добавить сервер">+</button>
         </div>
-        <p id="sidebar-no-server" class="sidebar-no-server muted hidden">Нет сохранённых профилей</p>
+        <p id="sidebar-no-server" class="sidebar-no-server muted hidden" data-i18n="sidebar.no_profiles">Нет сохранённых профилей</p>
       </div>
       <nav class="sidebar-nav">
         <button type="button" class="nav-item active" data-view="home">
@@ -110,25 +110,25 @@
       <p class="sidebar-label sidebar-label-gap" data-i18n="nav.people">Люди</p>
       <nav class="sidebar-nav">
         <button type="button" class="nav-item" data-view="players" data-need="rcon">
-          <span class="nav-icon">👥</span> Игроки
+          <span class="nav-icon">👥</span> <span data-i18n="nav.players">Игроки</span>
         </button>
         <button type="button" class="nav-item" data-view="bans" data-need="files">
-          <span class="nav-icon">⛔</span> Баны
+          <span class="nav-icon">⛔</span> <span data-i18n="nav.bans">Баны</span>
         </button>
         <button type="button" class="nav-item" data-view="npc" data-need="files" data-need-plugin="meatballs">
-          <span class="nav-icon">♟</span> NPC
+          <span class="nav-icon">♟</span> <span data-i18n="nav.npc">NPC</span>
         </button>
         <button type="button" class="nav-item" data-view="chat" data-need="files">
-          <span class="nav-icon">💬</span> Чат
+          <span class="nav-icon">💬</span> <span data-i18n="nav.chat">Чат</span>
         </button>
         <button type="button" class="nav-item" data-view="privates" data-need="files" data-need-plugin="meatballs">
-          <span class="nav-icon">⌂</span> Приваты
+          <span class="nav-icon">⌂</span> <span data-i18n="nav.privates">Приваты</span>
         </button>
       </nav>
-      <p class="sidebar-label sidebar-label-gap">Конфиг</p>
+      <p class="sidebar-label sidebar-label-gap" data-i18n="nav.config">Конфиг</p>
       <nav class="sidebar-nav">
         <button type="button" class="nav-item" data-view="files" data-need="files">
-          <span class="nav-icon">📁</span> Файлы
+          <span class="nav-icon">📁</span> <span data-i18n="nav.files">Файлы</span>
         </button>
         <button type="button" class="nav-item" data-view="mods" data-need="files">
           <span class="nav-icon">🧩</span> <span data-i18n="nav.mods">Моды</span>
@@ -137,10 +137,10 @@
           <span class="nav-icon">⚙</span> <span data-i18n="nav.workshop">Workshop</span>
         </button>
         <button type="button" class="nav-item" data-view="scheduler" data-need="rcon">
-          <span class="nav-icon">📅</span> Планировщик
+          <span class="nav-icon">📅</span> <span data-i18n="nav.scheduler">Планировщик</span>
         </button>
         <button type="button" class="nav-item" data-view="logs" data-need="files">
-          <span class="nav-icon">📋</span> Логи
+          <span class="nav-icon">📋</span> <span data-i18n="nav.logs">Логи</span>
         </button>
       </nav>
     </aside>
@@ -151,8 +151,8 @@
         <div class="card full-height home-layout">
           <div class="card-head">
             <div class="card-head-left">
-              <h2>Быстрое управление</h2>
-              <span class="hint" id="home-hint">нет активного сервера · добавьте профиль</span>
+              <h2 data-i18n="home.quick">Быстрое управление</h2>
+              <span class="hint" id="home-hint" data-i18n="home.hint_none">нет активного сервера · добавьте профиль</span>
             </div>
             <div class="terminal-tools">
               <button type="button" id="btn-home-refresh" class="btn sm" data-i18n="home.refresh">Обновить</button>
@@ -182,26 +182,26 @@
             </div>
             -->
             <div class="home-actions action-grid">
-              <button type="button" class="btn save" id="btn-home-save">Сохранить</button>
-              <button type="button" class="btn warn" id="btn-home-graceful">Рестарт 5м</button>
-              <button type="button" class="btn danger" id="btn-home-hard">Рестарт сейчас</button>
-              <button type="button" class="btn sm hidden" id="btn-home-local-start">Local Start</button>
-              <button type="button" class="btn sm danger hidden" id="btn-home-local-stop">Local Stop</button>
+              <button type="button" class="btn save" id="btn-home-save" data-i18n="home.save">Сохранить мир</button>
+              <button type="button" class="btn warn" id="btn-home-graceful" data-i18n="home.restart5">Рестарт 5 мин</button>
+              <button type="button" class="btn danger" id="btn-home-hard" data-i18n="home.restart_now">Рестарт сейчас</button>
+              <button type="button" class="btn sm hidden" id="btn-home-local-start" data-i18n="home.local_start">Local Start</button>
+              <button type="button" class="btn sm danger hidden" id="btn-home-local-stop" data-i18n="home.local_stop">Local Stop</button>
             </div>
-            <p class="muted home-host-note" id="home-host-note">Сначала добавьте сервер (сайдбар «+ Добавить сервер»), затем появятся статус, порты и игроки.</p>
+            <p class="muted home-host-note" id="home-host-note" data-i18n="home.note_add">Сначала нажмите «+» у списка серверов и добавьте профиль — затем появятся статус, порты и игроки.</p>
             <div class="home-widgets">
               <div class="home-widget home-widget-players">
                 <div class="widget-head">
-                  <h3 class="widget-title">Игроки онлайн</h3>
+                  <h3 class="widget-title" data-i18n="home.players_online">Игроки онлайн</h3>
               <span class="widget-badge server-live-only" id="home-players-count">0</span>
                 </div>
-                <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
+                <div id="home-players" class="home-players"><p class="muted" data-i18n="home.no_players">Нет игроков</p></div>
               </div>
               <div class="home-widget home-widget-health">
-                <h3 class="widget-title">Состояние и ошибки</h3>
+                <h3 class="widget-title" data-i18n="home.status_errors">Состояние и ошибки</h3>
                 <div class="health-terminal">
-                  <div id="home-status" class="home-health-lines"><p class="muted">Загрузка…</p></div>
-                  <ul id="home-errors" class="home-errors-list"><li class="muted">нет</li></ul>
+                  <div id="home-status" class="home-health-lines"><p class="muted" data-i18n="home.loading">Загрузка…</p></div>
+                  <ul id="home-errors" class="home-errors-list"><li class="muted" data-i18n="home.none">нет</li></ul>
                 </div>
               </div>
             </div>
@@ -796,23 +796,23 @@
         <form id="server-form" class="server-form wiz-server-form">
           <input type="hidden" id="srv-edit-id" value="" />
           <div class="wiz-step-block" data-wiz-step="1">
-            <p class="wizard-step">1. Имя и хостер</p>
-            <label class="field"><span>Имя</span><input id="srv-name" required maxlength="80" placeholder="MEATBALLS" /></label>
-            <label class="field"><span>Хостер</span>
+            <p class="wizard-step" data-i18n="wizard.step1">1. Имя и хостер</p>
+            <label class="field"><span data-i18n="wizard.name">Имя</span><input id="srv-name" required maxlength="80" placeholder="MEATBALLS" /></label>
+            <label class="field"><span data-i18n="wizard.hoster">Хостер</span>
               <select id="srv-hoster">
                 <option value="xlgames">XLGAMES</option>
                 <option value="vps">VPS / vanilla</option>
                 <option value="local">Local dedi</option>
               </select>
             </label>
-            <label class="field"><span>Версия PZ</span><input id="srv-version" maxlength="20" placeholder="42.20.4" /></label>
+            <label class="field"><span data-i18n="wizard.version">Версия PZ</span><input id="srv-version" maxlength="20" placeholder="42.20.4" /></label>
           </div>
           <div class="wiz-step-block" data-wiz-step="2">
-            <p class="wizard-step">2. RCON</p>
-            <label class="field"><span>RCON host</span><input id="srv-rcon-host" maxlength="200" placeholder="your.server.example" /></label>
-            <label class="field"><span>RCON port</span><input id="srv-rcon-port" type="number" value="16284" /></label>
-            <label class="field"><span>RCON password</span><input id="srv-rcon-pass" type="password" autocomplete="new-password" /></label>
-            <button type="button" class="btn sm" id="btn-srv-probe-rcon">Проверить RCON</button>
+            <p class="wizard-step" data-i18n="wizard.step2">2. RCON</p>
+            <label class="field"><span data-i18n="wizard.rcon_host">RCON host</span><input id="srv-rcon-host" maxlength="200" placeholder="your.server.example" /></label>
+            <label class="field"><span data-i18n="wizard.rcon_port">RCON port</span><input id="srv-rcon-port" type="number" value="16284" /></label>
+            <label class="field"><span data-i18n="wizard.rcon_pass">RCON password</span><input id="srv-rcon-pass" type="password" autocomplete="new-password" /></label>
+            <button type="button" class="btn sm" id="btn-srv-probe-rcon" data-i18n="wizard.probe_rcon">Проверить RCON</button>
           </div>
           <div class="wiz-step-block" data-wiz-step="3">
             <p class="wizard-step" data-i18n="wizard.step3">3. Файлы (FTP, SFTP или local path)</p>
@@ -832,27 +832,27 @@
             <label class="field"><span data-i18n="wizard.root">Root / путь</span><input id="srv-files-root" maxlength="300" placeholder="/ServerWorld" /></label>
             <label class="field"><span data-i18n="wizard.ini">INI</span><input id="srv-files-ini" maxlength="80" placeholder="world.ini" /></label>
             <label class="toggle-label plugin-toggle"><input type="checkbox" id="srv-plugin-meatballs" /> <span data-i18n="wizard.plugin_meatballs">Включить модуль MEATBALLS</span></label>
-            <button type="button" class="btn sm" id="btn-srv-probe-files">Проверить файлы</button>
+            <button type="button" class="btn sm" id="btn-srv-probe-files" data-i18n="wizard.probe_files">Проверить файлы</button>
           </div>
           <div class="wiz-step-block" data-wiz-step="4">
-            <p class="wizard-step">4. Публичные порты</p>
-            <label class="field"><span>Публичный IP</span><input id="srv-public-host" maxlength="200" /></label>
-            <label class="field"><span>Game UDP</span><input id="srv-game-port" type="number" value="16282" /></label>
-            <label class="field"><span>Query UDP</span><input id="srv-query-port" type="number" value="16281" /></label>
-            <button type="button" class="btn sm" id="btn-srv-probe-query">Проверить Query</button>
+            <p class="wizard-step" data-i18n="wizard.step4">4. Публичные порты</p>
+            <label class="field"><span data-i18n="wizard.public_ip">Публичный IP</span><input id="srv-public-host" maxlength="200" /></label>
+            <label class="field"><span data-i18n="wizard.game_udp">Game UDP</span><input id="srv-game-port" type="number" value="16282" /></label>
+            <label class="field"><span data-i18n="wizard.query_udp">Query UDP</span><input id="srv-query-port" type="number" value="16281" /></label>
+            <button type="button" class="btn sm" id="btn-srv-probe-query" data-i18n="wizard.probe_query">Проверить Query</button>
           </div>
           <div class="wiz-step-block" data-wiz-step="5">
-            <p class="wizard-step">5. Кто поднимает JVM</p>
-            <label class="field"><span>Процесс</span>
+            <p class="wizard-step" data-i18n="wizard.step5">5. Кто поднимает JVM</p>
+            <label class="field"><span data-i18n="wizard.process">Процесс</span>
               <select id="srv-process">
-                <option value="none">none — хостер сам</option>
-                <option value="local">local — эта машина</option>
+                <option value="none" data-i18n="wizard.process_none">none — хостер сам</option>
+                <option value="local" data-i18n="wizard.process_local">local — эта машина</option>
               </select>
             </label>
             <div class="server-form-actions">
-              <button type="button" class="btn sm" id="btn-srv-probe-all">Проверить каналы</button>
-              <button type="button" class="btn sm" id="btn-srv-save-draft">Сохранить черновик</button>
-              <button type="submit" class="btn primary sm" id="btn-srv-save-active">Сохранить и сделать активным</button>
+              <button type="button" class="btn sm" id="btn-srv-probe-all" data-i18n="wizard.probe_all">Проверить каналы</button>
+              <button type="button" class="btn sm" id="btn-srv-save-draft" data-i18n="wizard.save_draft">Сохранить черновик</button>
+              <button type="submit" class="btn primary sm" id="btn-srv-save-active" data-i18n="wizard.save_active">Сохранить и сделать активным</button>
             </div>
           </div>
           <p id="srv-probe" class="muted server-probe"></p>
@@ -929,18 +929,18 @@
     </div>
   </div>
 
-  <nav class="bottom-nav" aria-label="Основная навигация">
+  <nav class="bottom-nav" aria-label="Main" data-i18n-title="nav.home">
     <button type="button" class="bottom-nav-item active" data-bottom-view="home">
       <span class="bottom-nav-icon">⌂</span>
-      <span class="bottom-nav-label">Home</span>
+      <span class="bottom-nav-label" data-i18n="nav.home">Главная</span>
     </button>
     <button type="button" class="bottom-nav-item" data-bottom-view="files">
       <span class="bottom-nav-icon">⚙</span>
-      <span class="bottom-nav-label">Config</span>
+      <span class="bottom-nav-label" data-i18n="nav.config">Конфиг</span>
     </button>
     <button type="button" class="bottom-nav-item bottom-nav-add" id="btn-bottom-add-server">
       <span class="bottom-nav-icon">+</span>
-      <span class="bottom-nav-label">Add Server</span>
+      <span class="bottom-nav-label" data-i18n="server.add">Добавить сервер</span>
     </button>
   </nav>
 
@@ -988,8 +988,8 @@
   </div>
 
   <div id="server-ctx" class="server-ctx hidden" role="menu" hidden>
-    <button type="button" class="server-ctx-item" data-action="edit" role="menuitem">✎ Редактировать</button>
-    <button type="button" class="server-ctx-item danger" data-action="delete" role="menuitem">🗑 Удалить</button>
+    <button type="button" class="server-ctx-item" data-action="edit" role="menuitem" data-i18n="server.ctx_edit">✎ Редактировать</button>
+    <button type="button" class="server-ctx-item danger" data-action="delete" role="menuitem" data-i18n="server.ctx_delete">🗑 Удалить</button>
   </div>
 
   <div id="toast" class="toast hidden"></div>
@@ -1008,7 +1008,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.22.0"></script>
-  <script src="/static/app.js?v=3.22.0"></script>
+  <script src="/static/i18n.js?v=3.22.1"></script>
+  <script src="/static/app.js?v=3.22.1"></script>
 </body>
 </html>

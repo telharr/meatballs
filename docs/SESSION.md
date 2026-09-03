@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-03 (Sprint 11 now — panel updates via GitHub, 3.22.0)
+Last updated: 2026-09-03 (release path for v3.22.1: GitHub Releases → panel banners)
 
 ## Host (do not commit secrets)
 
@@ -18,6 +18,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. **Now: Sprint 11** — обновления с GitHub; Sprint 10 мастер почти закрыт; later: **7 — JVM**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.22.1**: RU/EN sync — missing `data-i18n` + locale keys; `refreshLocalizedChrome()` on lang switch; RU strings that were still English
 - Panel **3.22.0**: `PANEL_DATA_DIR` / frozen `%LocalAppData%\PZControlPanel\data`; banner обновлений; `/api/panel/updates*`; Inno `.env` onlyifdoesntexist
 - Panel **3.21.1**: мастер — нельзя «Далее» без полей; RCON/файлы авто-probe; зелёная/красная подсветка после проверки
 - Panel **3.21.0**: один CTA «Добавить сервер» → шаг 0 (VPS / хостинг / local); форма create уехала с Главной в мастер; Edit = тот же shell
@@ -26,6 +27,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - Panel **3.20.1**: сохранённые профили снова в сайдбаре (switcher больше не прячется вместе с телеметрией)
 - Panel **3.20.0**: VPS hardening — login lockout, cookie-only JWT, CSRF, step-up, TOTP, encrypted secrets, security headers, public health redact; see `docs/SECURITY.md`
 - Test VPS Auto-Deploy (2026-09-02): Ubuntu 24.04 @ `185.221.154.241` — Docker + `/opt/pz-panel` on **:8000**; compose must escape `$` in `ADMIN_PASS_HASH` (fixed in provisioner)
+- Test VPS **2026-09-03**: upgraded to **3.22.0** (`docker compose up -d --build`, data/mirror/.env preserved). Release: https://github.com/telharr/meatballs/releases/tag/v3.22.0
 - Panel **3.19.11**: city wipe multi-job queue (cmd file lines) + UI list + when-it-runs help
 - Panel **3.19.8**: sidebar **Мир → Вайп**; city wipe + Hard FS wipe перенесены с Зеркала
 - Panel **3.19.7**: VPS Auto-Deploy; mods On/Off + import from world.ini; sidebar server switcher; Amnezia modal dual mode

@@ -142,7 +142,7 @@
 
 ## 6. Где мы сейчас (Deployment & packaging)
 
-Панель **3.22.0** — Sprint 11: обновления с GitHub Releases; state вне app (`PANEL_DATA_DIR` / LocalAppData); banner в UI.
+Панель **3.22.1** — Sprint 11: обновления с GitHub Releases; state вне app (`PANEL_DATA_DIR` / LocalAppData); banner в UI; RU/EN sync.
 
 Панель **3.21.0** — Sprint 10: единый мастер добавления сервера (path picker + VPS/ручной/local).
 

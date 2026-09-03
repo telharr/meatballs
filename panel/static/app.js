@@ -576,22 +576,25 @@ async function installPanelUpdate() {
       await api("/api/panel/updates/download", { method: "POST", body: "{}" });
       showToast(t("update.launching"));
       await api("/api/panel/updates/apply", { method: "POST", body: "{}" });
-      showToast("Установщик запущен — перезапустите панель после setup");
+      showToast(t("update.installer_launched"));
       return;
     }
     if (data.channel === "docker_or_git" || !data.asset) {
       const hint = data.docker_hint || data.git_hint || "";
-      showToast(hint ? `Обновление: ${hint}` : `Доступна ${data.latest} — см. GitHub Releases`, "ok");
+      showToast(
+        hint ? t("update.available_hint", { hint }) : t("update.available_tag", { latest: data.latest }),
+        "ok",
+      );
       if (data.html_url) window.open(data.html_url, "_blank", "noopener");
       return;
     }
     // Non-frozen Windows with asset: open download URL
     if (data.asset && data.asset.url) {
       window.open(data.asset.url, "_blank", "noopener");
-      showToast("Скачайте setup и установите поверх — профили в data не в дистрибутиве");
+      showToast(t("update.manual_setup"));
       return;
     }
-    showToast("Автоустановка недоступна на этой сборке — обновите вручную", "err");
+    showToast(t("update.auto_unavailable"), "err");
   } catch (e) {
     showToast(e.message || String(e), "err");
   } finally {
@@ -729,14 +732,28 @@ function connectEventWs() {
   };
 }
 
+function refreshLocalizedChrome() {
+  renderUserBadge();
+  syncServerChrome();
+  applyCapabilities();
+  checkPanelUpdates().catch(() => {});
+  const wiz = document.getElementById("add-server-wizard");
+  if (wiz && !wiz.classList.contains("hidden") && typeof renderAddServerWizard === "function") {
+    renderAddServerWizard();
+  }
+}
+
 async function initI18n() {
   const lang = localStorage.getItem("pz_lang") || "ru";
   await I18n.loadLocale(lang);
   document.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.onclick = async () => {
       await I18n.loadLocale(btn.dataset.lang);
-      renderUserBadge();
+      refreshLocalizedChrome();
     };
+  });
+  document.addEventListener("i18n:change", () => {
+    /* loadLocale already applyI18n; dynamic strings need a second pass */
   });
 }
 
@@ -810,20 +827,16 @@ function syncServerChrome() {
     const text = $("#status-pill-text");
     if (pill && text) {
       pill.className = "status-pill unknown";
-      text.textContent = saved ? "IDLE" : "NO SERVER";
-      pill.title = saved ? "Выберите профиль в сайдбаре" : "Подключите профиль сервера";
+      text.textContent = saved ? t("status.idle") : t("status.no_server");
+      pill.title = saved ? t("status.pick_title") : t("status.connect_title");
     }
     const hint = $("#home-hint");
     if (hint) {
-      hint.textContent = saved
-        ? "профиль есть · выберите сервер в списке слева"
-        : "нет сохранённых профилей · добавьте сервер";
+      hint.textContent = saved ? t("home.hint_pick") : t("home.hint_none");
     }
     const note = $("#home-host-note");
     if (note) {
-      note.textContent = saved
-        ? "Выберите сохранённый сервер в списке слева — статус и порты появятся после активации."
-        : "Сначала нажмите «+» у списка серверов и добавьте профиль — затем появятся статус, порты и игроки.";
+      note.textContent = saved ? t("home.note_pick") : t("home.note_add");
     }
     const empty = $("#home-empty-add");
     const conn = $("#home-connection-card");
@@ -848,9 +861,7 @@ function updateHomeConnectionSummary() {
   if (!el) return;
   const active = (state.servers || []).find((s) => s.id === state.serversActive);
   if (!active) {
-    el.textContent = hasSavedServers()
-      ? "Выберите сервер в списке слева"
-      : "—";
+    el.textContent = hasSavedServers() ? t("home.select_server") : "—";
     return;
   }
   const files = (active.files && active.files.kind) || "?";
@@ -867,13 +878,13 @@ function applyCapabilities() {
     document.querySelectorAll("[data-need]").forEach((el) => {
       el.classList.add("is-disabled");
       if (el.tagName === "BUTTON") el.disabled = true;
-      el.title = "нужен профиль сервера";
+      el.title = t("cap.need_profile");
     });
     ["btn-home-save", "btn-home-graceful", "btn-home-hard"].forEach((id) => {
       const btn = document.getElementById(id);
       if (!btn) return;
       btn.disabled = true;
-      btn.title = "нужен профиль сервера";
+      btn.title = t("cap.need_profile");
     });
     return;
   }
@@ -921,14 +932,17 @@ function applyCapabilities() {
   });
   const note = $("#home-host-note");
   if (note) {
-    note.textContent = caps.process
-      ? "Local Start запускает JVM на этой машине."
-      : "Запустить хост панель не может — после quit открой панель хостера.";
+    note.textContent = caps.process ? t("home.note_local") : t("home.note_hoster");
   }
   const hint = $("#home-hint");
   if (hint) {
-    const name = (active && active.name) || (state.health && state.health.server_name) || "сервер";
-    hint.textContent = `${name} · rcon=${caps.rcon ? "да" : "нет"} · files=${caps.files ? "да" : "нет"} · process=${caps.process ? "local" : "none"}`;
+    const name = (active && active.name) || (state.health && state.health.server_name) || "server";
+    hint.textContent = t("home.hint_live", {
+      name,
+      rcon: caps.rcon ? t("common.yes") : t("common.no"),
+      files: caps.files ? t("common.yes") : t("common.no"),
+      process: caps.process ? "local" : "none",
+    });
   }
 }
 
@@ -947,7 +961,7 @@ function renderCapStrip(caps, notes) {
 function switchView(view) {
   const gate = viewGate(view);
   if (view !== "home" && gate && gate.ok === false) {
-    showToast(gate.hint || "канал недоступен", "err");
+    showToast(gate.hint || t("common.channel_unavailable"), "err");
     return;
   }
   state.activeView = view;

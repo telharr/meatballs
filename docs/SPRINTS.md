@@ -234,14 +234,14 @@ State (persist)     PANEL_DATA_DIR | %LOCALAPPDATA%/PZControlPanel/data | panel/
 - [x] `GET /api/panel/updates` — GitHub `releases/latest` (`PANEL_UPDATE_REPO`)
 - [x] Banner + «Обновить» / «Позже» (snooze в prefs)
 - [x] Windows frozen: download setup → SHA256 (если есть) → backup zip → launch Inno
-- [x] Inno: `.env` `onlyifdoesntexist`; version 3.22.0
+- [x] Inno: `.env` `onlyifdoesntexist`; version sync with `panel/version.py`
 - [x] Docker/git: подсказка в API (не silent destroy volumes)
 - [x] `panel/version.py` = semver релиза
 
 **Приёмка**
 
 - [ ] После обновления installer профили на месте; `.env` не перезаписан
-- [ ] Banner при `latest > current`; snooze скрывает до следующего тега
+- [ ] Banner при `latest > current`; snooze скрывает до следующего тега *(проверка на VPS 3.22.0 → 3.22.1)*
 - [ ] Docker: `compose pull && up -d` без `-v` сохраняет `/data`
 
 **Не в scope:** silent auto-update без клика; code signing; macOS.
