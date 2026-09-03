@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-02 (panel 3.19.7 — VPS provisioner, mods catalog toggles, sidebar server switcher)
+Last updated: 2026-09-03 (panel 3.20.3 — CSP allowed cdnjs CodeMirror; initEditor no longer blocks auth)
 
 ## Host (do not commit secrets)
 
@@ -18,6 +18,12 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. Next sprint: **6 — JVM process**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.20.2**: список серверов — кнопки; reconcile индекса с `servers/*.json`; при `AUTH_DISABLED` авто `enterLocalAuth()` (раньше SPA зависала на модалке → пустой сайдбар / NO SERVER при живом API)
+- Panel **3.20.1**: сохранённые профили снова в сайдбаре (switcher больше не прячется вместе с телеметрией)
+- Panel **3.20.0**: VPS hardening — login lockout, cookie-only JWT, CSRF, step-up, TOTP, encrypted secrets, security headers, public health redact; see `docs/SECURITY.md`
+- Test VPS Auto-Deploy (2026-09-02): Ubuntu 24.04 @ `185.221.154.241` — Docker + `/opt/pz-panel` on **:8000**; compose must escape `$` in `ADMIN_PASS_HASH` (fixed in provisioner)
+- Panel **3.19.11**: city wipe multi-job queue (cmd file lines) + UI list + when-it-runs help
+- Panel **3.19.8**: sidebar **Мир → Вайп**; city wipe + Hard FS wipe перенесены с Зеркала
 - Panel **3.19.7**: VPS Auto-Deploy; mods On/Off + import from world.ini; sidebar server switcher; Amnezia modal dual mode
 - Panel **3.19.1**: UI declutter — unified endpoint pill, compact telemetry, hero dashboard widgets, mirror/city-wipe cards
 - Panel **3.18.0**: zero-click Inno installer; Amnezia-style VPS SSH onboarding; status ring dashboard

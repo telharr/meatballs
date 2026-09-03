@@ -19,7 +19,7 @@ class ProvisionBody(BaseModel):
     user: str = Field(default="root", max_length=80)
     secret: str = Field(..., max_length=16000)
     web_port: int = Field(default=8000, ge=1, le=65535)
-    admin_password: str = Field(..., min_length=8, max_length=200)
+    admin_password: str = Field(..., min_length=12, max_length=200)
 
 
 def _is_key(secret: str) -> bool:

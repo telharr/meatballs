@@ -14,6 +14,9 @@ panel/data/.mb_slots.txt
 panel/data/servers.json
 panel/data/servers/*
 !panel/data/servers/.gitkeep
+panel/data/admintools_queue/
+panel/data/login_rate.json
+panel/data/player_access/
 panel/data/mods.catalog.json
 
 # Backups & Snapshots

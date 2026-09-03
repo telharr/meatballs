@@ -469,17 +469,23 @@ def _run_provision(req: ProvisionRequest) -> None:
 
             jwt = secrets.token_urlsafe(48)
             admin_hash = hash_password(req.admin_password)
+            # Compose interpolates $VAR in env_file — escape every literal $.
+            def _compose_env_escape(value: str) -> str:
+                return value.replace("$", "$$")
+
             # Compose maps ${PANEL_PORT}:8000 (host→container). Container env overrides
             # PANEL_PORT=8000 in docker-compose.yml so the app still listens on 8000.
             env_body = "\n".join(
                 [
                     "PANEL_HOST=0.0.0.0",
                     f"PANEL_PORT={port}",
+                    "PANEL_PUBLIC=true",
+                    "TRUST_PROXY=false",
                     "AUTH_LOCAL_BYPASS=false",
                     "AUTH_DISABLED=false",
-                    f"JWT_SECRET={jwt}",
+                    f"JWT_SECRET={_compose_env_escape(jwt)}",
                     "ADMIN_USER=admin",
-                    f"ADMIN_PASS_HASH={admin_hash}",
+                    f"ADMIN_PASS_HASH={_compose_env_escape(admin_hash)}",
                     "",
                 ]
             )

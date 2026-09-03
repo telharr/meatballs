@@ -35,7 +35,10 @@ const state = {
   vpsProvisionPoll: null,
   editingServerId: null,
   smokePoll: null,
-  token: localStorage.getItem("pz_panel_token") || null,
+  sessionOk: false,
+  csrf: null,
+  totpEnabled: false,
+  pendingTotpChallenge: null,
   user: null,
   authDisabled: false,
   authMode: "login",
@@ -121,9 +124,19 @@ function t(key, vars) {
   return (window.I18n && window.I18n.t(key, vars)) || key;
 }
 
+function readCookie(name) {
+  const m = document.cookie.match(new RegExp(`(?:^|; )${name.replace(/[$()*+.?[\\\]^{|}]/g, "\\$&")}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : "";
+}
+
+function syncCsrfFromCookie() {
+  state.csrf = readCookie("pz_panel_csrf") || state.csrf;
+}
+
 async function api(path, options = {}) {
+  syncCsrfFromCookie();
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
-  if (state.token) headers.Authorization = `Bearer ${state.token}`;
+  if (state.csrf) headers["X-CSRF-Token"] = state.csrf;
   const res = await fetch(path, {
     headers,
     credentials: "same-origin",
@@ -131,9 +144,11 @@ async function api(path, options = {}) {
   });
   let data = {};
   try { data = await res.json(); } catch { data = {}; }
+  if (data && data.csrf) state.csrf = data.csrf;
+  syncCsrfFromCookie();
   if (res.status === 401 && !String(path).startsWith("/api/auth/")) {
-    state.token = null;
-    localStorage.removeItem("pz_panel_token");
+    state.sessionOk = false;
+    state.user = null;
     showAuthModal(state.authMode === "setup" ? "setup" : "login");
     const err = new Error(t("toast.unauthorized"));
     err.status = 401;
@@ -154,6 +169,28 @@ async function api(path, options = {}) {
   return data;
 }
 
+async function promptStepUp() {
+  const password = window.prompt(t("auth.stepup_password") || "Подтвердите паролем админа:");
+  if (password == null || password === "") {
+    throw new Error(t("auth.stepup_cancelled") || "Отменено");
+  }
+  let totp = "";
+  if (state.totpEnabled) {
+    totp = window.prompt(t("auth.stepup_totp") || "Код 2FA (TOTP):") || "";
+  }
+  return { password, totp };
+}
+
+async function apiStepUp(path, options = {}) {
+  const { password, totp } = await promptStepUp();
+  const headers = {
+    ...(options.headers || {}),
+    "X-Panel-Confirm-Password": password,
+  };
+  if (totp) headers["X-Panel-TOTP"] = totp;
+  return api(path, { ...options, headers });
+}
+
 function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -166,10 +203,13 @@ function showAuthModal(mode) {
   modal.classList.remove("hidden");
   document.body.classList.add("auth-locked");
   const setup = mode === "setup";
+  const totp = mode === "totp";
   const localOnly = mode === "local" || (state.authDisabled && state.localBypass);
   document.querySelectorAll(".auth-setup-only").forEach((el) => el.classList.toggle("hidden", !setup));
-  const formFields = $("#auth-form")?.querySelectorAll("label.field:not(.auth-setup-only)");
-  formFields?.forEach((el) => el.classList.toggle("hidden", localOnly));
+  document.querySelectorAll(".auth-totp-only").forEach((el) => el.classList.toggle("hidden", !totp));
+  document.querySelectorAll(".auth-login-fields").forEach((el) => el.classList.toggle("hidden", totp || localOnly));
+  const formFields = $("#auth-form")?.querySelectorAll("label.field:not(.auth-setup-only):not(.auth-totp-only)");
+  formFields?.forEach((el) => el.classList.toggle("hidden", localOnly || totp));
   const credWrap = $("#auth-credentials-wrap");
   const localWrap = $("#auth-local-wrap");
   if (credWrap) credWrap.classList.toggle("hidden", localOnly);
@@ -177,14 +217,18 @@ function showAuthModal(mode) {
     localWrap.classList.toggle("hidden", !state.localBypass && !localOnly);
     localWrap.classList.toggle("auth-local-prominent", localOnly);
   }
-  const titleKey = localOnly ? "auth.local_title" : (setup ? "auth.setup" : "auth.login");
-  const hintKey = localOnly ? "auth.local_hint" : (setup ? "auth.setup_hint" : "auth.login_hint");
+  const titleKey = localOnly
+    ? "auth.local_title"
+    : (totp ? "auth.totp_title" : (setup ? "auth.setup" : "auth.login"));
+  const hintKey = localOnly
+    ? "auth.local_hint"
+    : (totp ? "auth.totp_hint" : (setup ? "auth.setup_hint" : "auth.login_hint"));
   const title = $("#auth-modal-title");
   const hint = $("#auth-modal-hint");
   const submit = $("#auth-submit");
   if (title) title.textContent = t(titleKey);
   if (hint) hint.textContent = t(hintKey);
-  if (submit) submit.textContent = t(setup ? "auth.setup" : "auth.login");
+  if (submit) submit.textContent = t(totp ? "auth.totp_submit" : (setup ? "auth.setup" : "auth.login"));
   const err = $("#auth-error");
   if (err) { err.classList.add("hidden"); err.textContent = ""; }
 }
@@ -197,10 +241,12 @@ function hideAuthModal() {
 function renderUserBadge() {
   const badge = $("#user-badge");
   const logout = $("#btn-logout");
+  const totpBtn = $("#btn-enable-2fa");
   if (!badge || !logout) return;
   if (!state.user?.username) {
     badge.classList.add("hidden");
     logout.classList.add("hidden");
+    totpBtn?.classList.add("hidden");
     return;
   }
   badge.textContent = state.user.role === "moderator"
@@ -214,7 +260,29 @@ function renderUserBadge() {
   badge.classList.toggle("user-admin", state.user.role !== "moderator");
   badge.classList.remove("hidden");
   logout.classList.remove("hidden");
+  if (totpBtn) {
+    const show = !state.user.local && !state.authDisabled && state.user.role !== "moderator";
+    totpBtn.classList.toggle("hidden", !show);
+    totpBtn.textContent = state.totpEnabled ? "2FA✓" : "2FA";
+    totpBtn.title = state.totpEnabled ? "2FA enabled" : (t("auth.enable_2fa") || "Enable 2FA");
+  }
   applyRolePermissions();
+}
+
+async function enableTotpFlow() {
+  try {
+    const setup = await api("/api/auth/totp/setup", { method: "POST", body: "{}" });
+    const code = window.prompt(
+      `Добавьте секрет в Authenticator:\n${setup.secret}\n\nИли URI:\n${setup.otpauth_url}\n\nЗатем введите код:`,
+    );
+    if (!code) return;
+    await api("/api/auth/totp/enable", { method: "POST", body: JSON.stringify({ code }) });
+    state.totpEnabled = true;
+    renderUserBadge();
+    showToast("2FA включена — войдите снова при необходимости");
+  } catch (e) {
+    showToast(e.message, "err");
+  }
 }
 
 function isAdmin() {
@@ -261,6 +329,7 @@ async function enterLocalAuth() {
   const errEl = $("#auth-error");
   if (state.authDisabled) {
     state.user = { username: "local", role: "admin", local: true };
+    state.sessionOk = true;
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
@@ -271,6 +340,8 @@ async function enterLocalAuth() {
     const res = await fetch("/api/auth/local", {
       method: "POST",
       credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -278,9 +349,11 @@ async function enterLocalAuth() {
       errEl.classList.remove("hidden");
       return;
     }
-    state.token = data.token;
-    localStorage.setItem("pz_panel_token", data.token);
+    if (data.csrf) state.csrf = data.csrf;
+    syncCsrfFromCookie();
+    state.sessionOk = true;
     state.user = data.user;
+    state.totpEnabled = !!data.user?.totp_enabled;
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
@@ -293,12 +366,48 @@ async function enterLocalAuth() {
 
 async function submitAuthForm(e) {
   e.preventDefault();
+  const errEl = $("#auth-error");
+  if (state.authMode === "totp") {
+    const code = ($("#auth-totp")?.value || "").trim();
+    try {
+      const res = await fetch("/api/auth/login/totp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ challenge: state.pendingTotpChallenge, code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errEl.textContent = typeof data.detail === "string" ? data.detail : res.statusText;
+        errEl.classList.remove("hidden");
+        return;
+      }
+      if (data.csrf) state.csrf = data.csrf;
+      syncCsrfFromCookie();
+      state.sessionOk = true;
+      state.pendingTotpChallenge = null;
+      state.user = data.user;
+      state.totpEnabled = true;
+      hideAuthModal();
+      renderUserBadge();
+      if (!state.appBootstrapped) bootstrapApp();
+      else { connectWs(); connectEventWs(); }
+    } catch (ex) {
+      errEl.textContent = ex.message;
+      errEl.classList.remove("hidden");
+    }
+    return;
+  }
   const username = $("#auth-username").value.trim();
   const password = $("#auth-password").value;
   const password2 = $("#auth-password2")?.value || "";
-  const errEl = $("#auth-error");
   if (state.authMode === "setup" && password !== password2) {
     errEl.textContent = "Passwords do not match";
+    errEl.classList.remove("hidden");
+    return;
+  }
+  if (state.authMode === "setup" && password.length < 12) {
+    errEl.textContent = t("auth.password_min") || "Password must be at least 12 characters";
     errEl.classList.remove("hidden");
     return;
   }
@@ -316,9 +425,17 @@ async function submitAuthForm(e) {
       errEl.classList.remove("hidden");
       return;
     }
-    state.token = data.token;
-    localStorage.setItem("pz_panel_token", data.token);
+    if (data.needs_totp && data.challenge) {
+      state.pendingTotpChallenge = data.challenge;
+      showAuthModal("totp");
+      $("#auth-totp")?.focus();
+      return;
+    }
+    if (data.csrf) state.csrf = data.csrf;
+    syncCsrfFromCookie();
+    state.sessionOk = true;
     state.user = data.user;
+    state.totpEnabled = !!data.user?.totp_enabled;
     hideAuthModal();
     renderUserBadge();
     if (!state.appBootstrapped) bootstrapApp();
@@ -331,8 +448,9 @@ async function submitAuthForm(e) {
 
 async function logoutUser() {
   try { await api("/api/auth/logout", { method: "POST", body: "{}" }); } catch { /* ignore */ }
-  state.token = null;
+  state.sessionOk = false;
   state.user = null;
+  state.csrf = null;
   localStorage.removeItem("pz_panel_token");
   if (state.ws) { try { state.ws.close(); } catch { /* ignore */ } state.ws = null; }
   if (state.eventWs) { try { state.eventWs.close(); } catch { /* ignore */ } state.eventWs = null; }
@@ -343,41 +461,52 @@ async function logoutUser() {
 }
 
 async function initAuth() {
+  localStorage.removeItem("pz_panel_token");
   try {
-    const status = await fetch("/api/auth/status").then((r) => r.json());
+    await fetch("/api/auth/csrf", { credentials: "same-origin" }).then(async (r) => {
+      const d = await r.json().catch(() => ({}));
+      if (d.csrf) state.csrf = d.csrf;
+    });
+    syncCsrfFromCookie();
+    const status = await fetch("/api/auth/status", { credentials: "same-origin" }).then((r) => r.json());
     state.authDisabled = !!status.auth_disabled;
     state.localBypass = !!status.local_bypass;
+    // AUTH_DISABLED: API already allows everything — auto-enter so chips/profiles load.
+    // Do not leave the SPA stuck on the local modal with empty sidebar / NO SERVER.
     if (state.authDisabled && state.localBypass) {
-      showAuthModal("local");
+      await enterLocalAuth();
       return;
     }
     if (status.needs_setup) {
       showAuthModal("setup");
       return;
     }
-    if (!state.token) {
-      showAuthModal("login");
-      return;
+    try {
+      state.user = await api("/api/auth/me");
+      state.sessionOk = true;
+      state.totpEnabled = !!state.user.totp_enabled;
+      hideAuthModal();
+      renderUserBadge();
+      bootstrapApp();
+    } catch {
+      showAuthModal(state.localBypass ? "local" : "login");
     }
-    state.user = await api("/api/auth/me");
-    hideAuthModal();
-    renderUserBadge();
-    bootstrapApp();
   } catch {
     showAuthModal(state.localBypass ? "local" : "login");
   }
 }
 
-function bootstrapApp() {
+async function bootstrapApp() {
   if (state.appBootstrapped) return;
   state.appBootstrapped = true;
   loadPrefs();
+  await loadServers();
   loadSlots();
   loadHealth();
-  loadServers();
   checkOnboarding();
-  loadConfigs().catch((e) => showToast(e.message, "err"));
-  applyStatusPayload(null);
+  if (hasSavedServers()) {
+    loadConfigs().catch((e) => showToast(e.message, "err"));
+  }
   tickUptime();
   connectWs();
   connectEventWs();
@@ -390,32 +519,6 @@ function telemetryClass(percent) {
   if (p >= 90) return "tel-critical";
   if (p >= 70) return "tel-warn";
   return "tel-ok";
-}
-
-function renderTelemetryBar(data) {
-  if (!data) return;
-  state.telemetry = data;
-  const host = data.host || {};
-  const sysEl = $("#tel-sys");
-  if (sysEl) {
-    const used = host.ram_used_gb ?? (host.ram_used_mb ? (host.ram_used_mb / 1024).toFixed(1) : "—");
-    const total = host.ram_total_gb ?? (host.ram_total_mb ? (host.ram_total_mb / 1024).toFixed(1) : "—");
-    const cpu = host.cpu_percent ?? "—";
-    sysEl.textContent = `CPU ${cpu}% · RAM ${used}/${total} GB`;
-    const worst = Math.max(Number(host.cpu_percent) || 0, Number(host.ram_percent) || 0);
-    sysEl.className = `telemetry-badge ${telemetryClass(worst)}`;
-  }
-  const gsEl = $("#tel-gameserver");
-  if (gsEl) {
-    const gs = data.gameserver;
-    if (gs && gs.running) {
-      gsEl.textContent = `JVM ${gs.rss_mb ?? "—"} MB · ${gs.cpu_percent ?? 0}%`;
-      gsEl.className = `telemetry-badge ${telemetryClass(gs.cpu_percent)}`;
-      gsEl.classList.remove("hidden");
-    } else {
-      gsEl.classList.add("hidden");
-    }
-  }
 }
 
 function applyStatusPayload(status) {
@@ -507,13 +610,12 @@ function handleEventMessage(msg) {
 }
 
 function connectEventWs() {
-  if (!state.authDisabled && !state.token) return;
+  if (!state.authDisabled && !state.sessionOk) return;
   if (state.eventWs) {
     try { state.eventWs.close(); } catch { /* ignore */ }
   }
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  const q = state.token ? `?token=${encodeURIComponent(state.token)}` : "";
-  state.eventWs = new WebSocket(`${proto}://${location.host}/ws/events${q}`);
+  state.eventWs = new WebSocket(`${proto}://${location.host}/ws/events`);
   state.eventWs.onclose = (ev) => {
     if (ev.code === 4401) return;
     setTimeout(connectEventWs, 4000);
@@ -578,10 +680,74 @@ function viewGate(view) {
   return { ok: !!activeCapabilities()[need], need, hint: capHints()[need] || need };
 }
 
+function hasSavedServers() {
+  return (state.servers || []).length > 0;
+}
+
+function hasActiveServerProfile() {
+  const id = state.serversActive;
+  if (!id) return false;
+  return (state.servers || []).some((s) => s.id === id);
+}
+
+function syncServerChrome() {
+  const saved = hasSavedServers();
+  const live = hasActiveServerProfile();
+  document.body.classList.toggle("no-server", !live);
+  document.querySelectorAll(".server-live-only").forEach((el) => {
+    el.classList.toggle("hidden", !live);
+  });
+  const switcher = $(".sidebar-server-switcher");
+  if (switcher) switcher.classList.toggle("hidden", false);
+  const chips = $("#server-switcher-chips");
+  if (chips) chips.hidden = !saved;
+  const noSrv = $("#sidebar-no-server");
+  if (noSrv) noSrv.classList.toggle("hidden", saved);
+  if (!live) {
+    const pill = $("#status-pill");
+    const text = $("#status-pill-text");
+    if (pill && text) {
+      pill.className = "status-pill unknown";
+      text.textContent = saved ? "IDLE" : "NO SERVER";
+      pill.title = saved ? "Выберите профиль в сайдбаре" : "Подключите профиль сервера";
+    }
+    const hint = $("#home-hint");
+    if (hint) {
+      hint.textContent = saved
+        ? "профиль есть · выберите сервер в списке слева"
+        : "нет сохранённых профилей · добавьте сервер";
+    }
+    const note = $("#home-host-note");
+    if (note) {
+      note.textContent = saved
+        ? "Выберите сохранённый сервер в списке слева — статус и порты появятся после активации."
+        : "Сначала добавьте сервер (сайдбар «+ Добавить сервер»), затем появятся статус, порты и игроки.";
+    }
+    const players = $("#pill-players");
+    if (players) players.textContent = "—";
+    const uptime = $("#pill-uptime");
+    if (uptime) uptime.textContent = "—";
+  }
+}
+
 function applyCapabilities() {
+  syncServerChrome();
   const active = (state.servers || []).find((s) => s.id === state.serversActive);
   const caps = (state.health && state.health.capabilities) || (active && active.capabilities);
-  if (!caps) return;
+  if (!hasActiveServerProfile() || !caps) {
+    document.querySelectorAll("[data-need]").forEach((el) => {
+      el.classList.add("is-disabled");
+      if (el.tagName === "BUTTON") el.disabled = true;
+      el.title = "нужен профиль сервера";
+    });
+    ["btn-home-save", "btn-home-graceful", "btn-home-hard"].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = true;
+      btn.title = "нужен профиль сервера";
+    });
+    return;
+  }
   const plugins = activePlugins();
   document.querySelectorAll("[data-need]").forEach((el) => {
     const need = el.dataset.need;
@@ -632,7 +798,6 @@ function applyCapabilities() {
   }
   const hint = $("#home-hint");
   if (hint) {
-    const active = (state.servers || []).find((s) => s.id === state.serversActive);
     const name = (active && active.name) || (state.health && state.health.server_name) || "сервер";
     hint.textContent = `${name} · rcon=${caps.rcon ? "да" : "нет"} · files=${caps.files ? "да" : "нет"} · process=${caps.process ? "local" : "none"}`;
   }
@@ -666,7 +831,10 @@ function switchView(view) {
   if (view === "files" && state.editor) {
     setTimeout(() => state.editor.refresh(), 50);
   }
-  if (view === "home") loadHome();
+  if (view === "home") {
+    if (!hasActiveServerProfile()) renderHomeStatus({}, {}, {});
+    loadHome();
+  }
   if (view === "scheduler") loadScheduler();
   if (view === "logs") loadServerLog();
   if (view === "network") loadNetwork();
@@ -677,10 +845,8 @@ function switchView(view) {
   if (view === "npc") loadSlots();
   if (view === "mods") loadMods();
   if (view === "workshop") loadWorkshop();
-  if (view === "mirror") {
-    loadMirror();
-    loadCityWipeCities();
-  }
+  if (view === "mirror") loadMirror();
+  if (view === "wipe") loadCityWipeCities();
   if (view === "smoke") loadSmoke();
   if (view === "chat") loadChat();
   if (view === "bans") loadBans();
@@ -705,7 +871,13 @@ function initNavigation() {
 
 /* —— Editor —— */
 function initEditor() {
-  state.editor = CodeMirror(document.getElementById("codemirror-host"), {
+  const host = document.getElementById("codemirror-host");
+  if (!host) return;
+  if (typeof CodeMirror === "undefined") {
+    console.warn("CodeMirror not loaded — editor disabled; panel auth/servers still start");
+    return;
+  }
+  state.editor = CodeMirror(host, {
     value: "",
     theme: "material-darker",
     lineNumbers: true,
@@ -745,6 +917,10 @@ function formatUptime(ms) {
 }
 
 function updateHeaderFromHealth() {
+  if (!hasActiveServerProfile()) {
+    syncServerChrome();
+    return;
+  }
   const h = state.health;
   if (!h) return;
   const ep = h.header || {};
@@ -766,6 +942,67 @@ function updateHeaderFromHealth() {
   setEp("#ep-game", gamePort);
   setEp("#ep-ftp", ftpPort);
   state.maxPlayers = ep.max_players || h.max_players || 32;
+}
+
+function updateStatusPill(online, error) {
+  if (!hasActiveServerProfile()) {
+    syncServerChrome();
+    return;
+  }
+  const pill = $("#status-pill");
+  const text = $("#status-pill-text");
+  if (online) {
+    pill.className = "status-pill online";
+    text.textContent = "ONLINE";
+    pill.title = "RCON reachable";
+  } else {
+    pill.className = "status-pill offline";
+    text.textContent = "OFFLINE";
+    pill.title = error || "RCON unreachable";
+  }
+  updateStatusRing(online, error);
+}
+
+function updatePlayersPill(count) {
+  if (!hasActiveServerProfile()) return;
+  const real = Number(count) || 0;
+  const pill = $("#pill-players");
+  if (!pill) return;
+  pill.textContent = `${real}/${state.maxPlayers || "—"}`;
+  pill.title = `Живые игроки ${real} · тренеры во вкладке NPC`;
+}
+
+function tickUptime() {
+  if (!hasActiveServerProfile()) return;
+  const el = $("#pill-uptime");
+  if (el) el.textContent = formatUptime(Date.now() - state.panelStartedAt);
+}
+
+function renderTelemetryBar(data) {
+  if (!hasActiveServerProfile()) return;
+  if (!data) return;
+  state.telemetry = data;
+  const host = data.host || {};
+  const sysEl = $("#tel-sys");
+  if (sysEl) {
+    const used = host.ram_used_gb ?? (host.ram_used_mb ? (host.ram_used_mb / 1024).toFixed(1) : "—");
+    const total = host.ram_total_gb ?? (host.ram_total_mb ? (host.ram_total_mb / 1024).toFixed(1) : "—");
+    const cpu = host.cpu_percent ?? "—";
+    sysEl.textContent = `CPU ${cpu}% · RAM ${used}/${total} GB`;
+    const worst = Math.max(Number(host.cpu_percent) || 0, Number(host.ram_percent) || 0);
+    sysEl.className = `telemetry-badge ${telemetryClass(worst)}`;
+  }
+  const gsEl = $("#tel-gameserver");
+  if (gsEl) {
+    const gs = data.gameserver;
+    if (gs && gs.running) {
+      gsEl.textContent = `JVM ${gs.rss_mb ?? "—"} MB · ${gs.cpu_percent ?? 0}%`;
+      gsEl.className = `telemetry-badge ${telemetryClass(gs.cpu_percent)}`;
+      gsEl.classList.remove("hidden");
+    } else {
+      gsEl.classList.add("hidden");
+    }
+  }
 }
 
 function initEndpointPopover() {
@@ -798,21 +1035,6 @@ function connectionSubtitle(active) {
   if (kind === "local") return "Connected via local path";
   if (active) return "Profile configured";
   return "Подключите VPS через SSH";
-}
-
-function updateStatusPill(online, error) {
-  const pill = $("#status-pill");
-  const text = $("#status-pill-text");
-  if (online) {
-    pill.className = "status-pill online";
-    text.textContent = "ONLINE";
-    pill.title = "RCON reachable";
-  } else {
-    pill.className = "status-pill offline";
-    text.textContent = "OFFLINE";
-    pill.title = error || "RCON unreachable";
-  }
-  updateStatusRing(online, error);
 }
 
 function updateStatusRing(online, error) {
@@ -852,18 +1074,6 @@ function isTrainerName(name) {
 
 function realPlayers(list) {
   return (list || []).filter((p) => !isTrainerName(p.name));
-}
-
-function updatePlayersPill(count) {
-  const real = Number(count) || 0;
-  const pill = $("#pill-players");
-  if (!pill) return;
-  pill.textContent = `${real}/${state.maxPlayers}`;
-  pill.title = `Живые игроки ${real} · тренеры во вкладке NPC`;
-}
-
-function tickUptime() {
-  $("#pill-uptime").textContent = formatUptime(Date.now() - state.panelStartedAt);
 }
 
 function maybeNotifyWorld(kind, world) {
@@ -917,26 +1127,34 @@ async function loadHealth() {
     updateHeaderFromHealth();
     applyCapabilities();
     updateStatusRing(false);
-    if (!state.health.rcon_configured) showToast("RCON password не задан в профиле", "err");
+    if (hasActiveServerProfile() && state.health && !state.health.rcon_configured) {
+      showToast("RCON password не задан в профиле", "err");
+    }
   } catch {
-    updateStatusPill(false, "Backend offline");
+    if (hasActiveServerProfile()) updateStatusPill(false, "Backend offline");
+    else syncServerChrome();
   }
 }
 
 /* —— Server profiles —— */
 function renderServerSwitcher() {
   const sel = $("#server-switcher");
-  if (!sel) return;
+  const chips = $("#server-switcher-chips");
   const rows = state.servers || [];
-  sel.innerHTML = rows.length
-    ? rows.map((s) => `<option value="${escapeHtml(s.id)}"${s.id === state.serversActive ? " selected" : ""}>${escapeHtml(s.name || s.id)}</option>`).join("")
-    : '<option value="">нет профилей</option>';
-  const hint = $("#home-hint");
-  if (hint) {
-    const active = rows.find((s) => s.id === state.serversActive);
-    hint.textContent = active
-      ? `${active.name} · ${active.hoster || "?"} · files=${(active.files && active.files.kind) || "?"} · process=${(active.process && active.process.kind) || "none"}`
-      : "профиль сервера · хостер — адаптер";
+  if (sel) {
+    sel.innerHTML = rows.length
+      ? rows.map((s) => `<option value="${escapeHtml(s.id)}"${s.id === state.serversActive ? " selected" : ""}>${escapeHtml(s.name || s.id)}</option>`).join("")
+      : "";
+  }
+  if (chips) {
+    chips.hidden = !rows.length;
+    chips.innerHTML = rows.map((s) => `
+      <button type="button" class="server-chip${s.id === state.serversActive ? " active" : ""}" data-server-id="${escapeHtml(s.id)}">
+        ${escapeHtml(s.name || s.id)}
+      </button>`).join("");
+    chips.querySelectorAll("[data-server-id]").forEach((btn) => {
+      btn.onclick = () => switchServer(btn.dataset.serverId);
+    });
   }
   const mobileName = $("#mobile-server-name");
   if (mobileName) {
@@ -944,6 +1162,14 @@ function renderServerSwitcher() {
     mobileName.textContent = active ? (active.name || active.id) : "Нет сервера";
   }
   renderServerPickerPopover();
+  syncServerChrome();
+  if (hasActiveServerProfile()) {
+    const hint = $("#home-hint");
+    const active = rows.find((s) => s.id === state.serversActive);
+    if (hint && active) {
+      hint.textContent = `${active.name} · ${active.hoster || "?"} · files=${(active.files && active.files.kind) || "?"} · process=${(active.process && active.process.kind) || "none"}`;
+    }
+  }
 }
 
 function renderServerPickerPopover() {
@@ -1127,7 +1353,7 @@ async function submitVpsDeploy() {
   $("#vps-provision-success")?.classList.add("hidden");
   if (btn) btn.disabled = true;
   try {
-    await api("/api/vps/provision", {
+    await apiStepUp("/api/vps/provision", {
       method: "POST",
       body: JSON.stringify({
         host,
@@ -1225,7 +1451,7 @@ async function submitVpsSetup(e) {
         notes: { files: (probe.checks && probe.checks.ok) ? `root=${root}` : "ssh ok" },
       },
     };
-    const created = await api("/api/servers", { method: "POST", body: JSON.stringify(serverPayload) });
+    const created = await apiStepUp("/api/servers", { method: "POST", body: JSON.stringify(serverPayload) });
     await api(`/api/servers/${encodeURIComponent(created.id)}/activate`, { method: "POST", body: "{}" });
     $("#vps-secret").value = "";
     closeVpsSetupModal();
@@ -1258,6 +1484,9 @@ async function loadServers() {
     const data = await api("/api/servers");
     state.servers = data.servers || [];
     state.serversActive = data.active || null;
+    if (state.servers.length && !hasActiveServerProfile()) {
+      state.serversActive = state.servers[0].id;
+    }
     state.serversPresets = data.presets || {};
     renderServerSwitcher();
     applyCapabilities();
@@ -1265,6 +1494,12 @@ async function loadServers() {
   } catch (e) {
     const sel = $("#server-switcher");
     if (sel) sel.innerHTML = `<option value="">${escapeHtml(e.message)}</option>`;
+    const chips = $("#server-switcher-chips");
+    if (chips) {
+      chips.hidden = false;
+      chips.innerHTML = `<p class="muted">${escapeHtml(e.message)}</p>`;
+    }
+    showToast(e.message, "err");
   }
 }
 
@@ -1524,9 +1759,9 @@ async function submitServerForm(e, { draft = false } = {}) {
     const editId = ($("#srv-edit-id") && $("#srv-edit-id").value) || state.editingServerId;
     let created;
     if (editId) {
-      created = await api(`/api/servers/${encodeURIComponent(editId)}`, { method: "PATCH", body: JSON.stringify(payload) });
+      created = await apiStepUp(`/api/servers/${encodeURIComponent(editId)}`, { method: "PATCH", body: JSON.stringify(payload) });
     } else {
-      created = await api("/api/servers", { method: "POST", body: JSON.stringify(payload) });
+      created = await apiStepUp("/api/servers", { method: "POST", body: JSON.stringify(payload) });
     }
     if (!draft) {
       await api(`/api/servers/${encodeURIComponent(created.id)}/activate`, { method: "POST", body: "{}" });
@@ -1596,7 +1831,7 @@ async function deleteActiveProfile() {
   if (!id) return;
   if (!confirm(t("confirm.delete_profile", { id }))) return;
   try {
-    await api(`/api/servers/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await apiStepUp(`/api/servers/${encodeURIComponent(id)}`, { method: "DELETE" });
     state.editingServerId = null;
     if ($("#srv-edit-id")) $("#srv-edit-id").value = "";
     await loadServers();
@@ -1874,10 +2109,9 @@ async function saveActiveTab() {
 
 /* —— RCON —— */
 function connectWs() {
-  if (!state.authDisabled && !state.token) return;
+  if (!state.authDisabled && !state.sessionOk) return;
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  const q = state.token ? `?token=${encodeURIComponent(state.token)}` : "";
-  state.ws = new WebSocket(`${proto}://${location.host}/ws/console${q}`);
+  state.ws = new WebSocket(`${proto}://${location.host}/ws/console`);
   state.ws.onopen = () => appendConsole("[ws] connected", "sys");
   state.ws.onclose = (ev) => {
     if (ev.code === 4401) {
@@ -2409,13 +2643,38 @@ async function runTaskNow(id) {
 function renderHomeStatus(status, world, local) {
   const el = $("#home-status");
   if (!el) return;
+  if (!hasActiveServerProfile()) {
+    el.innerHTML = `
+      <div class="health-line">
+        <span class="health-k">Сервер</span>
+        <span class="health-v">не подключён</span>
+      </div>
+      <div class="health-line">
+        <span class="health-k">RCON</span>
+        <span class="health-v">—</span>
+      </div>
+      <div class="health-line">
+        <span class="health-k">Слоты</span>
+        <span class="health-v">—</span>
+      </div>
+      <div class="health-line">
+        <span class="health-k">Мир</span>
+        <span class="health-v">—</span>
+      </div>`;
+    const countEl = $("#home-players-count");
+    if (countEl) countEl.textContent = "—";
+    const strip = $("#home-players");
+    if (strip) strip.innerHTML = '<p class="muted">Подключите сервер, чтобы видеть игроков</p>';
+    return;
+  }
   const remote = (world && world.remote) || {};
   const loc = local || {};
   const players = realPlayers(status.players || state.players || []);
+  const maxSlots = state.maxPlayers || "—";
   const cells = [
     ["RCON", status.rcon_online ? "ONLINE" : "OFFLINE", status.rcon_online ? "ok" : "bad"],
     ["Мир", remote.label || remote.stage || "—", worldStageClass(remote.stage)],
-    ["Слоты", `${players.length}/${state.maxPlayers}`, players.length ? "ok" : ""],
+    ["Слоты", `${players.length}/${maxSlots}`, players.length ? "ok" : ""],
     ["Local JVM", loc.running ? "Running" : "Stopped", loc.running ? "ok" : ""],
   ];
   el.innerHTML = cells.map(([k, v, cls]) => `
@@ -2441,14 +2700,15 @@ async function createPanelSnapshot() {
   if (btn) btn.disabled = true;
   try {
     showToast(t("home.snapshot_working") || "Snapshot…");
-    const data = await api("/api/panel/snapshot", { method: "POST", body: "{}" });
+    const data = await apiStepUp("/api/panel/snapshot", { method: "POST", body: "{}" });
     if (!data || !data.ok) {
       throw new Error((data && data.detail) || "Snapshot failed");
     }
     const href = data.download || `/api/panel/snapshot/file?name=${encodeURIComponent(data.filename || "")}`;
-    const headers = {};
-    if (state.token) headers.Authorization = `Bearer ${state.token}`;
-    const res = await fetch(href, { credentials: "same-origin", headers });
+    const res = await fetch(href, {
+      credentials: "same-origin",
+      headers: state.csrf ? { "X-CSRF-Token": state.csrf } : {},
+    });
     if (!res.ok) throw new Error(`Download failed: ${res.status}`);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -2591,8 +2851,65 @@ async function loadCityWipeCities() {
         loadCityWipeCities();
       };
     });
+    const help = $("#city-wipe-help p");
+    if (help && data.how_it_works) help.textContent = data.how_it_works;
+    await loadCityWipeQueue();
   } catch (e) {
     box.innerHTML = `<p class="err">${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function renderCityWipeQueue(payload) {
+  const status = $("#city-wipe-status");
+  if (!status) return;
+  const pending = (payload && (payload.pending || payload.queue)) || [];
+  const jobs = pending.length ? pending : ((payload && payload.jobs) || []).filter((j) => j.status === "queued");
+  if (!jobs.length) {
+    status.className = "city-wipe-queue hidden";
+    status.innerHTML = "";
+    return;
+  }
+  const chips = [];
+  if (payload && payload.uploaded) chips.push({ label: "FTP", ok: true });
+  if (payload && payload.upload_error) chips.push({ label: `FTP: ${payload.upload_error}`, ok: false });
+  if (payload && payload.rcon != null && !payload.rcon_error) chips.push({ label: "RCON", ok: true });
+  if (payload && payload.rcon_error) chips.push({ label: `RCON: ${payload.rcon_error}`, ok: false });
+  const warn = !!(payload && payload.upload_error && !payload.uploaded);
+  status.className = `city-wipe-queue ${warn ? "is-warn" : "is-ok"}`;
+  status.innerHTML = `
+    <div class="queue-head">
+      <span class="queue-led" aria-hidden="true"></span>
+      <strong class="queue-title">${escapeHtml(t("admintools.queued"))}</strong>
+      <span class="queue-count">${jobs.length}</span>
+    </div>
+    <ol class="queue-list">${jobs.map((j, idx) => `
+      <li>
+        <span class="queue-idx">#${idx + 1}</span>
+        <span class="queue-city-name">${escapeHtml(j.city_name || j.city_id || "?")}</span>
+        <span class="queue-meta muted">${escapeHtml(j.created_at || "")}${j.refill_loot === false ? " · loot off" : ""}${j.reconstruct_containers ? " · containers" : ""}</span>
+      </li>`).join("")}</ol>
+    ${chips.length ? `<div class="queue-chips">${chips.map((c) =>
+      `<span class="queue-chip ${c.ok ? "ok" : "bad"}">${escapeHtml(c.label)}${c.ok ? " ok" : ""}</span>`
+    ).join("")}</div>` : ""}
+    <p class="queue-hint muted">${escapeHtml(t("admintools.when_short"))}</p>`;
+}
+
+async function loadCityWipeQueue() {
+  try {
+    const data = await api("/api/admintools/queue");
+    renderCityWipeQueue(data);
+  } catch {
+    /* queue optional for older backends */
+  }
+}
+
+async function clearCityWipeQueue() {
+  try {
+    const data = await apiStepUp("/api/admintools/queue/clear", { method: "POST", body: "{}" });
+    renderCityWipeQueue(data);
+    showToast(t("admintools.queue_cleared") || "Очередь очищена", "ok");
+  } catch (e) {
+    showToast(e.message, "err");
   }
 }
 
@@ -2601,11 +2918,10 @@ async function triggerCityWipe() {
     showToast(t("admintools.pick_city"), "err");
     return;
   }
-  const status = $("#city-wipe-status");
   const btn = $("#btn-city-wipe");
   if (btn) btn.disabled = true;
   try {
-    const data = await api("/api/admintools/city-wipe", {
+    const data = await apiStepUp("/api/admintools/city-wipe", {
       method: "POST",
       body: JSON.stringify({
         city_id: state.cityWipeId,
@@ -2615,17 +2931,22 @@ async function triggerCityWipe() {
         rcon_notify: true,
       }),
     });
+    renderCityWipeQueue(data);
     const city = (data.city && data.city.name) || state.cityWipeId;
-    const bits = [];
-    if (data.uploaded) bits.push("FTP ok");
-    if (data.upload_error) bits.push(`upload: ${data.upload_error}`);
-    if (data.rcon != null) bits.push("RCON ok");
-    if (data.rcon_error) bits.push(`rcon: ${data.rcon_error}`);
-    const msg = `${t("admintools.queued")}: ${city} · ${bits.join(" · ") || "local only"}`;
-    if (status) status.textContent = msg;
-    showToast(msg, data.upload_error && !data.uploaded ? "warn" : "ok");
+    const n = data.pending_count || (data.queue && data.queue.length) || 1;
+    const warn = !!(data.upload_error && !data.uploaded);
+    showToast(`${t("admintools.queued")}: ${city} · ${n} в файле`, warn ? "warn" : "ok");
   } catch (e) {
-    if (status) status.textContent = e.message;
+    const status = $("#city-wipe-status");
+    if (status) {
+      status.className = "city-wipe-queue is-err";
+      status.innerHTML = `
+        <div class="queue-head">
+          <span class="queue-led" aria-hidden="true"></span>
+          <strong class="queue-title">Ошибка</strong>
+        </div>
+        <div class="queue-city">${escapeHtml(e.message)}</div>`;
+    }
     showToast(e.message, "err");
   } finally {
     if (btn) btn.disabled = false;
@@ -2801,7 +3122,7 @@ async function applyWipe() {
   if (!confirm(`Удалить ${prev.count} файлов клетки ${prev.cell_x},${prev.cell_y}?`)) return;
   if (!confirm("Второй раз: это сотрёт чанк на зеркале и на FTP. Продолжить?")) return;
   try {
-    const data = await api("/api/wipe/apply", {
+    const data = await apiStepUp("/api/wipe/apply", {
       method: "POST",
       body: JSON.stringify({ ...wipePayload(), confirm: typed, apply: true }),
     });
@@ -3602,7 +3923,7 @@ consoleInput.addEventListener("keydown", (e) => {
 });
 document.querySelectorAll("[data-cmd]").forEach((btn) => { btn.onclick = () => quickAction(btn.dataset.cmd); });
 $("#btn-graceful").onclick = () => quickAction("graceful");
-document.querySelector("[data-action=mods]").onclick = () => quickAction("mods");
+document.querySelector("[data-action=mods]")?.addEventListener("click", () => quickAction("mods"));
 $("#btn-players-refresh").onclick = () => { loadPlayers(); loadLaunch(); };
 $("#btn-npc-refresh").onclick = () => loadSlots();
 $("#slots-form").onsubmit = submitSlots;
@@ -3695,6 +4016,7 @@ $("#chat-announce-form").onsubmit = submitChatAnnounce;
 $("#btn-privates-refresh").onclick = () => loadPrivates();
 $("#btn-wipe-preview").onclick = () => previewWipe();
 $("#btn-city-wipe").onclick = () => triggerCityWipe();
+$("#btn-city-wipe-clear")?.addEventListener("click", () => clearCityWipeQueue());
 $("#btn-log-refresh").onclick = () => loadServerLog();
 $("#log-kind").onchange = () => loadServerLog();
 $("#btn-log-download").onclick = () => downloadText(state.serverLogContent, `${state.logKind || "log"}_${ts()}.txt`);
@@ -3731,12 +4053,13 @@ setInterval(() => {
 setInterval(tickUptime, 1000);
 
 initTheme();
-initEditor();
+try { initEditor(); } catch (e) { console.warn("initEditor failed", e); }
 initNavigation();
 initEndpointPopover();
 $("#auth-form").onsubmit = submitAuthForm;
 $("#auth-local-btn").onclick = () => enterLocalAuth();
 $("#btn-logout").onclick = () => logoutUser();
+$("#btn-enable-2fa")?.addEventListener("click", () => enableTotpFlow());
 
 initI18n().then(() => initAuth()).catch((e) => {
   console.error(e);

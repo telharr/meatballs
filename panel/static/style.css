@@ -267,8 +267,9 @@ body {
 
 .sidebar-server-block {
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
   padding: 0 0.65rem 0.65rem;
 }
 .sidebar-server-block .sidebar-label {
@@ -276,14 +277,58 @@ body {
   flex-shrink: 0;
   white-space: nowrap;
 }
-.sidebar-server-switcher {
+.sidebar-no-server {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.server-switcher-chips {
   display: flex;
-  flex: 1;
-  min-width: 0;
-  padding: 0.3rem 0.45rem;
-  border-radius: 10px;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+.server-chip {
+  width: 100%;
+  text-align: left;
   border: 1px solid var(--border);
   background: var(--bg-input);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.server-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.server-chip:hover { border-color: #484f58; }
+body.no-server .server-live-only {
+  display: none !important;
+}
+body.no-server .status-pill.unknown {
+  color: var(--muted);
+  border-color: var(--border);
+  background: var(--bg-hover);
+}
+body.no-server .status-pill.unknown .led {
+  background: var(--muted);
+  box-shadow: none;
+  animation: none;
+}
+.status-pill.unknown {
+  color: var(--muted);
+  border-color: var(--border);
+}
+.sidebar-server-switcher {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 .sidebar-server-switcher select {
   width: 100%;
@@ -1757,6 +1802,151 @@ body.auth-locked #auth-modal { pointer-events: auto; }
   gap: 0.75rem;
   margin: 0.4rem 0 0.6rem;
 }
+.city-wipe-help {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(88, 166, 255, 0.35);
+  background: rgba(88, 166, 255, 0.08);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.city-wipe-help strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--info);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.city-wipe-help p { margin: 0; }
+.city-wipe-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+.queue-count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
+  background: rgba(63, 185, 80, 0.15);
+  border: 1px solid rgba(63, 185, 80, 0.4);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+.queue-list {
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.queue-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: baseline;
+  padding: 0.35rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+}
+.queue-idx {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+.queue-city-name {
+  font-weight: 600;
+  color: var(--text);
+}
+.queue-meta { font-size: 0.68rem; }
+.queue-hint { margin: 0.35rem 0 0; font-size: 0.72rem; }
+.city-wipe-queue {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(63, 185, 80, 0.45);
+  background: rgba(63, 185, 80, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.city-wipe-queue.hidden { display: none !important; }
+.city-wipe-queue.is-warn {
+  border-color: rgba(210, 153, 34, 0.55);
+  background: rgba(210, 153, 34, 0.12);
+}
+.city-wipe-queue.is-err {
+  border-color: rgba(248, 81, 73, 0.5);
+  background: rgba(248, 81, 73, 0.12);
+}
+.queue-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.queue-led {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  flex-shrink: 0;
+  animation: pulse-led 2s ease-in-out infinite;
+}
+.city-wipe-queue.is-warn .queue-led {
+  background: var(--warn);
+  box-shadow: 0 0 8px var(--warn);
+}
+.city-wipe-queue.is-err .queue-led {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+  animation: none;
+}
+.queue-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+.city-wipe-queue.is-warn .queue-title { color: #e3b341; }
+.city-wipe-queue.is-err .queue-title { color: #ff7b72; }
+.queue-city {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.queue-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+.queue-chip {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--muted);
+}
+.queue-chip.ok {
+  color: var(--success);
+  border-color: rgba(63, 185, 80, 0.5);
+  background: rgba(63, 185, 80, 0.12);
+}
+.queue-chip.bad {
+  color: #ff7b72;
+  border-color: rgba(248, 81, 73, 0.5);
+  background: rgba(248, 81, 73, 0.12);
+}
 .city-wipe-body { padding: 0 0.85rem 0.85rem; }
 .city-wipe-panel .card-head { border-bottom: 1px solid var(--border); }
 .mirror-stack {
@@ -1769,25 +1959,18 @@ body.auth-locked #auth-modal { pointer-events: auto; }
 .mirror-card { flex-shrink: 0; }
 .mirror-grid-body { max-height: none; }
 .hard-wipe-card {
-  border-color: rgba(248, 81, 73, 0.25);
+  border-color: rgba(248, 81, 73, 0.35);
 }
-.hard-wipe-card summary {
-  cursor: pointer;
-  padding: 0.55rem 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-  user-select: none;
-  list-style: none;
-}
-.hard-wipe-card summary::-webkit-details-marker { display: none; }
-.hard-wipe-card[open] summary {
-  border-bottom: 1px solid var(--border);
+.hard-wipe-card .card-head h2 {
   color: #ff7b72;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: 0.82rem;
 }
 .hard-wipe-card .hard-fs-wipe-panel {
   padding: 0.75rem 0.85rem 0.85rem;
+  margin-top: 0;
 }
-.hard-fs-wipe-panel { margin-top: 0.5rem; }
 .audit-panel {
   margin: 0 0.85rem 0.5rem;
   max-height: 55vh;

@@ -10,19 +10,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.19.7" />
+  <link rel="stylesheet" href="/static/style.css?v=3.20.3" />
 </head>
-<body>
+<body class="no-server">
   <header class="navbar">
     <div class="nav-brand">
       <img src="/static/assets/icon.ico" alt="" class="nav-logo" width="28" height="28" />
       <span class="nav-title">MEATBALLS <em>PZ</em></span>
       <span id="status-pill" class="status-pill unknown" title="Checking…">
         <span class="led"></span>
-        <span id="status-pill-text">…</span>
+        <span id="status-pill-text">NO SERVER</span>
       </span>
     </div>
-    <div class="nav-pills" id="nav-pills">
+    <div class="nav-pills server-live-only" id="nav-pills">
       <span id="tel-sys" class="telemetry-badge tel-ok">CPU — · RAM —</span>
       <span id="tel-gameserver" class="telemetry-badge tel-ok hidden">JVM: —</span>
       <div class="header-endpoint-wrap">
@@ -35,8 +35,8 @@
           <div class="endpoint-row"><span class="ep-label">FTP</span><span class="ep-value" id="ep-ftp">—</span></div>
         </div>
       </div>
-      <span class="pill pill-players"><span class="pill-k" data-i18n="pill.players">Players</span><span id="pill-players" class="pill-v">0/32</span></span>
-      <span class="pill"><span class="pill-k" data-i18n="pill.uptime">Uptime</span><span id="pill-uptime" class="pill-v">00:00:00</span></span>
+      <span class="pill pill-players"><span class="pill-k" data-i18n="pill.players">Players</span><span id="pill-players" class="pill-v">—</span></span>
+      <span class="pill"><span class="pill-k" data-i18n="pill.uptime">Uptime</span><span id="pill-uptime" class="pill-v">—</span></span>
     </div>
     <div class="nav-controls">
       <span id="user-badge" class="user-badge hidden" title=""></span>
@@ -46,6 +46,7 @@
       </div>
       <button type="button" id="btn-panel-snapshot" class="icon-btn" data-i18n-title="home.snapshot" title="Snapshot">📷</button>
       <button type="button" id="btn-sync-ftp" class="icon-btn" data-need="files" title="Force Sync FTP">⟳</button>
+      <button type="button" id="btn-enable-2fa" class="icon-btn hidden" title="2FA">2FA</button>
       <button type="button" id="btn-logout" class="icon-btn hidden" data-i18n-title="auth.logout" title="Выход">⎋</button>
       <button type="button" id="btn-theme" class="icon-btn" title="Dark / OLED">☀</button>
     </div>
@@ -58,6 +59,8 @@
         <label class="server-switcher sidebar-server-switcher" data-i18n-title="nav.server">
           <select id="server-switcher" aria-label="Active server"></select>
         </label>
+        <div id="server-switcher-chips" class="server-switcher-chips" hidden></div>
+        <p id="sidebar-no-server" class="sidebar-no-server muted hidden">Нет сохранённых профилей</p>
       </div>
       <nav class="sidebar-nav">
         <button type="button" class="nav-item active" data-view="home">
@@ -77,6 +80,12 @@
         </button>
         <button type="button" class="nav-item nav-item-add" id="btn-sidebar-add-server">
           <span class="nav-icon">+</span> Добавить сервер
+        </button>
+      </nav>
+      <p class="sidebar-label sidebar-label-gap" data-i18n="nav.world">Мир</p>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item" data-view="wipe" data-need="files">
+          <span class="nav-icon">🗑</span> <span data-i18n="nav.wipe">Вайп</span>
         </button>
       </nav>
       <p class="sidebar-label sidebar-label-gap" data-i18n="nav.people">Люди</p>
@@ -124,7 +133,7 @@
           <div class="card-head">
             <div class="card-head-left">
               <h2>Быстрое управление</h2>
-              <span class="hint" id="home-hint">профиль сервера · хостер — адаптер</span>
+              <span class="hint" id="home-hint">нет активного сервера · добавьте профиль</span>
             </div>
             <div class="terminal-tools">
               <button type="button" id="btn-home-refresh" class="btn sm" data-i18n="home.refresh">Обновить</button>
@@ -160,12 +169,12 @@
               <button type="button" class="btn sm hidden" id="btn-home-local-start">Local Start</button>
               <button type="button" class="btn sm danger hidden" id="btn-home-local-stop">Local Stop</button>
             </div>
-            <p class="muted home-host-note" id="home-host-note">Запустить хост панель не может — после quit открой панель хостера.</p>
+            <p class="muted home-host-note" id="home-host-note">Сначала добавьте сервер (сайдбар «+ Добавить сервер»), затем появятся статус, порты и игроки.</p>
             <div class="home-widgets">
               <div class="home-widget home-widget-players">
                 <div class="widget-head">
                   <h3 class="widget-title">Игроки онлайн</h3>
-                  <span class="widget-badge" id="home-players-count">0</span>
+              <span class="widget-badge server-live-only" id="home-players-count">0</span>
                 </div>
                 <div id="home-players" class="home-players"><p class="muted">Нет игроков</p></div>
               </div>
@@ -658,6 +667,12 @@
               <p class="muted">Загрузка…</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- Wipe (Мир) -->
+      <section class="view" id="view-wipe">
+        <div class="mirror-stack full-height wipe-stack">
           <div class="card mirror-card city-wipe-panel">
             <div class="card-head">
               <div class="card-head-left">
@@ -671,14 +686,24 @@
                 <label class="toggle-label"><input type="checkbox" id="city-wipe-containers" checked /> <span data-i18n="admintools.reconstruct">Восстановить контейнеры</span></label>
                 <label class="toggle-label"><input type="checkbox" id="city-wipe-loot" checked /> <span data-i18n="admintools.refill">Заспавнить лут</span></label>
               </div>
-              <div class="modal-actions">
+              <div class="city-wipe-help" id="city-wipe-help">
+                <strong data-i18n="admintools.when_title">Когда сработает очередь</strong>
+                <p data-i18n="admintools.when_body">Нужен запущенный дедик с модом AdminTools. Панель пишет строки в Lua/mb_admintools_cmd.txt; сервер читает файл примерно раз в секунду и ставит каждый город в job-очередь. Вайп идёт только по загруженным чанкам (кто-то рядом в мире). Подтверждение: servermsg в игре, лог AdminTools, Логи → Admin Audit. После чтения файл очищается.</p>
+              </div>
+              <div id="city-wipe-status" class="city-wipe-queue hidden" role="status" aria-live="polite"></div>
+              <div class="modal-actions city-wipe-actions">
+                <button type="button" id="btn-city-wipe-clear" class="btn ghost sm" data-i18n="admintools.clear_queue">Очистить очередь панели</button>
                 <button type="button" id="btn-city-wipe" class="btn primary sm" data-i18n="admintools.trigger">Точечный вайп города</button>
               </div>
-              <div id="city-wipe-status" class="muted"></div>
             </div>
           </div>
-          <details class="card mirror-card hard-wipe-card">
-            <summary class="hard-wipe-summary" data-i18n="admintools.hard_fs">Hard FS Wipe (файлы чанка)</summary>
+          <div class="card mirror-card hard-wipe-card">
+            <div class="card-head">
+              <div class="card-head-left">
+                <h2 data-i18n="admintools.hard_fs">Hard FS Wipe (файлы чанка)</h2>
+                <span class="hint">map / chunkdata / zpop · WorldDictionary не трогаем</span>
+              </div>
+            </div>
             <div class="hard-fs-wipe-panel" id="hard-fs-wipe-panel">
               <p class="muted">Удаляет только map/chunkdata/zpop этой клетки (256×256). WorldDictionary не трогаем. Сначала превью.</p>
               <form id="wipe-form" class="launch-form wipe-form">
@@ -690,7 +715,7 @@
               </form>
               <div id="wipe-preview" class="muted">Укажи координаты и нажми превью. На живом хосте не жать «Вайп» без бэкапа.</div>
             </div>
-          </details>
+          </div>
         </div>
       </section>
 
@@ -725,17 +750,21 @@
       <div class="modal-body">
         <p id="auth-modal-hint" class="muted" data-i18n="auth.login_hint">Войдите для управления серверами.</p>
         <form id="auth-form" class="auth-form">
-          <label class="field">
+          <label class="field auth-login-fields">
             <span data-i18n="auth.username">Логин</span>
             <input id="auth-username" type="text" autocomplete="username" required maxlength="80" />
           </label>
-          <label class="field">
+          <label class="field auth-login-fields">
             <span data-i18n="auth.password">Пароль</span>
-            <input id="auth-password" type="password" autocomplete="current-password" required maxlength="200" />
+            <input id="auth-password" type="password" autocomplete="current-password" required maxlength="200" minlength="1" />
           </label>
           <label class="field auth-setup-only hidden">
             <span data-i18n="auth.password_confirm">Повтор пароля</span>
-            <input id="auth-password2" type="password" autocomplete="new-password" maxlength="200" />
+            <input id="auth-password2" type="password" autocomplete="new-password" maxlength="200" minlength="12" />
+          </label>
+          <label class="field auth-totp-only hidden">
+            <span data-i18n="auth.totp_code">Код 2FA</span>
+            <input id="auth-totp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="12" />
           </label>
           <p id="auth-error" class="err hidden"></p>
           <div id="auth-local-wrap" class="auth-local-wrap hidden">
@@ -891,7 +920,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.19.7"></script>
-  <script src="/static/app.js?v=3.19.7"></script>
+  <script src="/static/i18n.js?v=3.20.3"></script>
+  <script src="/static/app.js?v=3.20.3"></script>
 </body>
 </html>

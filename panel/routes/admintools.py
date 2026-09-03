@@ -27,6 +27,16 @@ async def api_cities() -> dict[str, Any]:
     return at_svc.list_cities()
 
 
+@router.get("/queue")
+async def api_queue(_user: dict[str, Any] = require_role("moderator")) -> dict[str, Any]:
+    return at_svc.queue_status()
+
+
+@router.post("/queue/clear")
+async def api_queue_clear(_user: dict[str, Any] = require_role("admin")) -> dict[str, Any]:
+    return at_svc.clear_queue(keep_history=True)
+
+
 @router.post("/city-wipe")
 async def api_city_wipe(
     body: CityWipeBody,

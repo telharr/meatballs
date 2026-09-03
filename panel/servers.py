@@ -34,6 +34,7 @@ VIEW_REQUIREMENTS: dict[str, str] = {
     "mods": "files",
     "workshop": "files",
     "mirror": "files",
+    "wipe": "files",
     "npc": "files",
     "smoke": "files",
 }
@@ -136,6 +137,41 @@ def load_index() -> dict[str, Any]:
     return data
 
 
+def profile_ids_on_disk() -> list[str]:
+    if not PROFILES_DIR.is_dir():
+        return []
+    found: list[str] = []
+    for path in sorted(PROFILES_DIR.glob("*.json")):
+        sid = path.stem
+        if sid.startswith("."):
+            continue
+        if ID_RE.match(sid):
+            found.append(sid)
+    return found
+
+
+def reconcile_index() -> dict[str, Any]:
+    """Keep servers.json in sync with panel/data/servers/*.json."""
+    index = load_index()
+    disk_ids = profile_ids_on_disk()
+    if not disk_ids:
+        if index.get("ids"):
+            index = _empty_index()
+            save_index(index)
+        return index
+    changed = False
+    if list(index.get("ids") or []) != disk_ids:
+        index["ids"] = disk_ids
+        changed = True
+    active = index.get("active")
+    if active not in disk_ids:
+        index["active"] = disk_ids[0]
+        changed = True
+    if changed:
+        save_index(index)
+    return index
+
+
 def save_index(data: dict[str, Any]) -> dict[str, Any]:
     _write_json(INDEX_FILE, data)
     return data
@@ -150,8 +186,10 @@ def _secrets_path(server_id: str) -> Path:
 
 
 def load_secrets(server_id: str) -> dict[str, str]:
+    from panel.security_hardening import decrypt_secret
+
     data = _read_json(_secrets_path(server_id))
-    return {
+    out = {
         "rcon_password": str(data.get("rcon_password") or ""),
         "ftp_password": str(data.get("ftp_password") or ""),
         "sftp_private_key": str(data.get("sftp_private_key") or ""),
@@ -159,9 +197,18 @@ def load_secrets(server_id: str) -> dict[str, str]:
         "server_password": str(data.get("server_password") or ""),
         "discord_webhook": str(data.get("discord_webhook") or ""),
     }
+    for key, val in list(out.items()):
+        try:
+            out[key] = decrypt_secret(val)
+        except Exception:
+            # Legacy / wrong key — leave as stored so operator can re-save
+            out[key] = val
+    return out
 
 
 def save_secrets(server_id: str, patch: dict[str, Any]) -> dict[str, str]:
+    from panel.security_hardening import encrypt_secret
+
     merged = load_secrets(server_id)
     for key in (
         "rcon_password",
@@ -173,7 +220,18 @@ def save_secrets(server_id: str, patch: dict[str, Any]) -> dict[str, str]:
     ):
         if key in patch and patch[key] is not None and patch[key] != "":
             merged[key] = str(patch[key])
-    _write_json(_secrets_path(server_id), merged)
+    stored = {k: encrypt_secret(v) if v else "" for k, v in merged.items()}
+    path = _secrets_path(server_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+    _write_json(path, stored)
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
     return merged
 
 
@@ -437,15 +495,24 @@ def public_profile(server_id: str) -> dict[str, Any]:
 
 def list_servers() -> dict[str, Any]:
     ensure_migrated()
-    index = load_index()
+    index = reconcile_index()
     rows = []
     for server_id in index.get("ids") or []:
         try:
             rows.append(public_profile(server_id))
-        except KeyError:
+        except Exception:
             continue
+    if not rows and profile_ids_on_disk():
+        for server_id in profile_ids_on_disk():
+            try:
+                rows.append(public_profile(server_id))
+            except Exception:
+                continue
+    active = index.get("active")
+    if rows and active not in {r.get("id") for r in rows}:
+        active = rows[0]["id"]
     return {
-        "active": index.get("active"),
+        "active": active,
         "servers": rows,
         "presets": {key: _preset_public(key) for key in HOSTER_PRESETS},
     }
@@ -634,7 +701,7 @@ def invite_password() -> str:
 
 def ensure_migrated() -> dict[str, Any]:
     load_dotenv()
-    index = load_index()
+    index = reconcile_index()
     if index.get("ids"):
         return index
     rcon_host = (os.environ.get("RCON_HOST") or os.environ.get("FTP_HOST") or "").strip()

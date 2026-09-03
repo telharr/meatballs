@@ -124,6 +124,7 @@ from panel.auth import (  # noqa: E402
     moderator_write_forbidden,
     needs_setup,
     require_role,
+    verify_step_up,
 )
 from panel.routes.auth import router as auth_router  # noqa: E402
 from panel.routes.workshop import router as workshop_router  # noqa: E402
@@ -131,6 +132,12 @@ from panel.routes.admintools import router as admintools_router  # noqa: E402
 from panel.routes.telemetry import router as telemetry_router  # noqa: E402
 from panel.routes.provision import router as provision_router  # noqa: E402
 from panel.services.event_bus import bus as event_bus  # noqa: E402
+from panel.security_hardening import (  # noqa: E402
+    SecurityHeadersMiddleware,
+    is_public_deployment,
+    path_needs_step_up,
+    validate_csrf,
+)
 
 from panel.scheduler import (  # noqa: E402
     add_task,
@@ -474,7 +481,16 @@ async def lifespan(app: FastAPI):
     _console_tail_task = None
 
 
-app = FastAPI(title="MEATBALLS PZ Control Panel", version="3.19.7", lifespan=lifespan)
+_PUBLIC = is_public_deployment()
+app = FastAPI(
+    title="MEATBALLS PZ Control Panel",
+    version="3.20.0",
+    lifespan=lifespan,
+    docs_url=None if _PUBLIC else "/docs",
+    redoc_url=None if _PUBLIC else "/redoc",
+    openapi_url=None if _PUBLIC else "/openapi.json",
+)
+app.add_middleware(SecurityHeadersMiddleware)
 app.include_router(auth_router)
 app.include_router(workshop_router)
 app.include_router(admintools_router)
@@ -485,6 +501,11 @@ app.include_router(provision_router)
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     path = request.url.path
+    if path.startswith("/api/"):
+        try:
+            validate_csrf(request)
+        except HTTPException as exc:
+            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     if path.startswith("/api/") and not is_public_api_path(path) and not auth_disabled():
         if needs_setup():
             return JSONResponse(status_code=401, content={"detail": "Admin setup required"})
@@ -495,6 +516,11 @@ async def auth_middleware(request: Request, call_next):
         user = request.state.user
         if user.get("role") == "moderator" and moderator_write_forbidden(request.method, path):
             return JSONResponse(status_code=403, content={"detail": "Insufficient permissions"})
+        if path_needs_step_up(request.method, path):
+            try:
+                verify_step_up(request, user)
+            except HTTPException as exc:
+                return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     return await call_next(request)
 
 
@@ -862,19 +888,38 @@ async def global_exception_handler(request, exc: Exception) -> JSONResponse:
 
 
 @app.get("/api/health")
-async def health() -> dict[str, Any]:
-    meta = _network_meta()
-    return {
+async def health(request: Request) -> dict[str, Any]:
+    """Public health: minimal on internet-facing hosts unless authenticated."""
+    base = {
         "ok": True,
         "version": app.version,
         "uptime_seconds": int(time.time() - _PANEL_STARTED_AT),
-        **meta,
     }
+    public = is_public_deployment()
+    if public:
+        if auth_disabled():
+            # Misconfiguration on a public bind — never leak network meta
+            return base
+        try:
+            authenticate_request(request)
+        except HTTPException:
+            return base
+        return {**base, **_network_meta()}
+    if auth_disabled():
+        return {**base, **_network_meta()}
+    try:
+        authenticate_request(request)
+        return {**base, **_network_meta()}
+    except HTTPException:
+        return base
 
 
 @app.get("/api/servers")
 async def api_servers_list() -> dict[str, Any]:
-    return list_servers()
+    try:
+        return list_servers()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"servers list: {exc}") from exc
 
 
 @app.post("/api/servers")

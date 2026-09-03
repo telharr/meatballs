@@ -306,12 +306,16 @@ Artifacts (gitignored): `dist/`, `build/`, `packaging/Output/`, `*.exe`.
 
 ## Security checklist
 
+See **[docs/SECURITY.md](SECURITY.md)** for VPS hardening (TLS, rate limits, 2FA, firewall, prebuilt images).
+
 - [ ] No `.env` / `panel/data/auth.json` / `panel/data/secrets/` in git
 - [ ] `AUTH_LOCAL_BYPASS=false` on VPS and Docker public binds
-- [ ] Unique `JWT_SECRET` per deployment
-- [ ] HTTPS in front of panel on the internet
+- [ ] `PANEL_PUBLIC=true` on internet-facing hosts
+- [ ] Unique `JWT_SECRET` / `SECRETS_KEY` per deployment
+- [ ] HTTPS in front of panel on the internet (Caddy/Nginx/Tunnel)
+- [ ] Enable TOTP (header **2FA**) for admin
 - [ ] Moderator accounts only when needed (`role: moderator` in `auth.json`)
-- [ ] RCON/FTP passwords in `panel/data/secrets/<profile>.json`, not in docs
+- [ ] RCON/FTP passwords encrypted at rest (`enc:v1:…` in secrets JSON)
 
 ---
 
