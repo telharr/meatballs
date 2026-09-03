@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-03 (v3.22.2: version badge + force update check on boot)
+Last updated: 2026-09-03 (v3.22.2 released; VPS + local on 3.22.2; update pipeline OK)
 
 ## Host (do not commit secrets)
 
@@ -18,10 +18,16 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. **Now: Sprint 11** — обновления с GitHub; Sprint 10 мастер почти закрыт; later: **7 — JVM**
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
-- Panel **3.22.2**: badge `vX.Y.Z` в navbar; boot `checkPanelUpdates(true)` (обход кэша 15 мин); клик по badge = force check; ошибки проверки не глотаются наклик
+- Panel **3.22.2**: navbar version badge; boot force-check; 5‑min update cache; `PANEL_GITHUB_TOKEN`; `packaging/deploy_vps.sh`
+- Test VPS **2026-09-03**: upgraded to **3.22.2** via deploy script; container can reach GitHub `releases/latest`. Release: https://github.com/telharr/meatballs/releases/tag/v3.22.2
 - Panel **3.22.1**: RU/EN sync; packaging scrub secrets from setup.exe
-- Test VPS **2026-09-03**: still **3.22.0** — баннер мог не показаться из‑за кэша `update_check.json` (~1ч на 3.22.0). SSH с этой машины без ключа. Release 3.22.1: https://github.com/telharr/meatballs/releases/tag/v3.22.1
-- Panel **3.22.0**: `PANEL_DATA_DIR` / frozen `%LocalAppData%\PZControlPanel\data`; banner обновлений; `/api/panel/updates*`
+- Panel **3.22.0**: `PANEL_DATA_DIR` / frozen data; banner updates API
+
+## What still needs a human
+
+- **Rotate VPS root password** (was reused from older chat for deploy)
+- **Hoster restart** after RCON `quit` — process.kind=`none`
+- Do not commit `.env` or `panel/backups/*`
 
 ## Dedicated on this PC
 
