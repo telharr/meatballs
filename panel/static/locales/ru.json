@@ -249,5 +249,8 @@
   "cap.need_profile": "нужен профиль сервера",
   "common.yes": "да",
   "common.no": "нет",
-  "common.channel_unavailable": "канал недоступен"
+  "common.channel_unavailable": "канал недоступен",
+  "panel.version_title": "Панель v{version} — клик: проверить обновления",
+  "update.checking": "Проверяем обновления…",
+  "update.check_failed": "Не удалось проверить обновления"
 }

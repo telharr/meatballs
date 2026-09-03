@@ -523,7 +523,8 @@ async function bootstrapApp() {
   connectEventWs();
   api("/api/telemetry/stats").then(renderTelemetryBar).catch(() => {});
   api("/api/status").then(applyStatusPayload).catch(() => {});
-  checkPanelUpdates().catch(() => {});
+  // Force on boot so a pre-release 1h cache cannot hide a just-published GitHub tag
+  checkPanelUpdates(true).catch(() => {});
 }
 
 async function checkPanelUpdates(force = false) {
@@ -531,9 +532,44 @@ async function checkPanelUpdates(force = false) {
     const q = force ? "?force=true" : "";
     const data = await api(`/api/panel/updates${q}`);
     state.panelUpdate = data;
+    if (data && data.current) setPanelVersionBadge(data.current, data);
     renderUpdateBanner(data);
-  } catch {
-    /* non-admin or offline */
+    if (data && data.ok === false && data.error) {
+      const badge = $("#panel-version-badge");
+      if (badge) {
+        badge.classList.add("check-error");
+        badge.title = `${t("update.check_failed")}: ${data.error}`;
+      }
+      if (force) showToast(`${t("update.check_failed")}: ${data.error}`, "err");
+    }
+  } catch (e) {
+    const badge = $("#panel-version-badge");
+    if (badge) {
+      badge.classList.add("check-error");
+      badge.title = e.message || t("update.check_failed");
+    }
+    if (force) showToast(e.message || t("update.check_failed"), "err");
+  }
+}
+
+function setPanelVersionBadge(version, updateInfo) {
+  const badge = $("#panel-version-badge");
+  if (!badge || !version) return;
+  const ver = String(version).replace(/^v/i, "");
+  badge.textContent = `v${ver}`;
+  badge.dataset.version = ver;
+  const available = !!(updateInfo && updateInfo.update_available && !updateInfo.snoozed);
+  badge.classList.toggle("update-available", available);
+  badge.classList.toggle("check-error", !!(updateInfo && updateInfo.ok === false));
+  if (available) {
+    badge.title = t("update.available", {
+      latest: updateInfo.latest,
+      current: ver,
+    });
+  } else if (updateInfo && updateInfo.ok === false && updateInfo.error) {
+    badge.title = `${t("update.check_failed")}: ${updateInfo.error}`;
+  } else {
+    badge.title = t("panel.version_title", { version: ver });
   }
 }
 
@@ -1304,6 +1340,9 @@ async function pollStatus() {
 async function loadHealth() {
   try {
     state.health = await api("/api/health");
+    if (state.health && state.health.version) {
+      setPanelVersionBadge(state.health.version, state.panelUpdate || null);
+    }
     updateHeaderFromHealth();
     applyCapabilities();
     updateStatusRing(false);
@@ -4855,6 +4894,10 @@ setInterval(() => {
 
 $("#update-banner-install")?.addEventListener("click", () => installPanelUpdate());
 $("#update-banner-later")?.addEventListener("click", () => snoozePanelUpdate());
+$("#panel-version-badge")?.addEventListener("click", () => {
+  showToast(t("update.checking"));
+  checkPanelUpdates(true).catch(() => {});
+});
 
 initTheme();
 try { initEditor(); } catch (e) { console.warn("initEditor failed", e); }

@@ -70,7 +70,15 @@ def version_gt(a: str, b: str) -> bool:
 
 
 def _http_json(url: str, timeout: float = 20.0) -> Any:
-    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": UA})
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": UA,
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    token = (os.environ.get("PANEL_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN") or "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
@@ -127,9 +135,12 @@ def check_for_updates(*, force: bool = False) -> dict[str, Any]:
     if not force and cache_path.exists():
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
-            if now - float(cached.get("checked_at") or 0) < 3600 and cached.get("repo") == repo:
+            # Short TTL: stale "no update" must not hide a just-published GitHub release.
+            if now - float(cached.get("checked_at") or 0) < 300 and cached.get("repo") == repo and cached.get("ok") is not False:
+                latest_cached = str(cached.get("latest") or local)
                 cached["current"] = local
-                cached["snoozed"] = bool(snooze and cached.get("latest") == snooze)
+                cached["update_available"] = bool(latest_cached and version_gt(latest_cached, local))
+                cached["snoozed"] = bool(cached["update_available"] and snooze == latest_cached)
                 return cached
         except Exception:
             pass
@@ -175,8 +186,12 @@ def check_for_updates(*, force: bool = False) -> dict[str, Any]:
         "checked_at": now,
         "frozen": bool(getattr(sys, "frozen", False)),
         "apply_supported": bool(setup and getattr(sys, "frozen", False) and os.name == "nt"),
-        "docker_hint": "docker compose pull && docker compose up -d",
-        "git_hint": f"git fetch && git checkout {tag}",
+        "docker_hint": (
+            f"curl -fsSL https://raw.githubusercontent.com/telharr/meatballs/v{latest}/packaging/deploy_vps.sh | bash -s -- {latest}"
+            if available
+            else "docker compose up -d --build"
+        ),
+        "git_hint": f"git fetch && git checkout {tag} && restart panel",
     }
     if setup:
         result["asset"] = {

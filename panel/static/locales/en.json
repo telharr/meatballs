@@ -249,5 +249,8 @@
   "cap.need_profile": "server profile required",
   "common.yes": "yes",
   "common.no": "no",
-  "common.channel_unavailable": "channel unavailable"
+  "common.channel_unavailable": "channel unavailable",
+  "panel.version_title": "Panel v{version} — click to check for updates",
+  "update.checking": "Checking for updates…",
+  "update.check_failed": "Update check failed"
 }

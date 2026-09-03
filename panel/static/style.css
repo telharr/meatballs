@@ -2112,6 +2112,31 @@ code {
   background: var(--accent-dim);
   color: var(--text);
 }
+.panel-version-badge {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.panel-version-badge:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.panel-version-badge.update-available {
+  color: var(--success);
+  border-color: rgba(63, 185, 80, 0.55);
+  background: rgba(63, 185, 80, 0.12);
+}
+.panel-version-badge.check-error {
+  color: var(--danger);
+  border-color: rgba(248, 81, 73, 0.5);
+}
 .user-badge {
   font-size: 0.72rem;
   padding: 0.2rem 0.55rem;

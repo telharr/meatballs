@@ -304,27 +304,47 @@ Artifacts (gitignored): `dist/`, `build/`, `packaging/Output/`, `*.exe`.
 
 ---
 
-## Panel self-update (Sprint 11 / 3.22.0)
+## Panel self-update (Sprint 11 / 3.22.2)
 
 Source of truth: **GitHub Releases** on `PANEL_UPDATE_REPO` (default `telharr/meatballs`). Tag `vX.Y.Z` must match `panel/version.py`.
 
 | Install | How state is kept | How to update |
 |---------|-------------------|---------------|
 | **Windows setup** | `%LOCALAPPDATA%\PZControlPanel\data` (migrated from `{app}\panel\data` once) | Banner → download setup → Inno; `.env` uses `onlyifdoesntexist` |
-| **Docker** | volumes `panel-data` → `/data`, `panel-mirror` → `/mirror` | `docker compose pull && docker compose up -d` (**never** `down -v`) |
+| **Docker** | volumes `./data` → `/data`, `./mirror` → `/mirror` | Prefer rsync tag sources + `docker compose up -d --build` (**never** `down -v`); banner shows compose hint |
 | **git + python** | `panel/data/` (gitignored) | `git fetch && git checkout vX.Y.Z` + restart |
 
-API (admin): `GET /api/panel/updates`, `POST .../download`, `POST .../apply`, `POST .../snooze`.
+API (admin): `GET /api/panel/updates?force=true`, `POST .../download`, `POST .../apply`, `POST .../snooze`.
+
+UI: navbar version badge (`vX.Y.Z`); boot always force-checks GitHub; badge click force-checks; cache TTL ~5 minutes.
 
 Optional env:
 
 ```ini
 PANEL_UPDATE_REPO=telharr/meatballs
+PANEL_GITHUB_TOKEN=ghp_...   # optional; raises GitHub API rate limit (fine-grained: public_repo read)
 PANEL_DATA_DIR=C:\path\to\data
 PANEL_STATE_DIR=%LOCALAPPDATA%\PZControlPanel
 ```
 
-Release checklist: publish setup.exe + optional `SHA256SUMS`; bump `panel/version.py` and Inno `MyAppVersion`.
+Release checklist:
+
+1. Bump `panel/version.py` + Inno `MyAppVersion` + static `?v=`
+2. `python packaging/build_exe.py --clean` (scrubs secrets from bundle)
+3. Compile Inno → `packaging/Output/PZControlPanel-X.Y.Z-setup.exe` + `SHA256SUMS`
+4. `git tag vX.Y.Z` + `gh release create` with setup.exe + SHA256SUMS
+5. Confirm any online panel (older version) shows banner after force check / ≤5 min
+
+VPS apply example (keep `.env` / `data` / `mirror`):
+
+```bash
+# on the VPS host
+curl -fsSL -o /tmp/meatballs.tgz https://github.com/telharr/meatballs/archive/refs/tags/v3.22.2.tar.gz
+# … rsync panel/ tools/ Dockerfile into /opt/pz-panel, then:
+cd /opt/pz-panel && docker compose up -d --build
+```
+
+See `packaging/deploy_vps_3.22.2.sh`.
 
 ---
 
