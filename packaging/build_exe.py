@@ -39,6 +39,45 @@ def _require_pyinstaller() -> None:
         ) from exc
 
 
+def _scrub_runtime_secrets(target: Path) -> None:
+    """Never ship operator secrets / live server profiles inside the installer."""
+    banned_names = {
+        "secrets",
+        "auth.json",
+        "prefs.json",
+        "scheduler.json",
+        "update_check.json",
+        "local-dedi.json",
+    }
+    for path in list(target.rglob("*")):
+        name = path.name
+        if name in banned_names or name.startswith("data._") or name.endswith(".bak"):
+            if path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+            elif path.is_file():
+                path.unlink(missing_ok=True)
+    # Keep only catalog seed + empty servers/.gitkeep under bundled panel/data
+    for data_dir in target.rglob("panel/data"):
+        if not data_dir.is_dir():
+            continue
+        for child in list(data_dir.iterdir()):
+            if child.name in ("mods.catalog.json", "servers"):
+                continue
+            if child.is_dir():
+                shutil.rmtree(child, ignore_errors=True)
+            else:
+                child.unlink(missing_ok=True)
+        servers = data_dir / "servers"
+        if servers.is_dir():
+            for child in list(servers.iterdir()):
+                if child.name == ".gitkeep":
+                    continue
+                if child.is_dir():
+                    shutil.rmtree(child, ignore_errors=True)
+                else:
+                    child.unlink(missing_ok=True)
+
+
 def _copy_runtime_extras(target: Path) -> None:
     """Copy files that PyInstaller datas may miss or that should stay editable."""
     for rel in (
@@ -63,6 +102,7 @@ def _copy_runtime_extras(target: Path) -> None:
         legacy = ROOT / "src" / "modpacks" / "meatballs.catalog.json"
         if legacy.is_file():
             shutil.copy2(legacy, catalog_seed)
+    _scrub_runtime_secrets(target)
 
 
 def build(*, clean: bool) -> Path:
