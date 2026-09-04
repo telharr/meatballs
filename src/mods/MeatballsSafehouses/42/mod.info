@@ -1,0 +1,3 @@
+name=Meatballs Safehouses
+id=MeatballsSafehouses
+description=Panel bridge v1.1: dump/create/update/release SafeHouse via Lua/mb_safehouse_cmd.txt. Dedicated polls EveryOneMinute (OnTick may not fire headless).

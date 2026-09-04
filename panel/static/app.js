@@ -29,6 +29,10 @@ const state = {
   cityWipeId: null,
   logKind: "console",
   wipePreview: null,
+  privatesMap: null,
+  privatesHouses: [],
+  privatesCities: [],
+  privatesSelected: null,
   worldNotify: { local: null, remote: null },
   servers: [],
   serversActive: null,
@@ -308,6 +312,7 @@ function applyRolePermissions() {
     "#btn-save",
     "#ws-compile-form button[type='submit']",
     "#btn-ws-analyze",
+    "#btn-ws-deploy-mods",
     "#btn-ws-steamcmd-install",
     "#btn-ws-download",
     "#btn-mirror-pull",
@@ -315,6 +320,11 @@ function applyRolePermissions() {
     "#btn-city-wipe-run",
     "#btn-wipe-apply",
     "#btn-wipe-preview",
+    "#btn-privates-create",
+    "#btn-privates-update",
+    "#btn-privates-release",
+    "#btn-privates-install",
+    "#btn-privates-restart",
     "#server-wizard-form",
     "#btn-home-save",
   ].forEach((sel) => {
@@ -525,6 +535,7 @@ async function bootstrapApp() {
   api("/api/status").then(applyStatusPayload).catch(() => {});
   // Force on boot so a pre-release 1h cache cannot hide a just-published GitHub tag
   checkPanelUpdates(true).catch(() => {});
+  if (state.activeView === "privates") loadPrivates();
 }
 
 async function checkPanelUpdates(force = false) {
@@ -789,7 +800,7 @@ async function initI18n() {
     };
   });
   document.addEventListener("i18n:change", () => {
-    /* loadLocale already applyI18n; dynamic strings need a second pass */
+    if (state.activeView === "privates") loadPrivates();
   });
 }
 
@@ -3799,38 +3810,316 @@ async function loadPrivates() {
   const list = $("#privates-list");
   const note = $("#privates-note");
   const journal = $("#privates-journal");
+  const bridgeEl = $("#privates-bridge");
   try {
-    const data = await api("/api/safehouses");
+    const data = await api("/api/safehouses?pull=1");
     if (note) note.textContent = data.note || "";
     const houses = data.safehouses || [];
     const factions = data.factions || [];
+    state.privatesHouses = houses;
+    state.privatesCities = data.cities || state.privatesCities || [];
+    const bridge = data.bridge || {};
+    const install = data.install || {};
+    if (bridgeEl) {
+      if (bridge.loaded) {
+        bridgeEl.className = "privates-bridge ok";
+        bridgeEl.textContent = t("privates.bridge_ok", { version: bridge.version || "MeatballsSafehouses" });
+      } else if (install.ready) {
+        bridgeEl.className = "privates-bridge off";
+        bridgeEl.textContent = t("privates.bridge_waiting");
+      } else if (install.files_ok && !install.ini_ok) {
+        bridgeEl.className = "privates-bridge off";
+        bridgeEl.textContent = t("privates.bridge_ini");
+      } else {
+        bridgeEl.className = "privates-bridge off";
+        bridgeEl.textContent = t("privates.bridge_off");
+      }
+    }
+    ensurePrivatesMap(data);
+    if (state.privatesMap) {
+      state.privatesMap.setHouses(houses);
+      if (state.privatesSelected) {
+        const same = houses.find((h) => houseEquals(h, state.privatesSelected));
+        state.privatesMap.setSelected(same || null);
+        if (same) fillPrivatesForm(same);
+      }
+    }
     let html = "";
     if (houses.length) {
-      html += houses.map((h) => `<div class="npc-card player-card">
+      html += houses.map((h) => `<button type="button" class="npc-card player-card privates-item" data-x="${h.x}" data-y="${h.y}" data-w="${h.w}" data-h="${h.h}">
         <div class="player-name">${escapeHtml(h.title || h.owner || "приват")}</div>
         <div class="player-id">владелец ${escapeHtml(h.owner || "—")} · ${h.x},${h.y} ${h.w}×${h.h}</div>
         <div class="player-id">члены: ${escapeHtml((h.members || []).join(", ") || "—")}</div>
-        ${h.expiry ? `<div class="player-id">last visit / expiry: ${escapeHtml(String(h.expiry))}</div>` : ""}
-        <p class="muted">Продление срока — в игре. Панель сейв не пишет.</p>
-      </div>`).join("");
+      </button>`).join("");
     }
     if (factions.length) {
-      html += `<h3 class="players-subhead">Фракции</h3>` + factions.map((f) => `<div class="founder-row">
+      html += `<h3 class="players-subhead">${escapeHtml(t("privates.factions"))}</h3>` + factions.map((f) => `<div class="founder-row">
         <div>
           <div class="player-name">${escapeHtml(f.name || "фракция")} ${f.tag ? "[" + escapeHtml(f.tag) + "]" : ""}</div>
           <div class="player-id">${escapeHtml(f.owner || "")} · ${(f.members || []).map(escapeHtml).join(", ")}</div>
         </div>
       </div>`).join("");
     }
-    if (list) list.innerHTML = html || '<p class="muted">Нет данных</p>';
+    if (list) {
+      list.innerHTML = html || '<p class="muted">Нет данных</p>';
+      list.querySelectorAll(".privates-item").forEach((btn) => {
+        btn.onclick = () => {
+          const found = (state.privatesHouses || []).find((h) =>
+            Number(h.x) === Number(btn.dataset.x)
+            && Number(h.y) === Number(btn.dataset.y)
+            && Number(h.w) === Number(btn.dataset.w)
+            && Number(h.h) === Number(btn.dataset.h));
+          if (found) selectPrivate(found);
+        };
+      });
+    }
     if (journal) {
       const rows = data.journal || [];
       journal.innerHTML = rows.length
         ? `<pre class="world-tail">${rows.map((r) => escapeHtml(r.line)).join("\n")}</pre>`
         : "Журнала _safehouse.txt на зеркале нет";
     }
+    refreshPrivatesOwnerList();
+    updatePrivatesSizeHint();
   } catch (e) {
     if (list) list.innerHTML = `<p class="err">${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function houseEquals(a, b) {
+  if (!a || !b) return false;
+  return Number(a.x) === Number(b.x) && Number(a.y) === Number(b.y)
+    && Number(a.w) === Number(b.w) && Number(a.h) === Number(b.h);
+}
+
+function ensurePrivatesMap(data) {
+  const canvas = $("#privates-map");
+  if (!canvas || !window.MeatballsPrivatesMap) return;
+  if (state.privatesMap) {
+    if (data?.map && state.privatesMap.setAtlas) state.privatesMap.setAtlas(data.map);
+    else if (data?.cities) state.privatesMap.draw();
+    return;
+  }
+  const world = data?.map || { x0: 3000, y0: 0, x1: 16000, y1: 14000 };
+  state.privatesMap = window.MeatballsPrivatesMap.createKnoxMap(canvas, {
+    world,
+    calibration: data?.map || world,
+    cities: data?.cities || state.privatesCities || [],
+    onSelect: (house) => selectPrivate(house),
+    onDraft: (draft, done) => {
+      const x = Math.min(draft.x1, draft.x2);
+      const y = Math.min(draft.y1, draft.y2);
+      const w = Math.abs(draft.x2 - draft.x1) + 1;
+      const h = Math.abs(draft.y2 - draft.y1) + 1;
+      $("#priv-x").value = x;
+      $("#priv-y").value = y;
+      $("#priv-w").value = w;
+      $("#priv-h").value = h;
+      const overlap = privatesOverlap(x, y, w, h);
+      if (state.privatesMap) state.privatesMap.markOverlap(!!overlap);
+      updatePrivatesSizeHint();
+      if (done && overlap) showToast(t("privates.overlap"), "err");
+    },
+    onHover: (pos) => {
+      const el = $("#privates-coords");
+      if (el) el.textContent = `${pos.x}, ${pos.y} · cell ${Math.floor(pos.x / 300)}, ${Math.floor(pos.y / 300)}`;
+    },
+  });
+}
+
+function fillPrivatesForm(house) {
+  if (!house) return;
+  $("#priv-title").value = house.title || "";
+  $("#priv-owner").value = house.owner || "";
+  $("#priv-members").value = (house.members || []).join(", ");
+  $("#priv-x").value = house.x;
+  $("#priv-y").value = house.y;
+  $("#priv-w").value = house.w;
+  $("#priv-h").value = house.h;
+  updatePrivatesSizeHint();
+}
+
+function selectPrivate(house) {
+  state.privatesSelected = house;
+  if (state.privatesMap) state.privatesMap.setSelected(house);
+  fillPrivatesForm(house);
+}
+
+function privatesOverlap(x, y, w, h, ignore) {
+  const candidate = { x, y, w, h };
+  return (state.privatesHouses || []).find((house) => {
+    if (ignore && houseEquals(house, ignore)) return false;
+    const ax = Number(house.x);
+    const ay = Number(house.y);
+    const aw = Number(house.w);
+    const ah = Number(house.h);
+    return !(x + w <= ax || ax + aw <= x || y + h <= ay || ay + ah <= y);
+  }) || null;
+}
+
+function privatesRectFromForm() {
+  const xRaw = $("#priv-x")?.value;
+  const yRaw = $("#priv-y")?.value;
+  const wRaw = $("#priv-w")?.value;
+  const hRaw = $("#priv-h")?.value;
+  if (xRaw === "" || yRaw === "" || wRaw === "" || hRaw === "") return null;
+  const x = Number(xRaw);
+  const y = Number(yRaw);
+  const w = Number(wRaw);
+  const h = Number(hRaw);
+  if (![x, y, w, h].every((n) => Number.isFinite(n))) return null;
+  return { x, y, w, h };
+}
+
+function splitNames(raw) {
+  return String(raw || "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function updatePrivatesSizeHint() {
+  const rect = privatesRectFromForm();
+  const el = $("#privates-size");
+  if (!el) return;
+  if (!rect) {
+    el.textContent = "—";
+    return;
+  }
+  const overlap = privatesOverlap(rect.x, rect.y, rect.w, rect.h, state.privatesSelected);
+  el.textContent = overlap
+    ? `${rect.w}×${rect.h} · ${t("privates.overlap")}`
+    : `${rect.w}×${rect.h} · ${rect.w * rect.h} tiles`;
+  el.classList.toggle("err", !!overlap);
+}
+
+async function refreshPrivatesOwnerList() {
+  const dl = $("#priv-owner-list");
+  if (!dl) return;
+  try {
+    const data = await api("/api/rcon/players");
+    const names = (data.players || data.online || []).map((p) => p.name || p.username || p).filter(Boolean);
+    dl.innerHTML = names.map((n) => `<option value="${escapeHtml(String(n))}"></option>`).join("");
+  } catch {
+    /* RCON optional */
+  }
+}
+
+function setPrivatesMode(mode) {
+  if (state.privatesMap) state.privatesMap.setMode(mode);
+  $("#btn-privates-pan")?.classList.toggle("active", mode === "pan");
+  $("#btn-privates-draw")?.classList.toggle("active", mode === "draw");
+}
+
+async function createPrivateFromForm() {
+  const rect = privatesRectFromForm();
+  const owner = ($("#priv-owner")?.value || "").trim();
+  if (!rect) {
+    showToast(t("privates.need_rect"), "err");
+    return;
+  }
+  if (!owner) {
+    showToast(t("privates.need_owner"), "err");
+    return;
+  }
+  if (privatesOverlap(rect.x, rect.y, rect.w, rect.h)) {
+    showToast(t("privates.overlap"), "err");
+    return;
+  }
+  try {
+    const data = await apiStepUp("/api/safehouses/create", {
+      method: "POST",
+      body: JSON.stringify({
+        ...rect,
+        owner,
+        title: ($("#priv-title")?.value || "").trim(),
+        members: splitNames($("#priv-members")?.value),
+      }),
+    });
+    showToast(t("privates.queued", { op: "create" }), data.upload_error ? "warn" : "ok");
+    if (state.privatesMap) state.privatesMap.clearDraft();
+    setTimeout(() => loadPrivates(), 1500);
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
+async function updatePrivateFromForm() {
+  const rect = privatesRectFromForm();
+  if (!rect) {
+    showToast(t("privates.need_rect"), "err");
+    return;
+  }
+  const next = splitNames($("#priv-members")?.value);
+  const prev = state.privatesSelected?.members || [];
+  const owner = ($("#priv-owner")?.value || "").trim();
+  const add = next.filter((n) => !prev.includes(n));
+  const kick = prev.filter((n) => n !== owner && !next.includes(n));
+  try {
+    const data = await apiStepUp("/api/safehouses/update", {
+      method: "POST",
+      body: JSON.stringify({
+        ...rect,
+        owner,
+        title: ($("#priv-title")?.value || "").trim(),
+        add,
+        kick,
+      }),
+    });
+    showToast(t("privates.queued", { op: "update" }), data.upload_error ? "warn" : "ok");
+    setTimeout(() => loadPrivates(), 1500);
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
+async function releasePrivateFromForm() {
+  const rect = privatesRectFromForm();
+  if (!rect) {
+    showToast(t("privates.need_rect"), "err");
+    return;
+  }
+  const typed = window.prompt(t("privates.release_confirm"), "");
+  if ((typed || "").trim().toLowerCase() !== "release") return;
+  try {
+    const data = await apiStepUp("/api/safehouses/release", {
+      method: "POST",
+      body: JSON.stringify({ ...rect, confirm: "release" }),
+    });
+    showToast(t("privates.queued", { op: "release" }), data.upload_error ? "warn" : "ok");
+    state.privatesSelected = null;
+    setTimeout(() => loadPrivates(), 1500);
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
+async function installPrivatesMod() {
+  const patch = window.confirm(t("privates.patch_ini"));
+  try {
+    const data = await apiStepUp("/api/safehouses/install", {
+      method: "POST",
+      body: JSON.stringify({ patch_ini: patch }),
+    });
+    const n = (data.uploaded || []).length || (data.local && data.local.files) || 0;
+    showToast(t("privates.installed", { n }), data.ok ? "ok" : "err");
+    if (data.hint) showToast(data.hint, "warn");
+    setTimeout(() => loadPrivates(), 800);
+  } catch (e) {
+    showToast(e.message, "err");
+  }
+}
+
+async function restartPrivatesJvm() {
+  if (!confirm(t("privates.confirm_restart"))) return;
+  try {
+    await api("/api/workshop/graceful-restart", {
+      method: "POST",
+      body: JSON.stringify({
+        minutes: 1,
+        message: "MEATBALLS: рестарт для загрузки MeatballsSafehouses",
+      }),
+    });
+    showToast(t("privates.restart_started"), "ok");
+  } catch (e) {
+    showToast(e.message, "err");
   }
 }
 
@@ -4158,7 +4447,7 @@ function renderWorkshopPicker(mods) {
   el.innerHTML = mods.map((m) => `
     <label class="ws-pick-row">
       <input type="checkbox" class="ws-mod-check" value="${escapeHtml(m.id)}" />
-      <span><strong>${escapeHtml(m.id)}</strong> · ${escapeHtml(m.name || "")}${m.workshop_id ? " · WS " + escapeHtml(m.workshop_id) : ""}</span>
+      <span><strong>${escapeHtml(m.id)}</strong> · ${escapeHtml(m.name || "")}${m.workshop_id ? " · WS " + escapeHtml(m.workshop_id) : ""} <em class="ws-pick-src">${escapeHtml(m.source || "")}</em></span>
     </label>`).join("");
 }
 
@@ -4396,6 +4685,47 @@ async function compileWorkshopPack(e) {
       ok ? "ok" : "err",
     );
     loadWorkshop();
+  } catch (err) {
+    showToast(err.message, "err");
+    if (log) log.textContent = err.message;
+  }
+}
+
+async function deployWorkshopModsAsIs() {
+  const modIds = selectedWorkshopModIds();
+  const log = $("#ws-compile-log");
+  if (!modIds.length) {
+    showToast(t("workshop.need_mods") || "Выберите хотя бы один мод", "err");
+    return;
+  }
+  if (log) log.textContent = "Uploading…";
+  try {
+    const data = await api("/api/workshop/deploy-mods", {
+      method: "POST",
+      body: JSON.stringify({
+        mod_ids: modIds,
+        update_ini: !!$("#ws-update-ini")?.checked,
+      }),
+    });
+    const lines = [
+      ...(data.log || []),
+      ...(data.errors || []).map((e) => `[error] ${e}`),
+      data.ini?.skipped ? `[ini] ${data.ini.message || data.ini.skipped}` : "",
+      data.hint || "",
+    ].filter(Boolean);
+    const text = lines.join("\n");
+    if (log) log.textContent = text;
+    state.wsCompileLog = text;
+    const iniSkip = data.ini && data.ini.skipped;
+    showToast(
+      data.ok
+        ? `${t("workshop.deploy_as_is_done") || "Uploaded"} ${modIds.join(", ")}`
+        : (data.errors && data.errors[0]) || "Upload failed",
+      data.ok ? (iniSkip ? "warn" : "ok") : "err",
+    );
+    await loadWorkshop();
+    const logAfter = $("#ws-compile-log");
+    if (logAfter && state.wsCompileLog) logAfter.textContent = state.wsCompileLog;
   } catch (err) {
     showToast(err.message, "err");
     if (log) log.textContent = err.message;
@@ -4851,6 +5181,17 @@ $("#btn-chat-refresh").onclick = () => loadChat();
 $("#chat-channel").onchange = () => loadChat();
 $("#chat-announce-form").onsubmit = submitChatAnnounce;
 $("#btn-privates-refresh").onclick = () => loadPrivates();
+$("#btn-privates-pan")?.addEventListener("click", () => setPrivatesMode("pan"));
+$("#btn-privates-draw")?.addEventListener("click", () => setPrivatesMode("draw"));
+$("#btn-privates-create")?.addEventListener("click", () => createPrivateFromForm());
+$("#btn-privates-update")?.addEventListener("click", () => updatePrivateFromForm());
+$("#btn-privates-release")?.addEventListener("click", () => releasePrivateFromForm());
+$("#btn-privates-install")?.addEventListener("click", () => installPrivatesMod());
+$("#btn-privates-restart")?.addEventListener("click", () => restartPrivatesJvm());
+$("#privates-form")?.addEventListener("submit", (e) => e.preventDefault());
+["priv-x", "priv-y", "priv-w", "priv-h"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("input", () => updatePrivatesSizeHint());
+});
 $("#btn-wipe-preview").onclick = () => previewWipe();
 $("#btn-city-wipe").onclick = () => triggerCityWipe();
 $("#btn-city-wipe-clear")?.addEventListener("click", () => clearCityWipeQueue());
@@ -4870,6 +5211,7 @@ $("#btn-ws-steamcmd-install").onclick = () => installSteamcmd();
 $("#btn-ws-check").onclick = () => checkWorkshopUpdates();
 $("#btn-ws-graceful").onclick = () => startWorkshopGraceful();
 $("#btn-ws-analyze").onclick = () => analyzeWorkshopPack();
+$("#btn-ws-deploy-mods")?.addEventListener("click", () => deployWorkshopModsAsIs());
 $("#ws-compile-form").onsubmit = compileWorkshopPack;
 $("#chk-ws-auto-restart").onchange = (e) => setWorkshopAutoRestart(e.target.checked);
 $("#btn-mirror-pull").onclick = () => pullMirror();

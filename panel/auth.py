@@ -514,9 +514,13 @@ def moderator_write_forbidden(method: str, path: str) -> bool:
         return True
     if path == "/api/workshop/compile":
         return True
+    if path == "/api/workshop/deploy-mods":
+        return True
     if path == "/api/admintools/city-wipe":
         return True
     if path == "/api/admintools/queue/clear":
+        return True
+    if path.startswith("/api/safehouses/") and path != "/api/safehouses/pull":
         return True
     return False
 

@@ -89,7 +89,6 @@ from panel.services import player_access as player_access_svc  # noqa: E402
 from panel.chat import snapshot as chat_snapshot
 from panel.bans import snapshot as bans_snapshot
 from panel.bans import unban_command
-from panel.safehouses import snapshot as safehouses_snapshot
 from panel.wipe import apply as wipe_apply
 from panel.wipe import preview as wipe_preview
 from panel.servers import (  # noqa: E402
@@ -134,6 +133,7 @@ from panel.routes.admintools import router as admintools_router  # noqa: E402
 from panel.routes.telemetry import router as telemetry_router  # noqa: E402
 from panel.routes.provision import router as provision_router  # noqa: E402
 from panel.routes.updates import router as updates_router  # noqa: E402
+from panel.routes.safehouses import router as safehouses_router  # noqa: E402
 from panel.version import __version__ as PANEL_VERSION  # noqa: E402
 from panel.services.event_bus import bus as event_bus  # noqa: E402
 from panel.security_hardening import (  # noqa: E402
@@ -502,6 +502,7 @@ app.include_router(admintools_router)
 app.include_router(telemetry_router)
 app.include_router(provision_router)
 app.include_router(updates_router)
+app.include_router(safehouses_router)
 
 
 @app.middleware("http")
@@ -1210,11 +1211,6 @@ async def api_bans_unban(body: UnbanBody) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=_rcon_error_message(exc)) from exc
-
-
-@app.get("/api/safehouses")
-async def api_safehouses() -> dict[str, Any]:
-    return safehouses_snapshot()
 
 
 @app.post("/api/wipe/preview")

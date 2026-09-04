@@ -19,6 +19,14 @@ globals = {
     "isServer",
     "isAdmin",
     "isDebugEnabled",
+    "MeatballsSafehouses",
+    "MeatballsSafehousesServer",
+    "SafeHouse",
+    "Faction",
+    "getFileReader",
+    "getFileWriter",
+    "getOnlinePlayers",
+    "getTimestamp",
 }
 
 read_globals = {

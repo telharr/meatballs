@@ -38,6 +38,15 @@
       "enabled": true,
       "path": "src/mods/AdminTools",
       "notes": "City wipe, Louisville claim ban, safehouse borders, disable map share"
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsSafehouses",
+      "name": "Meatballs Safehouses",
+      "source": "local",
+      "enabled": true,
+      "path": "src/mods/MeatballsSafehouses",
+      "notes": "Panel bridge: create/update/release vanilla SafeHouse via Lua/mb_safehouse_cmd.txt"
     }
   ]
 }

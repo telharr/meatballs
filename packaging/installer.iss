@@ -2,7 +2,7 @@
 ; Build: 1) python packaging/build_exe.py  2) ISCC packaging/installer.iss
 
 #define MyAppName "PZ Control Panel"
-#define MyAppVersion "3.22.2"
+#define MyAppVersion "3.23.0"
 #define MyAppPublisher "MEATBALLS"
 #define MyAppURL "https://github.com/telharr/meatballs"
 #define MyBuildDir "..\dist\PZControlPanel"

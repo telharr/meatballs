@@ -40,7 +40,7 @@ VIEW_REQUIREMENTS: dict[str, str] = {
     "smoke": "files",
 }
 
-MEATBALLS_VIEWS = frozenset({"npc", "privates"})
+MEATBALLS_VIEWS = frozenset({"npc"})
 
 CAP_HINTS: dict[str, str] = {
     "rcon": "нужен RCON",

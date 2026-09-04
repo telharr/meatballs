@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.22.2" />
+  <link rel="stylesheet" href="/static/style.css?v=3.24.0" />
 </head>
 <body class="no-server">
       <div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
@@ -122,7 +122,7 @@
         <button type="button" class="nav-item" data-view="chat" data-need="files">
           <span class="nav-icon">💬</span> <span data-i18n="nav.chat">Чат</span>
         </button>
-        <button type="button" class="nav-item" data-view="privates" data-need="files" data-need-plugin="meatballs">
+        <button type="button" class="nav-item" data-view="privates" data-need="files">
           <span class="nav-icon">⌂</span> <span data-i18n="nav.privates">Приваты</span>
         </button>
       </nav>
@@ -448,19 +448,54 @@
 
       <!-- Privates -->
       <section class="view" id="view-privates">
-        <div class="card full-height">
+        <div class="card full-height privates-card">
           <div class="card-head">
             <div class="card-head-left">
-              <h2>Приваты и фракции</h2>
-              <span class="hint">дамп LogExtender · Saves не трогаем</span>
+              <h2 data-i18n="privates.title">Приваты</h2>
+              <span class="hint" data-i18n="privates.hint">карта · SafeHouse API · сейвы не трогаем</span>
             </div>
-            <button type="button" id="btn-privates-refresh" class="btn sm">Обновить</button>
+            <div class="privates-head-actions">
+              <button type="button" id="btn-privates-install" class="btn sm ghost" data-i18n="privates.install">Залить мод</button>
+              <button type="button" id="btn-privates-restart" class="btn sm danger" data-i18n="privates.restart">Рестарт JVM</button>
+              <button type="button" id="btn-privates-refresh" class="btn sm" data-i18n="privates.refresh">Обновить</button>
+            </div>
           </div>
-          <div class="home-body">
-            <p class="muted" id="privates-note"></p>
-            <div id="privates-list"><p class="muted">Загрузка…</p></div>
-            <h3 class="players-subhead">Журнал _safehouse.txt</h3>
-            <div id="privates-journal" class="muted">—</div>
+          <div class="privates-body">
+            <div class="privates-map-col">
+              <div class="privates-map-toolbar">
+                <button type="button" id="btn-privates-pan" class="btn sm active" data-i18n="privates.pan">Панорама</button>
+                <button type="button" id="btn-privates-draw" class="btn sm" data-i18n="privates.draw">Разметить</button>
+                <span id="privates-coords" class="privates-coords muted">—</span>
+              </div>
+              <canvas id="privates-map" class="privates-map" width="800" height="560"></canvas>
+              <p class="muted privates-map-legend" data-i18n="privates.legend">Бумажный атлас Knox (как карта M). Зелёные прямоугольники — приваты. Разметить = Add Safezone.</p>
+            </div>
+            <div class="privates-side">
+              <p class="muted" id="privates-note"></p>
+              <div id="privates-bridge" class="privates-bridge off" data-i18n="privates.bridge_off">Мод не отвечает — залейте MeatballsSafehouses и рестартните дедик</div>
+              <form id="privates-form" class="privates-form">
+                <label class="field"><span data-i18n="privates.field_title">Название</span><input id="priv-title" maxlength="80" autocomplete="off" /></label>
+                <label class="field"><span data-i18n="privates.field_owner">Владелец</span><input id="priv-owner" maxlength="80" list="priv-owner-list" autocomplete="off" /></label>
+                <datalist id="priv-owner-list"></datalist>
+                <label class="field"><span data-i18n="privates.field_members">Члены (через запятую)</span><input id="priv-members" maxlength="400" autocomplete="off" /></label>
+                <div class="privates-xy">
+                  <label class="field"><span>X</span><input id="priv-x" type="number" /></label>
+                  <label class="field"><span>Y</span><input id="priv-y" type="number" /></label>
+                  <label class="field"><span data-i18n="privates.w">W</span><input id="priv-w" type="number" min="1" /></label>
+                  <label class="field"><span data-i18n="privates.h">H</span><input id="priv-h" type="number" min="1" /></label>
+                </div>
+                <p class="muted" id="privates-size">—</p>
+                <div class="privates-form-actions">
+                  <button type="button" id="btn-privates-create" class="btn primary sm" data-i18n="privates.create">Создать</button>
+                  <button type="button" id="btn-privates-update" class="btn sm" data-i18n="privates.update">Сохранить</button>
+                  <button type="button" id="btn-privates-release" class="btn danger sm" data-i18n="privates.release">Снять</button>
+                </div>
+              </form>
+              <h3 class="players-subhead" data-i18n="privates.list">Список</h3>
+              <div id="privates-list"><p class="muted">Загрузка…</p></div>
+              <h3 class="players-subhead">Журнал _safehouse.txt</h3>
+              <div id="privates-journal" class="muted">—</div>
+            </div>
           </div>
         </div>
       </section>
@@ -590,7 +625,7 @@
           <div id="ws-table" class="workshop-table"><p class="muted" data-i18n="loading">Загрузка…</p></div>
           <div class="workshop-builder">
             <h3 class="players-subhead" data-i18n="workshop.builder">ModPack Builder</h3>
-            <p class="muted" data-i18n="workshop.builder_hint">Выберите моды, задайте ID пака, скомпилируйте единый ServerModPack.</p>
+            <p class="muted" data-i18n="workshop.builder_hint">Локальный мод (MeatballsSafehouses) — выберите только его и «Залить выбранные как есть». «Собрать» склеивает несколько модов в один pack и падает на общих хуках.</p>
             <div class="workshop-builder-grid">
               <div id="ws-mod-picker" class="ws-mod-picker"><p class="muted">…</p></div>
               <form id="ws-compile-form" class="mod-form">
@@ -602,10 +637,11 @@
                 </label>
                 <label class="toggle-label"><input type="checkbox" id="ws-fail-conflict" /> <span data-i18n="workshop.fail_conflict">Стоп при конфликтах</span></label>
                 <label class="toggle-label"><input type="checkbox" id="ws-deploy-server" /> <span data-i18n="workshop.deploy_server">Скомпилировать и сразу залить на сервер (FTP/SFTP)</span></label>
-                <label class="toggle-label"><input type="checkbox" id="ws-update-ini" checked /> <span data-i18n="workshop.update_ini">Добавить пак в Mods= в world.ini</span></label>
+                <label class="toggle-label"><input type="checkbox" id="ws-update-ini" checked /> <span data-i18n="workshop.update_ini">Добавить ID в Mods= в world.ini</span></label>
                 <div class="modal-actions">
                   <button type="button" id="btn-ws-analyze" class="btn sm" data-i18n="workshop.analyze">Анализ конфликтов</button>
-                  <button type="submit" class="btn primary sm" data-i18n="workshop.compile">Compile</button>
+                  <button type="button" id="btn-ws-deploy-mods" class="btn primary sm" data-i18n="workshop.deploy_as_is">Залить выбранные как есть</button>
+                  <button type="submit" class="btn sm" data-i18n="workshop.compile">Собрать</button>
                 </div>
               </form>
             </div>
@@ -1009,7 +1045,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/properties/properties.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <script src="/static/i18n.js?v=3.22.2"></script>
-  <script src="/static/app.js?v=3.22.2"></script>
+  <script src="/static/i18n.js?v=3.24.0"></script>
+  <script src="/static/privates-map.js?v=3.24.0"></script>
+  <script src="/static/app.js?v=3.24.0"></script>
 </body>
 </html>

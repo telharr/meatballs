@@ -17,6 +17,7 @@ Maintain this repo as a **modding framework + distribution pipeline** for Projec
 | **Deployment (A/B/C)** | `docs/DEPLOYMENT.md` |
 | **Packaging / installer** | `packaging/build_exe.py`, `packaging/installer.iss` |
 | Conflict / merge | `tools/pack_merger.py` |
+| Knox atlas (Приваты) | `tools/knox_atlas.py`, `docs/privates-map.md` |
 | Workshop VDF / publish | `tools/uploader.py` |
 | FTP pull / push mods | `tools/ftp_manager.py`, `.cursor/rules/ftp-deploy.mdc` |
 | New mod skeleton | Copy `templates/mod/` → `src/mods/<ModId>/` or `python tools/mod_catalog.py scaffold --id MyMod` |
@@ -25,6 +26,7 @@ Maintain this repo as a **modding framework + distribution pipeline** for Projec
 | Local dedicated test | `tools/local_server.py`, set `PZ_DEDICATED_DIR` |
 | Launch invites / adduser | `tools/launch_invite.py`, panel **Игроки** |
 | Empty test / NPC slots | `tools/slots_ctl.py`, `src/mods/MeatballsSlots`, panel **Игроки** |
+| Safehouses from panel | `src/mods/MeatballsSafehouses`, panel **Приваты**, `docs/privates-map.md` |
 | Cursor Lua agent | `.cursor/rules/pz-coder.mdc` |
 | Cursor Steam agent | `.cursor/rules/steam-pipeline.mdc` |
 | Cursor FTP deploy agent | `.cursor/rules/ftp-deploy.mdc` |

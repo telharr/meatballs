@@ -15,9 +15,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from panel.paths import DATA_DIR
+from panel.paths import DATA_DIR, PANEL
 
 STATE_FILE = DATA_DIR / "server_uptime.json"
+ROOT = PANEL.parent
 
 # LOG  : General      f:0 st:188\xa0400\xa0465> ...
 _ST_RE = re.compile(r"\bst:([0-9\s\u00a0\u202f\u2009]+)\s*>", re.I)
@@ -112,8 +113,8 @@ def _console_candidates(server_id: str | None) -> list[Path]:
         roots.append(mirror_root(sid))
     except Exception:
         pass
-    roots.append(PANEL.parent / ".mirror" / sid)
-    roots.append(PANEL.parent / ".cache" / "dedi-test")
+    roots.append(ROOT / ".mirror" / sid)
+    roots.append(ROOT / ".cache" / "dedi-test")
     try:
         profile = load_profile(sid)
         files = profile.get("files") or {}

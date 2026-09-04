@@ -1,0 +1,17 @@
+{
+  "comment": "Copy to calibration.json if missing. Atlas PNG is gitignored. Cell is 300 (worldmap.xml).",
+  "image": "atlas.png",
+  "x0": 3000,
+  "y0": 0,
+  "x1": 16000,
+  "y1": 14000,
+  "cell": 300,
+  "scale": 0.25,
+  "image_w": 3250,
+  "image_h": 3500,
+  "anchors": [
+    { "id": "westpoint", "x": 11690, "y": 6990 },
+    { "id": "muldraugh", "x": 10780, "y": 9830 },
+    { "id": "rosewood", "x": 8300, "y": 11670 }
+  ]
+}

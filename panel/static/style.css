@@ -2524,6 +2524,13 @@ body.auth-locked #auth-modal { pointer-events: auto; }
   font-size: 0.78rem;
   margin-bottom: 0.35rem;
 }
+.ws-pick-src {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 .workshop-log {
   margin: 0;
   padding: 0.65rem 0.75rem;
@@ -2970,5 +2977,90 @@ a.amnezia-pill-btn {
   text-decoration: none;
   text-align: center;
   box-sizing: border-box;
+}
+
+.privates-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.privates-head-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.privates-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 0.85rem;
+  min-height: 0;
+  flex: 1;
+  padding: 0.75rem 1rem 1rem;
+  overflow: hidden;
+}
+.privates-map-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 0.4rem;
+}
+.privates-map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.privates-map-toolbar .btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.privates-coords {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  margin-left: auto;
+}
+.privates-map {
+  flex: 1;
+  width: 100%;
+  min-height: 280px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #152016;
+  cursor: grab;
+}
+.privates-map-legend { margin: 0; font-size: 0.78rem; }
+.privates-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+.privates-bridge {
+  font-size: 0.82rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.privates-bridge.ok { border-color: rgba(63, 185, 80, 0.45); color: var(--success); }
+.privates-bridge.off { border-color: rgba(210, 153, 34, 0.45); color: var(--warn); }
+.privates-form { display: flex; flex-direction: column; gap: 0.45rem; }
+.privates-xy {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+.privates-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.privates-form-actions .btn { flex: 1 1 auto; }
+@media (max-width: 980px) {
+  .privates-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .privates-map { min-height: 240px; height: 280px; flex: none; }
 }
 

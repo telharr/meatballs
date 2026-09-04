@@ -35,6 +35,11 @@ class AnalyzeBody(BaseModel):
     mod_ids: list[str] = Field(default_factory=list)
 
 
+class DeployModsBody(BaseModel):
+    mod_ids: list[str] = Field(default_factory=list)
+    update_ini: bool = True
+
+
 class AutoRestartFlagBody(BaseModel):
     enabled: bool = False
 
@@ -164,6 +169,20 @@ async def api_workshop_compile(
             pack_name=body.pack_name,
             fail_on_conflict=body.fail_on_conflict,
             deploy_to_server=body.deploy_to_server,
+            update_ini=body.update_ini,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/deploy-mods")
+async def api_workshop_deploy_mods(
+    body: DeployModsBody,
+    _user: dict[str, Any] = require_role("admin"),
+) -> dict[str, Any]:
+    try:
+        return pack_svc.deploy_mods_as_is(
+            mod_ids=body.mod_ids,
             update_ini=body.update_ini,
         )
     except ValueError as exc:

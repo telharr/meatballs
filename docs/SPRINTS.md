@@ -2,7 +2,7 @@
 
 Читать после `docs/PRODUCT.md`. Статусы: `done` / `now` / `next` / `later`.
 
-Текущий фокус: **Sprint 11 — обновления панели с GitHub** (panel **3.22.0**). Sprint 10 (единый мастер) — implementing/почти done; Sprint 7 (JVM) — later.
+**Текущий фокус:** Sprint 13 Phase A **done** (атлас ISWorldMap, панель 3.24.0). Дальше тайлы (Phase B), если зума PNG мало.
 
 ---
 
@@ -245,6 +245,87 @@ State (persist)     PANEL_DATA_DIR | %LOCALAPPDATA%/PZControlPanel/data | panel/
 - [ ] Docker: `compose pull && up -d` без `-v` сохраняет `/data`
 
 **Не в scope:** silent auto-update без клика; code signing; macOS.
+
+---
+
+## Sprint 12 — приваты: карта, создание, снятие, правка (now, panel 3.23.0)
+
+**Цель:** вкладка **Приваты** повторяет админский Add Safezone / Safehouse UI: карта Knox Country, подсветка зон, прямоугольник, владелец/члены, снятие. Работает на **любом** профиле с каналом файлов, не только XLGAMES.
+
+**Почему мод:** `SafeHouse.*` живёт в JVM дедика. Панель сейв не пишет, RCON слэш-команд персонажа не эмулирует. Хостинг-агностичный мост — файл в `Lua/` + серверный Lua, как city wipe.
+
+**Контракт**
+
+```text
+Браузер (карта + форма) → POST /api/safehouses/{create|update|release|install}
+Панель → Lua/mb_safehouse_cmd.txt (FTP/SFTP/local cachedir)
+Мод MeatballsSafehouses (~1 с) читает, чистит, вызывает SafeHouse.*
+Сразу пишет mb_safehouses.json + mb_safehouse_ack.json + mb_safehouse_bridge.json
+Панель Pull / poll ack → оверлей
+```
+
+Формат команды (без JSON-парсера в Lua):
+
+```text
+op=create|update|release
+nonce=...
+x= y= w= h=
+owner=...   title=...   members=a,b   add=...   kick=...
+---
+```
+
+Строки `owner` / `title` / члены — percent-encoding. Ключ зоны: `x,y,w,h` (title может смениться).
+
+**Мод** `src/mods/MeatballsSafehouses` (B42, без ServerTweaker/LogExtender/AdminTools):
+
+- [x] Дамп `mb_safehouses.json` (совместим с LogExtender)
+- [x] Поллер `mb_safehouse_cmd.txt` + ack/bridge
+- [x] create / update (title, owner, add/kick) / release
+- [x] рассылка `sendServerCommand` онлайн-клиентам
+- [x] в каталоге; кнопка «Залить мод» по `files.root/mods/`
+
+**Панель**
+
+- [x] Приваты видны при `capabilities.files` (не только `plugins.meatballs`)
+- [x] Карта Knox: pan/zoom, города, оверлей зон, drag-прямоугольник
+- [x] Форма как ISAddSafeZoneUI: title, owner, members, размер, пересечение
+- [x] Карточка зоны: правка / снятие (confirm `release`)
+- [x] Refresh тянет дамп с FTP; без мода — честный empty state
+- [x] POST admin + step-up; сейвы не трогаем
+- [x] i18n RU/EN, cache-bust `3.23.2` (Приваты: статус «ждём рестарт JVM», не «мод не залит»)
+
+**Приёмка**
+
+- [x] `python tests/test_safehouses.py` — encode/overlap roundtrip
+- [x] UI: карта Knox, города, Draw/Pan, форма title/owner/XYWH, size tiles
+- [x] Вкладка на профиле с FTP (не только meatballs plugin)
+- [x] Залить мод на активный сервер → файлы в `mods/MeatballsSafehouses` *(Приваты → Залить мод **или** Workshop → только этот мод → «Залить выбранные как есть»)*
+- [x] Команда create пишется в `Lua/mb_safehouse_cmd.txt` (проверено локально и FTP)
+- [x] После рестарта дедика: мост `1.0.0` в консоли; **OnTick на headless не поллит cmd** (исправление 1.1.0: poll на `OnServerStarted` + `EveryOneMinute`)
+- [x] Create → ack → дамп: зона `MB-panel-probe` 10648,6912 8×8 (2026-09-04, мод 1.1.1)
+
+**Не в scope Sprint 12:** правка границ без release+create; фракции; продление `lastVisited`; in-game заливка пола с панели.
+
+Карта «как в игре»: `docs/privates-map.md`, **Sprint 13**.
+
+---
+
+## Sprint 13 — карта приватов как ISWorldMap (done / next tiles)
+
+**Цель:** на вкладке Приваты тот же бумажный атлас Knox, что админ видит по M, с оверлеем зон и Draw → `SafeHouse` X/Y.
+
+**Не цель:** спутник OSM, iframe чужого сайта, коммит копирайтных PNG в git.
+
+**Порядок**
+
+1. [x] Калибровка `panel/data/maps/knox/calibration.json` + атлас вне git (`python tools/knox_atlas.py` из `worldmap.xml`).
+2. [x] `privates-map.js`: `drawImage` атласа, схема — fallback. Панель **3.24.0**.
+3. [ ] Приёмка в браузере: клик по West Point / Muldraugh совпадает с игрой ±2 тайла; `MB-panel-probe` 10648,6912 на карте.
+4. Later: тайловая пирамида, если зума A мало.
+
+Детали: `docs/privates-map.md`.
+
+---
 
 ---
 

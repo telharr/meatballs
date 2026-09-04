@@ -99,6 +99,8 @@ end)
 
 Per-chunk data uses `ModData` attached to `IsoGridSquare` or custom `GlobalModData` keys scoped by coordinates. Safehouse data is managed by the vanilla `SafeHouse` system — avoid overwriting safehouse ModData keys.
 
+Панель создаёт зоны только через мод + `Lua/mb_safehouse_cmd.txt`. Карта вкладки Приваты: `docs/privates-map.md` (атлас из `worldmap.xml` + оверлей зон). Headless dedicated может не слать `Events.OnTick`; поллер 1.1.1 сидит на `OnServerStarted` / `EveryOneMinute`.
+
 ### WorldDictionary Collision Prevention
 
 When registering custom world entities, prefix IDs with your mod ID:
