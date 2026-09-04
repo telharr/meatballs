@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-04 (panel 3.24.1 wizard step-up; Sprint 13 atlas 3.24.0)
+Last updated: 2026-09-04 (panel 3.24.3 CSRF headers on wizard save; VPS has MEATBALLS)
 
 ## Host (do not commit secrets)
 
@@ -22,13 +22,13 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. **Now: Sprint 13 Phase A** — атлас Knox на вкладке Приваты
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.24.2**: Update button on Docker chooses rebuild (sock + project mount), not Windows setup.exe. Release: https://github.com/telharr/meatballs/releases/tag/v3.24.2
+- Test VPS **2026-09-04**: `185.221.154.241:8000` health **3.24.2** after one-shot `deploy_vps.sh`; compose has docker.sock + `/host/pz-panel` for later in-panel updates
+- VPS panel active profile **MEATBALLS** (`meatballs`, XLGAMES, process `none`). Copied from local `meatballs-xl` via hosting wizard. Game version field empty on save (local had 42.20.4).
+- Panel **3.24.3** (branch `fix`, not merged): `api()` keeps CSRF + `Content-Type` when `apiStepUp` adds confirm headers. Stock 3.24.2 wizard Save on public VPS returned 403 CSRF, then 422 if Content-Type was dropped.
 - Panel **3.24.1**: wizard «Сохранить и сделать активным» uses in-app step-up (not `window.prompt`); errors show in the wizard; `/api/status` no longer paints `[500]` when no profile
 - Panel **3.24.0**: Приваты рисуют бумажный атлас из `worldmap.xml` (`python tools/knox_atlas.py`). PNG gitignore.
-- Panel **3.23.2**: Приваты больше не пишут «мод отсутствует», если файлы и `Mods=` уже на хосте — нужен рестарт JVM
-- Panel **3.23.1**: Workshop builder — **Залить выбранные как есть** (без склейки в один pack). «Собрать» с fail-on-conflict падает на общих Lua-хуках — это не способ залить MeatballsSafehouses.
-- Panel **3.23.0**: вкладка Приваты — карта Knox, разметка, мост `MeatballsSafehouses` (сейвы не пишет)
 - Panel **3.22.2**: navbar version badge; boot force-check; 5‑min update cache; `PANEL_GITHUB_TOKEN`; `packaging/deploy_vps.sh`
-- Test VPS **2026-09-03**: upgraded to **3.22.2** via deploy script; container can reach GitHub `releases/latest`. Release: https://github.com/telharr/meatballs/releases/tag/v3.22.2
 
 ## What still needs a human
 

@@ -25,8 +25,25 @@ def test_probes_and_activate_stay_open() -> None:
     assert path_needs_step_up("POST", "/api/servers/meatballs/activate") is False
 
 
+def test_api_fetch_does_not_let_options_overwrite_headers() -> None:
+    """apiStepUp passes Confirm-Password headers; spreading ...options after
+    headers dropped X-CSRF-Token and Content-Type on wizard save (403 then 422).
+    """
+    src = (Path(__file__).resolve().parents[1] / "panel" / "static" / "app.js").read_text(
+        encoding="utf-8"
+    )
+    start = src.index("async function api(")
+    chunk = src[start : src.index("\nfunction closeStepUpModal", start)]
+    fetch_start = chunk.index("await fetch(path, {")
+    fetch_block = chunk[fetch_start : chunk.index("});", fetch_start)]
+    assert "...options" not in fetch_block
+    assert "...rest" in fetch_block
+    assert fetch_block.rfind("headers") > fetch_block.find("...rest")
+
+
 if __name__ == "__main__":
     test_create_and_patch_skip_middleware_step_up()
     test_delete_and_other_writes_still_need_step_up()
     test_probes_and_activate_stay_open()
+    test_api_fetch_does_not_let_options_overwrite_headers()
     print("ok")

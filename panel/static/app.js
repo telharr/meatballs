@@ -150,12 +150,13 @@ function syncCsrfFromCookie() {
 
 async function api(path, options = {}) {
   syncCsrfFromCookie();
-  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const { headers: extraHeaders, ...rest } = options;
+  const headers = { "Content-Type": "application/json", ...(extraHeaders || {}) };
   if (state.csrf) headers["X-CSRF-Token"] = state.csrf;
   const res = await fetch(path, {
-    headers,
     credentials: "same-origin",
-    ...options,
+    ...rest,
+    headers,
   });
   let data = {};
   try { data = await res.json(); } catch { data = {}; }
@@ -170,7 +171,10 @@ async function api(path, options = {}) {
     throw err;
   }
   if (res.status === 403) {
-    showToast(t("rbac.denied") || "Insufficient permissions", "err");
+    const csrfFail = data.detail === "CSRF validation failed";
+    if (!csrfFail) {
+      showToast(t("rbac.denied") || "Insufficient permissions", "err");
+    }
   }
   if (!res.ok) {
     const detail = data.detail;
