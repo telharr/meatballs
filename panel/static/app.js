@@ -184,16 +184,61 @@ async function api(path, options = {}) {
   return data;
 }
 
-async function promptStepUp() {
-  const password = window.prompt(t("auth.stepup_password") || "Подтвердите паролем админа:");
-  if (password == null || password === "") {
-    throw new Error(t("auth.stepup_cancelled") || "Отменено");
+let _stepUpWait = null;
+
+function closeStepUpModal(result) {
+  const modal = $("#stepup-modal");
+  if (modal) modal.classList.add("hidden");
+  const wait = _stepUpWait;
+  _stepUpWait = null;
+  if (!wait) return;
+  if (result && result.password) wait.resolve(result);
+  else wait.reject(new Error(t("auth.stepup_cancelled") || "Отменено"));
+}
+
+function promptStepUp() {
+  const modal = $("#stepup-modal");
+  const pw = $("#stepup-password");
+  const totp = $("#stepup-totp");
+  const totpWrap = $("#stepup-totp-wrap");
+  const err = $("#stepup-error");
+  if (!modal || !pw) {
+    const password = window.prompt(t("auth.stepup_password") || "Подтвердите паролем админа:");
+    if (password == null || password === "") {
+      return Promise.reject(new Error(t("auth.stepup_cancelled") || "Отменено"));
+    }
+    let code = "";
+    if (state.totpEnabled) {
+      code = window.prompt(t("auth.stepup_totp") || "Код 2FA (TOTP):") || "";
+    }
+    return Promise.resolve({ password, totp: code });
   }
-  let totp = "";
-  if (state.totpEnabled) {
-    totp = window.prompt(t("auth.stepup_totp") || "Код 2FA (TOTP):") || "";
+  if (err) {
+    err.textContent = "";
+    err.classList.add("hidden");
   }
-  return { password, totp };
+  pw.value = "";
+  if (totp) totp.value = "";
+  if (totpWrap) totpWrap.classList.toggle("hidden", !state.totpEnabled);
+  modal.classList.remove("hidden");
+  setTimeout(() => pw.focus(), 0);
+  return new Promise((resolve, reject) => {
+    _stepUpWait = { resolve, reject };
+  });
+}
+
+function finishStepUp(ok) {
+  const pw = ($("#stepup-password") && $("#stepup-password").value) || "";
+  const totp = ($("#stepup-totp") && $("#stepup-totp").value) || "";
+  const err = $("#stepup-error");
+  if (ok && !pw.trim()) {
+    if (err) {
+      err.textContent = t("auth.stepup_password") || "Подтвердите паролем админа:";
+      err.classList.remove("hidden");
+    }
+    return;
+  }
+  closeStepUpModal(ok ? { password: pw, totp } : null);
 }
 
 async function apiStepUp(path, options = {}) {
@@ -203,7 +248,18 @@ async function apiStepUp(path, options = {}) {
     "X-Panel-Confirm-Password": password,
   };
   if (totp) headers["X-Panel-TOTP"] = totp;
-  return api(path, { ...options, headers });
+  let body = options.body;
+  if (typeof body === "string" && body) {
+    try {
+      const data = JSON.parse(body);
+      data.confirm_password = password;
+      if (totp) data.confirm_totp = totp;
+      body = JSON.stringify(data);
+    } catch {
+      /* keep original body */
+    }
+  }
+  return api(path, { ...options, headers, body });
 }
 
 function escapeHtml(s) {
@@ -1318,6 +1374,7 @@ function maybeNotifyWorld(kind, world) {
 }
 
 async function pollStatus() {
+  if (!hasActiveServerProfile()) return;
   try {
     const status = await api("/api/status");
     updateStatusPill(status.rcon_online, status.error);
@@ -2523,6 +2580,7 @@ async function submitServerForm(e, { draft = false } = {}) {
     showToast(draft ? `Черновик: ${created.name}` : `Сохранён и активен: ${created.name}`);
     if (!draft) closeAddServerWizard();
   } catch (err) {
+    setServerProbe(err.message, false);
     showToast(err.message, "err");
   }
 }
@@ -3509,6 +3567,17 @@ async function createPanelSnapshot() {
 async function loadHome() {
   try {
     applyCapabilities();
+    if (!hasActiveServerProfile()) {
+      const el = $("#home-status");
+      const list = $("#home-errors");
+      const noneLabel = (() => {
+        const v = t("home.none");
+        return (!v || v === "home.none") ? "нет" : v;
+      })();
+      if (el) el.innerHTML = `<p class="muted">${escapeHtml(noneLabel)}</p>`;
+      if (list) list.innerHTML = `<li class="muted">${escapeHtml(noneLabel)}</li>`;
+      return;
+    }
     const canFiles = !!activeCapabilities().files;
     const [status, local, log] = await Promise.all([
       api("/api/status"),
@@ -5094,6 +5163,19 @@ $("#btn-srv-probe-all").onclick = probeServerAll;
 $("#srv-process").onchange = renderWizardCaps;
 $("#server-form").onsubmit = (e) => submitServerForm(e, { draft: false });
 $("#btn-srv-save-draft").onclick = (e) => submitServerForm(e, { draft: true });
+$("#stepup-form") && ($("#stepup-form").onsubmit = (e) => {
+  e.preventDefault();
+  finishStepUp(true);
+});
+$("#stepup-cancel") && ($("#stepup-cancel").onclick = () => finishStepUp(false));
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const modal = $("#stepup-modal");
+  if (!modal || modal.classList.contains("hidden")) return;
+  e.preventDefault();
+  e.stopPropagation();
+  finishStepUp(false);
+});
 
 function bindWizardFieldInvalidation() {
   const map = [

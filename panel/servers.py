@@ -854,7 +854,8 @@ def upsert_server(payload: dict[str, Any], server_id: str | None = None) -> dict
             server_id = f"{_slug(name)}-{n}"
             n += 1
         base = _deep_merge(_default_profile(server_id, name), preset)
-    merged = _deep_merge(base, {k: v for k, v in payload.items() if k not in {"secrets", "capabilities", "draft"}})
+    skip = {"secrets", "capabilities", "draft", "confirm_password", "confirm_totp"}
+    merged = _deep_merge(base, {k: v for k, v in payload.items() if k not in skip})
     merged["id"] = server_id
     merged["name"] = name
     if draft:

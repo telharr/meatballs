@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-04 (Sprint 13 atlas from worldmap.xml; panel 3.24.0)
+Last updated: 2026-09-04 (panel 3.24.1 wizard step-up; Sprint 13 atlas 3.24.0)
 
 ## Host (do not commit secrets)
 
@@ -14,10 +14,15 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - RCON / Query / game ports: from hoster panel
 - Game version on host: e.g. **42.20.x**
 
+## Panel bugfix agent
+
+- Screenshot reports: reproduce local (`python run_panel.py`) then test VPS; commits only on branch **`fix`**; merge after user readiness check. Protocol: `.cursor/rules/panel-bugfix.mdc`.
+
 ## Panel
 
 - Product: `docs/PRODUCT.md`. Onboarding: `docs/ONBOARDING.md`. **Now: Sprint 13 Phase A** — атлас Knox на вкладке Приваты
 - Start: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001 if :8000 stuck)
+- Panel **3.24.1**: wizard «Сохранить и сделать активным» uses in-app step-up (not `window.prompt`); errors show in the wizard; `/api/status` no longer paints `[500]` when no profile
 - Panel **3.24.0**: Приваты рисуют бумажный атлас из `worldmap.xml` (`python tools/knox_atlas.py`). PNG gitignore.
 - Panel **3.23.2**: Приваты больше не пишут «мод отсутствует», если файлы и `Mods=` уже на хосте — нужен рестарт JVM
 - Panel **3.23.1**: Workshop builder — **Залить выбранные как есть** (без склейки в один pack). «Собрать» с fail-on-conflict падает на общих Lua-хуках — это не способ залить MeatballsSafehouses.

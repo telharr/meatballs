@@ -1,0 +1,25 @@
+---
+description: Panel bug triage from user screenshots — reproduce local then VPS, diagnose, commit only on branch fix
+alwaysApply: true
+---
+
+# @panel-bugfix — Panel screenshot bugs
+
+When the user sends a **screenshot, user report, or broken panel flow**, this protocol owns the work. Feature agents keep landing on `main`; this agent does not merge.
+
+## Loop (do not skip)
+
+1. Parse the screenshot: tab, action, expected vs actual, error text.
+2. `git fetch` + rebase `fix` onto latest `main` (other agents ship there). Resolve conflicts; do not rewrite their commits.
+3. Reproduce **locally**: `python run_panel.py` → http://127.0.0.1:8000/ (or :8001). Browser or API, same clicks.
+4. Reproduce on **test VPS** (SESSION.md / deploy scripts). Note if local-only, VPS-only, or both.
+5. Find the cause in `panel/` (route, static JS, i18n, adapter). Propose the fix **before** a large rewrite.
+6. Patch on branch **`fix`**. Conventional Commits: `fix(panel): …`. No `.env`, `panel/data/servers/*`, secrets.
+7. Re-verify local, then VPS. Do **not** merge to `main` until the user says the ticket is ready.
+
+## Do / Don't
+
+- **Do** follow PRODUCT → SESSION → SPRINTS before touching the live panel.
+- **Do** tell the user: repro local, repro VPS, root cause, proposed fix.
+- **Don't** commit on `main`. **Don't** merge. **Don't** invent JVM Start on hosters without API.
+---

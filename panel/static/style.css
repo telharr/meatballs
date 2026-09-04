@@ -1315,6 +1315,7 @@ code {
   backdrop-filter: blur(4px);
 }
 .modal.hidden { display: none; }
+#stepup-modal { z-index: 260; }
 .modal-card {
   width: min(420px, 92vw);
   background: var(--bg-panel);
@@ -1352,7 +1353,7 @@ code {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   max-width: 420px;
-  z-index: 80;
+  z-index: 300;
   font-size: 0.82rem;
   animation: toast-in 0.2s ease;
 }

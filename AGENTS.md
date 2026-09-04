@@ -30,6 +30,7 @@ Maintain this repo as a **modding framework + distribution pipeline** for Projec
 | Cursor Lua agent | `.cursor/rules/pz-coder.mdc` |
 | Cursor Steam agent | `.cursor/rules/steam-pipeline.mdc` |
 | Cursor FTP deploy agent | `.cursor/rules/ftp-deploy.mdc` |
+| Cursor panel bugfix | `.cursor/rules/panel-bugfix.mdc` — screenshots → local + VPS repro → branch `fix` (no merge until ready) |
 | MCP | `.cursor/mcp.json`, `mcp/README.md` |
 | CI | `.github/workflows/lint.yml`, `deploy.yml` |
 
@@ -37,6 +38,7 @@ Maintain this repo as a **modding framework + distribution pipeline** for Projec
 
 - **Do** keep `definitions/pz/` as LSP stubs only.
 - **Do** use Conventional Commits (`CONTRIBUTING.md`).
+- **Do** put panel screenshot-bug commits on branch `fix`; rebase onto `main` after other agents land; merge only after a readiness check.
 - **Don't** commit `.env`, SteamCMD binaries, or Workshop passwords.
 - **Don't** put world mutations in client Lua for multiplayer mods.
 - **Don't** invent a second tools layout; extend `tools/` and `docs/`.

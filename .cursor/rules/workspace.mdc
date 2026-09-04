@@ -21,7 +21,7 @@ This repository is a Project Zomboid (Kahlua2 Lua / Java 17) mod and modpack pip
 - Modpacks: `src/modpacks/`
 - Skeletons only: `templates/mod/`
 - LSP stubs: `definitions/pz/` (not game-loaded)
-- Agents: `@pz-coder` (Lua), `@steam-pipeline` (Workshop/SteamCMD)
+- Agents: `@pz-coder` (Lua), `@steam-pipeline` (Workshop/SteamCMD), `@panel-bugfix` (screenshot bugs → branch `fix`)
 
 ## Quality bars
 

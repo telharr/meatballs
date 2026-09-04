@@ -353,6 +353,13 @@ def path_needs_step_up(method: str, path: str) -> bool:
         return False
     if path.startswith("/api/servers/") and path.endswith("/activate"):
         return False
+    # Create/patch confirm the password in the JSON body (route), not only a
+    # custom header — proxies and window.prompt+fetch drop/break that header,
+    # so OK on the native dialog looks like a no-op.
+    if path == "/api/servers" and method.upper() == "POST":
+        return False
+    if method.upper() == "PATCH" and path.startswith("/api/servers/"):
+        return False
     if path.startswith("/api/servers") and method.upper() in ("POST", "PATCH", "DELETE"):
         return True
     return False

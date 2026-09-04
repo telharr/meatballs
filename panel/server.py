@@ -314,6 +314,8 @@ class ServerUpsertBody(BaseModel):
     secrets: dict[str, str] = Field(default_factory=dict)
     capabilities: dict[str, Any] = Field(default_factory=dict)
     draft: bool = False
+    confirm_password: str | None = Field(default=None, max_length=200)
+    confirm_totp: str | None = Field(default=None, max_length=12)
 
 
 class ServerProbeRconBody(BaseModel):
@@ -921,6 +923,21 @@ async def health(request: Request) -> dict[str, Any]:
         return base
 
 
+def _step_up_from_body(request: Request, user: dict[str, Any], body: ServerUpsertBody) -> None:
+    request.state.confirm_password = body.confirm_password
+    request.state.confirm_totp = body.confirm_totp
+    if auth_disabled() or user.get("local"):
+        return
+    verify_step_up(request, user)
+
+
+def _upsert_payload(body: ServerUpsertBody) -> dict[str, Any]:
+    payload = body.model_dump()
+    payload.pop("confirm_password", None)
+    payload.pop("confirm_totp", None)
+    return payload
+
+
 @app.get("/api/servers")
 async def api_servers_list() -> dict[str, Any]:
     try:
@@ -931,23 +948,27 @@ async def api_servers_list() -> dict[str, Any]:
 
 @app.post("/api/servers")
 async def api_servers_create(
+    request: Request,
     body: ServerUpsertBody,
     _user: dict[str, Any] = require_role("admin"),
 ) -> dict[str, Any]:
+    _step_up_from_body(request, _user, body)
     try:
-        return upsert_server(body.model_dump())
+        return upsert_server(_upsert_payload(body))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.patch("/api/servers/{server_id}")
 async def api_servers_patch(
+    request: Request,
     server_id: str,
     body: ServerUpsertBody,
     _user: dict[str, Any] = require_role("admin"),
 ) -> dict[str, Any]:
+    _step_up_from_body(request, _user, body)
     try:
-        return upsert_server(body.model_dump(), server_id)
+        return upsert_server(_upsert_payload(body), server_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Server not found") from exc
     except ValueError as exc:
@@ -1052,7 +1073,16 @@ async def api_smoke_stop() -> dict[str, Any]:
 
 @app.get("/api/status")
 async def server_status() -> dict[str, Any]:
-    meta = _network_meta()
+    try:
+        meta = _network_meta()
+    except Exception:
+        meta = {
+            "max_players": 32,
+            "rcon_host": "",
+            "rcon_port": 16284,
+            "query_port": 16281,
+            "game_port": 16282,
+        }
     online = False
     players_count = 0
     players_raw = ""
@@ -1070,20 +1100,31 @@ async def server_status() -> dict[str, Any]:
 
     from panel.services.server_uptime import resolve_uptime
 
-    uptime = await asyncio.to_thread(
-        resolve_uptime,
-        _active_server_id(),
-        rcon_online=online,
-    )
+    try:
+        uptime = await asyncio.to_thread(
+            resolve_uptime,
+            _active_server_id(),
+            rcon_online=online,
+        )
+    except Exception:
+        uptime = {"seconds": None, "source": "unavailable"}
     server_secs = uptime.get("seconds")
+    try:
+        founders = load_roster()["founders"]
+    except Exception:
+        founders = []
+    try:
+        slots = slots_snapshot()
+    except Exception:
+        slots = {"count": 0, "npcs": []}
     return {
         "rcon_online": online,
         "players_online": players_count,
         "players": players_list,
         "players_raw": players_raw,
-        "founders": load_roster()["founders"],
-        "dummy_slots": slots_snapshot()["count"],
-        "npcs": slots_snapshot()["npcs"],
+        "founders": founders,
+        "dummy_slots": slots.get("count") or 0,
+        "npcs": slots.get("npcs") or [],
         "max_players": meta["max_players"],
         "rcon_host": meta["rcon_host"],
         "rcon_port": meta["rcon_port"],
