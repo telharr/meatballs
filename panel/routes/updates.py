@@ -63,6 +63,9 @@ async def api_panel_updates_apply(
 ) -> dict[str, Any]:
     try:
         await asyncio.to_thread(upd.backup_state_zip)
+        kind = upd.detect_install_kind()
+        if kind == "docker":
+            return await asyncio.to_thread(upd.apply_docker_update, None)
         return await asyncio.to_thread(upd.apply_downloaded_setup, body.path or None)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

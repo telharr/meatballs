@@ -1,5 +1,7 @@
 # Remote VPS deploy template — isolated from Amnezia/Marzban Docker networks.
 # Deployed only under /opt/pz-panel/ by panel/services/vps_provisioner.py
+#
+# Self-update: docker.sock + project bind so admin "Update" can rebuild in place.
 
 services:
   pz-panel:
@@ -15,9 +17,17 @@ services:
     environment:
       PANEL_HOST: "0.0.0.0"
       PANEL_PORT: "8000"
+      PANEL_INSTALL: "docker"
+      PANEL_DOCKER_PROJECT: "/host/pz-panel"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
     volumes:
       - ./data:/data
       - ./mirror:/mirror
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/host/pz-panel
+    group_add:
+      # docker.sock group on Debian/Ubuntu hosts is often 999 or 998 — provisioner may adjust
+      - "999"
     networks:
       - pz-panel-net
     healthcheck:

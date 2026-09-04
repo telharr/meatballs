@@ -288,5 +288,7 @@
   "privates.overlap": "Пересечение с другим приватом",
   "privates.patch_ini": "Добавить MeatballsSafehouses в Mods= на сервере?",
   "privates.installed": "Мод залит: {n} файлов. Рестарт dedicated обязателен.",
-  "privates.factions": "Фракции"
+  "privates.factions": "Фракции",
+  "update.docker_applying": "Обновляем Docker-панель… контейнер пересоберётся",
+  "update.docker_restart_hint": "Обновление запущено — обновите страницу через ~30 с"
 }

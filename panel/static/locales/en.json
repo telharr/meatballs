@@ -288,5 +288,7 @@
   "privates.overlap": "Overlaps another safehouse",
   "privates.patch_ini": "Append MeatballsSafehouses to server Mods= ?",
   "privates.installed": "Mod uploaded: {n} files. Dedicated restart required.",
-  "privates.factions": "Factions"
+  "privates.factions": "Factions",
+  "update.docker_applying": "Updating Docker panel… container will rebuild",
+  "update.docker_restart_hint": "Update started — refresh the page in ~30s"
 }

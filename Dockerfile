@@ -1,4 +1,4 @@
-# PZ Control Panel — production image (panel 3.17.0)
+# PZ Control Panel — production image
 
 FROM python:3.12-slim-bookworm
 
@@ -10,7 +10,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && apt-get install -y --no-install-recommends curl ca-certificates tar \
+    && curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.1.1.tgz \
+      | tar -xz --strip-components=1 -C /usr/local/bin docker/docker \
+    && curl -fsSL -o /usr/local/bin/docker-compose \
+      https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
+    && chmod +x /usr/local/bin/docker /usr/local/bin/docker-compose \
     && rm -rf /var/lib/apt/lists/*
 
 COPY panel/requirements.txt /app/panel/requirements.txt

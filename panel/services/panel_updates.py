@@ -34,6 +34,153 @@ _job: dict[str, Any] = {
 }
 
 
+def detect_install_kind() -> str:
+    """How this panel binary/process is installed (not which GitHub assets exist)."""
+    forced = (os.environ.get("PANEL_INSTALL") or "").strip().lower()
+    if forced in {"windows_setup", "docker", "git"}:
+        return forced
+    if getattr(sys, "frozen", False) and os.name == "nt":
+        return "windows_setup"
+    if Path("/.dockerenv").exists() or (os.environ.get("PANEL_DOCKER_PROJECT") or "").strip():
+        return "docker"
+    return "git"
+
+
+def docker_project_dir() -> Path:
+    raw = (os.environ.get("PANEL_DOCKER_PROJECT") or "/host/pz-panel").strip() or "/host/pz-panel"
+    return Path(raw)
+
+
+def docker_self_update_ready() -> bool:
+    """True when the container can rebuild itself via Docker Engine API/CLI."""
+    if detect_install_kind() != "docker":
+        return False
+    project = docker_project_dir()
+    if not project.is_dir():
+        return False
+    has_compose = any((project / name).is_file() for name in ("docker-compose.yml", "compose.yml", "compose.yaml"))
+    if not has_compose:
+        return False
+    sock = Path("/var/run/docker.sock")
+    host = (os.environ.get("DOCKER_HOST") or "").strip()
+    if host.startswith("tcp://") or host.startswith("http"):
+        return True
+    return sock.exists()
+
+
+def _compose_file(project: Path) -> Path:
+    for name in ("docker-compose.yml", "compose.yml", "compose.yaml"):
+        path = project / name
+        if path.is_file():
+            return path
+    raise RuntimeError(f"No compose file in {project}")
+
+
+def _docker_compose_cmd(project: Path) -> list[str]:
+    compose = _compose_file(project)
+    # Image ships standalone docker-compose; plugin may be absent with static docker CLI
+    if shutil.which("docker-compose"):
+        return ["docker-compose", "-f", str(compose), "--project-directory", str(project)]
+    return ["docker", "compose", "-f", str(compose), "--project-directory", str(project)]
+
+
+def _copy_tree(src: Path, dest: Path) -> None:
+    dest.mkdir(parents=True, exist_ok=True)
+    for item in src.iterdir():
+        target = dest / item.name
+        if item.is_dir():
+            if target.exists():
+                shutil.rmtree(target)
+            shutil.copytree(item, target)
+        else:
+            shutil.copy2(item, target)
+
+
+def apply_docker_update(tag: str | None = None) -> dict[str, Any]:
+    """Pull release sources into host project mount and rebuild the panel container."""
+    if not docker_self_update_ready():
+        raise RuntimeError(
+            "Docker self-update not ready: mount docker.sock and PANEL_DOCKER_PROJECT "
+            "(see packaging/templates/vps.docker-compose.yml)"
+        )
+    info = check_for_updates(force=True)
+    if not info.get("ok"):
+        raise RuntimeError(info.get("error") or "update check failed")
+    latest = str(info.get("latest") or "").strip()
+    tag_name = (tag or info.get("tag") or (f"v{latest}" if latest else "")).strip()
+    if not tag_name:
+        raise RuntimeError("No release tag to apply")
+    if not tag_name.startswith("v"):
+        tag_name = f"v{tag_name}"
+    ver = tag_name.lstrip("vV")
+    if _parse_semver(ver) < _parse_semver(current_version()):
+        raise RuntimeError(f"Refusing downgrade {current_version()} → {ver}")
+
+    project = docker_project_dir()
+    repo = update_repo()
+    url = f"https://github.com/{repo}/archive/refs/tags/{tag_name}.tar.gz"
+    _set_job(
+        phase="download",
+        percent=5,
+        message=f"Downloading {tag_name}",
+        path=None,
+        error=None,
+        started_at=time.time(),
+        finished_at=None,
+    )
+    work = Path(tempfile.mkdtemp(prefix="pz-docker-upd-"))
+    try:
+        tarball = work / "src.tar.gz"
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=180) as resp, tarball.open("wb") as out:
+            shutil.copyfileobj(resp, out)
+        _set_job(phase="extract", percent=35, message="Extracting sources")
+        subprocess.run(["tar", "-xzf", str(tarball), "-C", str(work)], check=True, timeout=120)
+        extracted = next((p for p in work.iterdir() if p.is_dir() and p.name.startswith("meatballs-")), None)
+        if extracted is None or not (extracted / "panel").is_dir():
+            raise RuntimeError("Unexpected archive layout from GitHub")
+
+        _set_job(phase="sync", percent=55, message=f"Syncing into {project}")
+        # Preserve host .env / data / mirror; refresh app sources for build context
+        for rel in ("panel", "tools", "packaging"):
+            src = extracted / rel
+            if src.is_dir():
+                _copy_tree(src, project / rel)
+        for rel in ("Dockerfile", "run_panel.py"):
+            src = extracted / rel
+            if src.is_file():
+                shutil.copy2(src, project / rel)
+        # Never ship runtime state in build context
+        for junk in (project / "panel" / "data", project / "panel" / "backups"):
+            if junk.exists():
+                shutil.rmtree(junk, ignore_errors=True)
+
+        _set_job(phase="rebuild", percent=75, message="docker compose up -d --build")
+        cmd = _docker_compose_cmd(project) + ["up", "-d", "--build"]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        if proc.returncode != 0:
+            detail = (proc.stderr or proc.stdout or "").strip()[-1500:]
+            raise RuntimeError(f"docker compose failed ({proc.returncode}): {detail}")
+        _set_job(
+            phase="launched",
+            percent=100,
+            message=f"Rebuilding to {tag_name} — refresh the UI in ~30s",
+            finished_at=time.time(),
+        )
+        return {
+            "ok": True,
+            "channel": "docker",
+            "tag": tag_name,
+            "project": str(project),
+            "restart_hint": True,
+        }
+    except Exception as exc:
+        _set_job(phase="error", message=str(exc), error=str(exc), finished_at=time.time())
+        raise
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def current_version() -> str:
     try:
         from panel.version import __version__
@@ -169,6 +316,9 @@ def check_for_updates(*, force: bool = False) -> dict[str, Any]:
     setup = _find_setup_asset(assets)
     sha = _find_sha_for(str(setup.get("name") if setup else ""), assets) if setup else None
     available = bool(latest and version_gt(latest, local))
+    kind = detect_install_kind()
+    setup_ok = bool(setup and kind == "windows_setup" and getattr(sys, "frozen", False) and os.name == "nt")
+    docker_ok = bool(kind == "docker" and docker_self_update_ready() and available)
     result = {
         "ok": True,
         "current": local,
@@ -181,11 +331,13 @@ def check_for_updates(*, force: bool = False) -> dict[str, Any]:
         "html_url": release.get("html_url"),
         "published_at": release.get("published_at"),
         "repo": repo,
-        "channel": "windows_setup" if setup else ("docker_or_git" if available else None),
+        "channel": kind,
+        "install_kind": kind,
         "asset": None,
         "checked_at": now,
         "frozen": bool(getattr(sys, "frozen", False)),
-        "apply_supported": bool(setup and getattr(sys, "frozen", False) and os.name == "nt"),
+        "apply_supported": bool(setup_ok or docker_ok),
+        "docker_self_update_ready": docker_self_update_ready() if kind == "docker" else False,
         "docker_hint": (
             f"curl -fsSL https://raw.githubusercontent.com/telharr/meatballs/v{latest}/packaging/deploy_vps.sh | bash -s -- {latest}"
             if available

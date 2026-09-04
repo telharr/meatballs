@@ -1,6 +1,6 @@
 #!/bin/bash
 # Apply a panel release tag on a Docker VPS host. Keeps .env, ./data, ./mirror.
-# Usage: bash packaging/deploy_vps.sh 3.22.2
+# Usage: bash packaging/deploy_vps.sh 3.24.2
 set -euo pipefail
 TAG="${1:?usage: deploy_vps.sh X.Y.Z}"
 cd /tmp
@@ -18,9 +18,17 @@ mkdir -p "$DST/packaging"
 rsync -a "$SRC/packaging/" "$DST/packaging/"
 cp -a "$SRC/Dockerfile" "$DST/Dockerfile"
 cp -a "$SRC/run_panel.py" "$DST/run_panel.py"
-if ! grep -q './data:/data' "$DST/docker-compose.yml" 2>/dev/null; then
+
+# Ensure compose supports in-panel Docker self-update (sock + project mount)
+if ! grep -q 'PANEL_DOCKER_PROJECT' "$DST/docker-compose.yml" 2>/dev/null; then
   cp -a "$SRC/packaging/templates/vps.docker-compose.yml" "$DST/docker-compose.yml"
 fi
+# Sync docker GID into group_add when possible
+if grep -q 'group_add' "$DST/docker-compose.yml" 2>/dev/null; then
+  DOCKER_GID="$(stat -c '%g' /var/run/docker.sock 2>/dev/null || echo 999)"
+  sed -i "s/- \"999\"/- \"${DOCKER_GID}\"/" "$DST/docker-compose.yml" || true
+fi
+
 rm -rf "$DST/panel/data" "$DST/panel/backups"
 mkdir -p "$DST/panel/data/servers" "$DST/data" "$DST/mirror"
 find "$DST/data" -name update_check.json -delete 2>/dev/null || true

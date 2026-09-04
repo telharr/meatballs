@@ -310,19 +310,27 @@ Source of truth: **GitHub Releases** on `PANEL_UPDATE_REPO` (default `telharr/me
 
 | Install | How state is kept | How to update |
 |---------|-------------------|---------------|
-| **Windows setup** | `%LOCALAPPDATA%\PZControlPanel\data` (migrated from `{app}\panel\data` once) | Banner → download setup → Inno; `.env` uses `onlyifdoesntexist` |
-| **Docker** | volumes `./data` → `/data`, `./mirror` → `/mirror` | Prefer rsync tag sources + `docker compose up -d --build` (**never** `down -v`); banner shows compose hint |
-| **git + python** | `panel/data/` (gitignored) | `git fetch && git checkout vX.Y.Z` + restart |
+| **Windows setup** | `%LOCALAPPDATA%\PZControlPanel\data` | Banner → download setup → Inno (`apply_supported`) |
+| **Docker** | `./data`, `./mirror` + **docker.sock** + project bind `/host/pz-panel` | Banner → **Обновить** runs in-container rebuild (`apply_docker_update`); never `down -v` |
+| **git + python** | `panel/data/` | Hint: `git fetch && git checkout vX.Y.Z` |
 
-API (admin): `GET /api/panel/updates?force=true`, `POST .../download`, `POST .../apply`, `POST .../snooze`.
+Channel is chosen by **runtime** (`PANEL_INSTALL` / `/.dockerenv` / frozen exe), not by whether `setup.exe` exists on the release.
 
-UI: navbar version badge (`vX.Y.Z`); boot always force-checks GitHub; badge click force-checks; cache TTL ~5 minutes.
+Docker self-update env:
 
-Optional env:
+```ini
+PANEL_INSTALL=docker
+PANEL_DOCKER_PROJECT=/host/pz-panel
+DOCKER_HOST=unix:///var/run/docker.sock
+```
+
+Compose must mount `/var/run/docker.sock` and the host project dir (see `packaging/templates/vps.docker-compose.yml`). First enablement on an old VPS: one manual `deploy_vps.sh`; later updates work from the UI.
+
+Optional:
 
 ```ini
 PANEL_UPDATE_REPO=telharr/meatballs
-PANEL_GITHUB_TOKEN=ghp_...   # optional; raises GitHub API rate limit (fine-grained: public_repo read)
+PANEL_GITHUB_TOKEN=ghp_...
 PANEL_DATA_DIR=C:\path\to\data
 PANEL_STATE_DIR=%LOCALAPPDATA%\PZControlPanel
 ```

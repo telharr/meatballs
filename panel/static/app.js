@@ -674,7 +674,14 @@ async function installPanelUpdate() {
   const btn = $("#update-banner-install");
   if (btn) btn.disabled = true;
   try {
-    if (data.apply_supported) {
+    const channel = data.channel || data.install_kind || "";
+    if (data.apply_supported && channel === "docker") {
+      showToast(t("update.docker_applying"));
+      await api("/api/panel/updates/apply", { method: "POST", body: "{}" });
+      showToast(t("update.docker_restart_hint"));
+      return;
+    }
+    if (data.apply_supported && channel === "windows_setup") {
       showToast(t("update.downloading"));
       await api("/api/panel/updates/download", { method: "POST", body: "{}" });
       showToast(t("update.launching"));
@@ -682,7 +689,7 @@ async function installPanelUpdate() {
       showToast(t("update.installer_launched"));
       return;
     }
-    if (data.channel === "docker_or_git" || !data.asset) {
+    if (channel === "docker" || channel === "git" || channel === "docker_or_git") {
       const hint = data.docker_hint || data.git_hint || "";
       showToast(
         hint ? t("update.available_hint", { hint }) : t("update.available_tag", { latest: data.latest }),
