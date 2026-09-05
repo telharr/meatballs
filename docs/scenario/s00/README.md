@@ -1,7 +1,7 @@
 ---
 season: "00"
 title: Нулевой сезон — Хроника пустых коек
-version: 0.4.0
+version: 0.4.1
 updated: 2026-09-05
 ---
 
@@ -22,7 +22,7 @@ updated: 2026-09-05
 | Файл | Содержание |
 |------|------------|
 | [BRIEF.md](BRIEF.md) | Атмосфера, наполнение части, три главы старта |
-| [quests.md](quests.md) | Кампания по главам |
+| [quests/c01-gate.md](quests/c01-gate.md) | ТЗ спринта: пролом ворот |
 | [scripts.md](scripts.md) | Реплики |
 | [texts.md](texts.md) | Жетоны, тетрадь, письмо |
 | [places.md](places.md) | Якоря XY |
