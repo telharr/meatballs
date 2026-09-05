@@ -2,7 +2,7 @@
 season: "00"
 id: places
 campaign: Хроника пустых коек
-version: 0.4.9
+version: 0.4.10
 updated: 2026-09-05
 ---
 
