@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.4.7 c04 doyle fuel)
+Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.4.8 c04 can/siphon/cap)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.7 — c04: `docs/scenario/s00/quests/c04-fuel.md`.
+- Current: **s00** v0.4.8 — c04: reissue can, siphon mark, cistern cap 80.
 
 ## Panel
 
