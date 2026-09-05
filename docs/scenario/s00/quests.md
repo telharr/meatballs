@@ -2,7 +2,7 @@
 season: "00"
 id: quests
 campaign: Хроника пустых коек
-version: 0.4.5
+version: 0.4.6
 updated: 2026-09-05
 ---
 

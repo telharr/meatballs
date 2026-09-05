@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (live five-pack on XLGAMES; scenario s00 v0.4.5 c03 church stealth)
+Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.4.6 c03 lamp/sheets/FOV)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.5 — c03: `docs/scenario/s00/quests/c03-church.md`.
+- Current: **s00** v0.4.6 — c03: lamp API, pastor sheets, off-FOV fail spawn.
 
 ## Panel
 
@@ -50,7 +50,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Mods (live XLGAMES, 2026-09-05)
 
 FTP `/ServerWorld/mods`: MeatballsLibraries, MeatballsCore, MeatballsKI5, MeatballsCharacter, MeatballsGameplay.  
-`Mods=` same order. `WorkshopItems=` `3796197817;3796206775;3796212345;3796217229;3796224319` (client auto-download). Hoster JVM restart required after INI write. Steam pages were set Public; Valve may still hide redistributed packs (`removed from the community`, author-only). Do not add original KI5/QoL Workshop IDs alongside these five.
+`Mods=` same order. **`WorkshopItems=` empty** — 2026-09-05 XLGAMES B42.20.4: query found 5 items, download `3796197817` `onItemNotDownloaded result=2`, then NPE `GameServerWorkshopItems.Install` → `deleteDirectory` null File, JVM exit. Do not put the five MEATBALLS WS ids (or originals) in live `WorkshopItems=` on this hoster. Clients: subscribe to public MEATBALLS pages, then Join; server loads FTP folders.
 
 ## Tools to prefer
 
