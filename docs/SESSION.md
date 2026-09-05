@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (branch `scenario`: s00 v0.3.0 scripts, places, captain week)
+Last updated: 2026-09-05 (branch `scenario`: s00 v0.3.1 firehouse brief)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.3.0 — реплики, якоря, неделя стола. `docs/scenario/`.
+- Current: **s00** v0.3.1 — выжимка пожарки `docs/scenario/s00/BRIEF.md`.
 
 ## Panel
 
