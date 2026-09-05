@@ -2,7 +2,7 @@
 season: "00"
 id: texts
 campaign: Хроника пустых коек
-version: 0.4.2
+version: 0.4.3
 updated: 2026-09-05
 ---
 
@@ -27,7 +27,52 @@ updated: 2026-09-05
 
 ## Тетрадь Марго (`c02`)
 
-Сорок строк. Часть вычеркнута «заражение / нет воды». Шестая строка — брат Марго. Новичок вписывается отдельно, как живой. Не в этот список мёртвых.
+Предмет: `MeatballsNadzor.BookOfTheDead`. Одна на мир, стол кухни после первой сдачи. UI: [c02-hygiene.md](quests/c02-hygiene.md) §3.2.
+
+Сорок строк, все вычеркнуты. Новичок **не** в этом списке. Помета `заражение` / `нет воды` = сепсис первой недели июля 1993. `твари` = укус. Строка **6 — Нейт Белл**, брат Марго.
+
+```text
+1  Ray Holcomb        твари
+2  June Perez         заражение / нет воды
+3  Walt Griggs        твари
+4  Sherry Cole        заражение / нет воды
+5  Omar Finch         твари
+6  Nate Bell          заражение / нет воды   ← брат
+7  Lila Boone         заражение / нет воды
+8  Hank Drury         твари
+9  Cora Miles         заражение / нет воды
+10 Pete Yarrow        твари
+11 Ida Voss           заражение / нет воды
+12 Cal Hobbs          твари
+13 Ruth Kenner        заражение / нет воды
+14 Gus Prado          твари
+15 Nell Farrow        заражение / нет воды
+16 Boyd Hines         твари
+17 Mae Sutcliffe      заражение / нет воды
+18 Earl Puckett       твари
+19 Tess Lang          заражение / нет воды
+20 Vic Romero         твари
+21 Polly Grant        заражение / нет воды
+22 Jed Harmon         твари
+23 Faye Nichols       заражение / нет воды
+24 Otis Bray          твари
+25 Willa Crowe        заражение / нет воды
+26 Ben Keeler         твари
+27 Nora Spitz         заражение / нет воды
+28 Chip Dillard       твари
+29 Alma Ruiz          заражение / нет воды
+30 Floyd Bates        твари
+31 Greta Holm         заражение / нет воды
+32 Mack Ingram        твари
+33 Sadie Peck         заражение / нет воды
+34 Leon Craft         твари
+35 Hattie Moon        заражение / нет воды
+36 Rex Talbot         твари
+37 Pearl Doss         заражение / нет воды
+38 Quinn Adler        твари
+39 Marge Loomis       заражение / нет воды
+40 Stan Vickers       твари
+```
 
 ## Записка пастора (`c03`)
 

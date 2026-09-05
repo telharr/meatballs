@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (branch `scenario`: s00 v0.4.2 c01 tech risks)
+Last updated: 2026-09-05 (branch `scenario`: s00 v0.4.3 c02 hygiene)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.2 — c01: late-join `c01_done`, tag recovery, sprite transmit.
+- Current: **s00** v0.4.3 — c02: `docs/scenario/s00/quests/c02-hygiene.md`.
 
 ## Panel
 

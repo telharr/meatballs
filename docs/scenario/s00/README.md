@@ -1,7 +1,7 @@
 ---
 season: "00"
 title: Нулевой сезон — Хроника пустых коек
-version: 0.4.1
+version: 0.4.3
 updated: 2026-09-05
 ---
 
@@ -23,6 +23,7 @@ updated: 2026-09-05
 |------|------------|
 | [BRIEF.md](BRIEF.md) | Атмосфера, наполнение части, три главы старта |
 | [quests/c01-gate.md](quests/c01-gate.md) | ТЗ спринта: пролом ворот |
+| [quests/c02-hygiene.md](quests/c02-hygiene.md) | ТЗ спринта: кипяток, аптечка, тетрадь |
 | [scripts.md](scripts.md) | Реплики |
 | [texts.md](texts.md) | Жетоны, тетрадь, письмо |
 | [places.md](places.md) | Якоря XY |
