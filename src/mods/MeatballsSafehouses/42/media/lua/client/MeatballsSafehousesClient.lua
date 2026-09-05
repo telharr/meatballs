@@ -4,29 +4,6 @@ if not MeatballsSafehouses then
     require "MeatballsSafehouses"
 end
 
-local function findExact(x, y, w, h)
-    if not SafeHouse or not SafeHouse.getSafehouseList then
-        return nil
-    end
-    local list = SafeHouse.getSafehouseList()
-    if not list then
-        return nil
-    end
-    local i = 0
-    while i < list:size() do
-        local house = list:get(i)
-        if house
-            and house:getX() == x
-            and house:getY() == y
-            and house:getW() == w
-            and house:getH() == h then
-            return house
-        end
-        i = i + 1
-    end
-    return nil
-end
-
 local function addMembers(house, csv)
     if not house or not house.addPlayer then
         return
@@ -42,6 +19,14 @@ local function addMembers(house, csv)
     end
 end
 
+local function refreshUi()
+    if triggerEvent then
+        pcall(function()
+            triggerEvent("OnSafehousesChanged")
+        end)
+    end
+end
+
 local function onServerCommand(module, command, args)
     if module ~= MeatballsSafehouses.MODULE then
         return
@@ -51,11 +36,13 @@ local function onServerCommand(module, command, args)
     local y = tonumber(args.y) or 0
     local w = tonumber(args.w) or 1
     local h = tonumber(args.h) or 1
+    local owner = tostring(args.owner or "")
     if command == "remove" then
-        local house = findExact(x, y, w, h)
+        local house = MeatballsSafehouses.findHouse(x, y, w, h, owner)
         if house and SafeHouse and SafeHouse.removeSafeHouse then
             SafeHouse.removeSafeHouse(house)
         end
+        refreshUi()
         return
     end
     if command ~= "apply" then
@@ -64,9 +51,9 @@ local function onServerCommand(module, command, args)
     if not SafeHouse or not SafeHouse.addSafeHouse then
         return
     end
-    local house = findExact(x, y, w, h)
+    local house = MeatballsSafehouses.findHouse(x, y, w, h, owner)
     if not house then
-        house = SafeHouse.addSafeHouse(x, y, w, h, tostring(args.owner or ""))
+        house = SafeHouse.addSafeHouse(x, y, w, h, owner)
     end
     if not house then
         return
@@ -78,6 +65,7 @@ local function onServerCommand(module, command, args)
         house:setOwner(tostring(args.owner))
     end
     addMembers(house, args.members)
+    refreshUi()
 end
 
 Events.OnServerCommand.Add(onServerCommand)

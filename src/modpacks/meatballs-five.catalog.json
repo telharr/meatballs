@@ -1,0 +1,49 @@
+{
+  "$schema": "./catalog.schema.json",
+  "name": "meatballs-five",
+  "ini_filename": "pack5.ini",
+  "dedicated_workshop_items": false,
+  "items": [
+    {
+      "kind": "mod",
+      "id": "MeatballsLibraries",
+      "name": "MEATBALLS Libraries (B42.20)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3796197817",
+      "notes": "5-pack #1. https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817 Load first. XLGAMES: FTP folder, do not write WorkshopItems=."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsCore",
+      "name": "MEATBALLS Core (B42.20)",
+      "source": "local",
+      "enabled": true,
+      "notes": "5-pack #2. require=MeatballsLibraries. Workshop id pending upload."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsKI5",
+      "name": "MEATBALLS KI5 Garage (B42.20)",
+      "source": "local",
+      "enabled": true,
+      "notes": "5-pack #3. require=MeatballsLibraries. Workshop id pending upload. ~450MB."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsCharacter",
+      "name": "MEATBALLS Character (B42.20)",
+      "source": "local",
+      "enabled": true,
+      "notes": "5-pack #4. require=MeatballsLibraries. Workshop id pending upload."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsGameplay",
+      "name": "MEATBALLS Gameplay (B42.20)",
+      "source": "local",
+      "enabled": true,
+      "notes": "5-pack #5. require=MeatballsLibraries. Workshop id pending upload."
+    }
+  ]
+}

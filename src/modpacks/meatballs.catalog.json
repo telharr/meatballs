@@ -2,6 +2,7 @@
   "$schema": "./catalog.schema.json",
   "name": "meatballs",
   "ini_filename": "world.ini",
+  "dedicated_workshop_items": false,
   "items": [
     {
       "kind": "mod",
@@ -46,7 +47,2208 @@
       "source": "local",
       "enabled": true,
       "path": "src/mods/MeatballsSafehouses",
-      "notes": "Panel bridge: create/update/release vanilla SafeHouse via Lua/mb_safehouse_cmd.txt"
+      "notes": "Panel bridge v1.3: vanilla SafeHouse via Lua/mb_safehouse_cmd.txt. Load after BetterSafehouse."
+    },
+    {
+      "kind": "mod",
+      "id": "BetterSafehouse",
+      "name": "Better Safehouse",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3634569678",
+      "notes": "Official WS 3634569678. Player QoL on vanilla SafeHouse. Load after AdminTools, before MeatballsSafehouses. Do not repack."
+    },
+    {
+      "kind": "library",
+      "id": "damnlib",
+      "name": "that DAMN Library",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3171167894",
+      "notes": "KI5 garage: load before all KI5 vehicles. Armor/craft/recycle."
+    },
+    {
+      "kind": "mod",
+      "id": "91geoMetro",
+      "name": "'91 Geo Metro",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3008795514",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "92fordCVPI",
+      "name": "'92 Ford Crown Victoria",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2962175696",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "89volvo200",
+      "name": "'89 Volvo 200 Series",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3292659291",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "92jeepYJ",
+      "name": "'92 Jeep Wrangler YJ",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3287727378",
+      "notes": "KI5 Wave A (JP18 variant not enabled)"
+    },
+    {
+      "kind": "mod",
+      "id": "91fordRanger",
+      "name": "'91 Ford Ranger",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3539691958",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "89fordBronco",
+      "name": "'89 Ford Bronco",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2886833398",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "86fordE150",
+      "name": "'86 Ford Econoline E150",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2870394916",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "86fordE150expanded",
+      "name": "'86 Ford Econoline E150 Expanded",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2870394916",
+      "notes": "KI5 Wave A extra chassis"
+    },
+    {
+      "kind": "mod",
+      "id": "93chevySuburban",
+      "name": "'93 Chevrolet Suburban / Silverado",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3152529790",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "93chevySuburbanExpanded",
+      "name": "'93 Chevrolet Suburban / Silverado Expanded",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3152529790",
+      "notes": "KI5 Wave A extra chassis"
+    },
+    {
+      "kind": "mod",
+      "id": "86oshkoshP19A",
+      "name": "'86 Oshkosh P19A + Military Trailers",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2566953935",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "92amgeneralM998",
+      "name": "'92 AM General M998 + M101A3 Trailer",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2642541073",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "KI5trailers",
+      "name": "Trailers!",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3330403100",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "KI5campers",
+      "name": "Campers!",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3670064951",
+      "notes": "KI5 Wave A"
+    },
+    {
+      "kind": "mod",
+      "id": "78amgeneralM35A2",
+      "name": "'78 AM General M35 Series Trucks",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2799152995",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "78amgeneralM49A2C",
+      "name": "'78 AM General M49A2C",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2799152995",
+      "notes": "KI5 Wave B fuel tanker"
+    },
+    {
+      "kind": "mod",
+      "id": "78amgeneralM50A3",
+      "name": "'78 AM General M50A3 Water Tanker",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2799152995",
+      "notes": "KI5 Wave B water tanker"
+    },
+    {
+      "kind": "mod",
+      "id": "78amgeneralM62",
+      "name": "'78 AM General M62 Wrecker",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2799152995",
+      "notes": "KI5 Wave B wrecker"
+    },
+    {
+      "kind": "mod",
+      "id": "90fordF350ambulance",
+      "name": "'90 Ford F350 Ambulance",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2952802178",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "90pierceArrow",
+      "name": "'90 Pierce Arrow Pumper",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2942793445",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "89defender",
+      "name": "'89 LAND ROVER Defender",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3570973322",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "91range",
+      "name": "'91 RANGE ROVER Classic",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2409333430",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "92nissanGTR",
+      "name": "'92 NISSAN Skyline GT-R (R32)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2846036306",
+      "notes": "KI5 Wave B tuner"
+    },
+    {
+      "kind": "mod",
+      "id": "70dodge",
+      "name": "'70 Dodge Challenger",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2873290424",
+      "notes": "KI5 Wave B muscle"
+    },
+    {
+      "kind": "mod",
+      "id": "isoContainers",
+      "name": "Containers!",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2625625421",
+      "notes": "KI5 Wave B"
+    },
+    {
+      "kind": "mod",
+      "id": "87toyotaCorolla",
+      "name": "'87 Toyota Corolla AE92",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3779315249",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69fordMustang",
+      "name": "'69 Ford Mustang",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3756938756",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69fordMustangExtra",
+      "name": "'69 Ford Mustang Extra Textures",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3756938756",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "73nissanGTR",
+      "name": "'73 NISSAN Skyline GT-R",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3743371090",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "78lamboCountach",
+      "name": "'78 Lamborghini Countach",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3726526329",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "88chevyS10",
+      "name": "'88 Chevrolet S10",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2886832936",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "84corvette",
+      "name": "'84 Chevrolet Corvette",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3684254299",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "91nissan240sx",
+      "name": "'91 Nissan 240SX",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3504401781",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "70fordEscort",
+      "name": "'70 Ford Escort",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3670063857",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "98stagea",
+      "name": "'98 Nissan Stagea 260RS Autech",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3315443103",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "81deloreanDMC12",
+      "name": "'81 DeLorean DMC-12",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3253385114",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "81deloreanDMC12BTTF",
+      "name": "'81 DeLorean DMC-12 Time Machine",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3253385114",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "87buickRegal",
+      "name": "'87 Buick Regal",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3226885926",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "99fordCVPI",
+      "name": "'99 Ford Crown Victoria Police Interceptor",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2971246021",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "87chevySuburban",
+      "name": "'87 Chevrolet Suburban",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3196180339",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "87toyotaMR2",
+      "name": "'87 Toyota MR2",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3052360250",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "63Type2Van",
+      "name": "'63 Volkswagen Type 2 Van",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3041122351",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "86chevyCUCV",
+      "name": "'86 Chevrolet CUCVs + M101A2 Trailer",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3428008364",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "82porsche911",
+      "name": "'82 Porsche 911",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3379334330",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69mini",
+      "name": "'69 Mini Mk2",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2937786633",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69mini_ItalianJob",
+      "name": "'69 Mini Mk2 Italian Job",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2937786633",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69mini_MrBean",
+      "name": "'69 Mini Mk2 Mr Bean",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2937786633",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "69mini_PitbullSpecial",
+      "name": "'69 Mini Mk2 Pitbull Special",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2937786633",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "95impreza",
+      "name": "'95 Subaru Impreza WRX STI",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3647735736",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "90bmwE30",
+      "name": "'90 BMW 3 Series (E30)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3110913021",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "85chevyStepVan",
+      "name": "'85 Chevrolet Step-Van",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3614034284",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "85chevyStepVanexpanded",
+      "name": "'85 Chevrolet Step-Van Expanded",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3614034284",
+      "notes": "KI5 collection 3781417097"
+    },
+    {
+      "kind": "library",
+      "id": "YAPZLib",
+      "name": "Yet Another PZ Library",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3624971238",
+      "notes": "KI5 support: required by VVR and KI5minifixes. Load before them."
+    },
+    {
+      "kind": "mod",
+      "id": "VVR",
+      "name": "Vanilla Vehicles Replacer (KI5)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3423424077",
+      "notes": "KI5 support: replace vanilla spawns with KI5. After vehicles."
+    },
+    {
+      "kind": "mod",
+      "id": "KI5minifixes",
+      "name": "KI5 Mini-fixes",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3740300378",
+      "notes": "KI5 support"
+    },
+    {
+      "kind": "mod",
+      "id": "VSUIKI5",
+      "name": "Vehicle Seat UI (KI5)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3501302358",
+      "notes": "KI5 support"
+    },
+    {
+      "kind": "mod",
+      "id": "SpecLoot",
+      "name": "Specific Loot (KI5)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3457132019",
+      "notes": "KI5 support: collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "VMZNEW",
+      "name": "Vehicle Military Zones",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3436499337",
+      "notes": "KI5 support: collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "NepWreckWorkingCars",
+      "name": "Dismantle Any Car",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3428369137",
+      "notes": "KI5 support: collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "MRT_VehicleMarket",
+      "name": "MRT.RanWhenParked: Vehicle Market",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3777490033",
+      "notes": "KI5 support: collection 3781417097"
+    },
+    {
+      "kind": "mod",
+      "id": "CarRoofFix",
+      "name": "Vehicle Aim Roof Fix",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3781616141",
+      "notes": "KI5 support: bob fix, load near end"
+    },
+    {
+      "kind": "mod",
+      "id": "CarWeaponFix",
+      "name": "Vehicle Weapon Clipping Fix",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3783874874",
+      "notes": "KI5 support: bob fix, load near end"
+    },
+    {
+      "kind": "mod",
+      "id": "CarEnterExitFix",
+      "name": "Vehicle Enter/Exit Fix",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3785695033",
+      "notes": "KI5 support: bob fix, load last"
+    },
+    {
+      "kind": "mod",
+      "id": "bdtmre",
+      "name": "MRE Mod",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3765409550",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "ChuckleberryFinnAlertSystem",
+      "name": "Mod Update and Alert System",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3077900375",
+      "notes": "Collection 3781417097 QoL (official WS); load before errorMagnifier"
+    },
+    {
+      "kind": "mod",
+      "id": "CleanHotBar",
+      "name": "Clean HotBar [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3461263912",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "errorMagnifier",
+      "name": "errorMagnifier",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2896041179",
+      "notes": "Collection 3781417097 QoL (official WS); requires ChuckleberryFinnAlertSystem"
+    },
+    {
+      "kind": "mod",
+      "id": "HereGoesTheSun",
+      "name": "Here Goes the Sun",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3618557184",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "Ladders4220",
+      "name": "Ladders?! B42.20",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3629835761",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "phuncure2",
+      "name": "PhunCure 2",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3676251425",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "RainCleansBlood",
+      "name": "Rain Cleans Blood",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2956146279",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "SkullysZombieCollision",
+      "name": "Skully's Zombie Collision",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3778511497",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "VB_CommonSense",
+      "name": "Common Sense [B42.20+]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3750253491",
+      "notes": "Collection 3781417097 QoL (official WS)"
+    },
+    {
+      "kind": "mod",
+      "id": "ZeroWeightKeys_B42",
+      "name": "Zero Weight Keys",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3776502124",
+      "notes": "Collection 3781417097 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "UsefulBarrelsMP",
+      "name": "Useful Barrels",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3436537035",
+      "notes": "Collection 3781417097 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "Tuna_GunRacks",
+      "name": "3D Gun Racks",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3784677588",
+      "notes": "Collection 3781417097 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "SkillRecoveryJournal",
+      "name": "Skill Recovery Journal",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2503622437",
+      "notes": "Collection 3781417097 QoL; requires Alert + errorMagnifier"
+    },
+    {
+      "kind": "mod",
+      "id": "CorvusNVG",
+      "name": "NVG [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3769335201",
+      "notes": "Collection 3781417097 QoL; VFE patch not enabled"
+    },
+    {
+      "kind": "mod",
+      "id": "OpenAllContainers",
+      "name": "Open All Containers",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3465040406",
+      "notes": "Collection 3781417097 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "ProximityInventory",
+      "name": "Proximity Inventory B42.20+",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2847184718",
+      "notes": "Collection 3781417097 caution: inventory UI"
+    },
+    {
+      "kind": "mod",
+      "id": "LGExtendedPlumbing",
+      "name": "LG Extended Plumbing",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3779561845",
+      "notes": "Collection 3781417097 caution: hidden plumbing objects"
+    },
+    {
+      "kind": "mod",
+      "id": "phunzones2",
+      "name": "PhunZones 2",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3676252660",
+      "notes": "Collection 3781417097 caution: zone rules vs panel privates"
+    },
+    {
+      "kind": "mod",
+      "id": "StarlitLibrary",
+      "name": "Starlit Library",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3378285185",
+      "notes": "Wave 1-40 library; load first among new"
+    },
+    {
+      "kind": "mod",
+      "id": "MoodleFramework",
+      "name": "Moodle Framework",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3396446795",
+      "notes": "Wave 1-40 library; before Modern Status"
+    },
+    {
+      "kind": "mod",
+      "id": "NeatUI_Framework",
+      "name": "NeatUI Framework [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3508537032",
+      "notes": "Wave 1-40; before CleanUI / Neat Crafting"
+    },
+    {
+      "kind": "mod",
+      "id": "CleanUI",
+      "name": "CleanUI [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3437629766",
+      "notes": "Wave 1-40 inventory UI"
+    },
+    {
+      "kind": "mod",
+      "id": "Neat_Crafting",
+      "name": "Neat Crafting [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3502080466",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SpnOpenCloth",
+      "name": "Spongie's Open Jackets (SpnOpenCloth)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2812326159",
+      "notes": "Wave 1-40; before Spongie Clothing"
+    },
+    {
+      "kind": "mod",
+      "id": "SpnOpenClothBase",
+      "name": "Spongie's Open Jackets (SpnOpenClothBase)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2812326159",
+      "notes": "Wave 1-40; before Spongie Clothing"
+    },
+    {
+      "kind": "mod",
+      "id": "SpnCloth",
+      "name": "Spongie's Clothing",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2684285534",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SPNCC",
+      "name": "Spongie's Character Customisation (SPNCC)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3414634809",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SPNCCDetails",
+      "name": "Spongie's Character Customisation (SPNCCDetails)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3414634809",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SPNCCDetailsHD",
+      "name": "Spongie's Character Customisation (SPNCCDetailsHD)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3414634809",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SPNCCFaces",
+      "name": "Spongie's Character Customisation (SPNCCFaces)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3414634809",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SpnHair",
+      "name": "Spongie's Hair",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2463184726",
+      "notes": "Wave 1-40 (picked over Fluffy Hair)"
+    },
+    {
+      "kind": "mod",
+      "id": "EquipmentUI_B42",
+      "name": "Equipment UI B42.20+",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3780682550",
+      "notes": "Wave 1-40 paper doll"
+    },
+    {
+      "kind": "mod",
+      "id": "ModernStatus",
+      "name": "Modern Status [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3451167732",
+      "notes": "Wave 1-40 HUD"
+    },
+    {
+      "kind": "mod",
+      "id": "P4HasBeenRead",
+      "name": "Has Been Read",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2544353492",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "MapLegendUI",
+      "name": "Map Legend UI",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2710167561",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "CombatText",
+      "name": "Combat Text",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2286124931",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "KillCount",
+      "name": "KillCount",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2553809727",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "StopJumpingOffStairs",
+      "name": "Stop Jumping Off Stairs",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3650112103",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "BetterGeneratorInfo",
+      "name": "Better Generator Info",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3576056135",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "ModManager",
+      "name": "[B42] Mod Manager",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3567084868",
+      "notes": "Wave 1-40 admin/client"
+    },
+    {
+      "kind": "mod",
+      "id": "GlassHats",
+      "name": "Hats and Glasses Don't Fall",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2423266708",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "FasterHoodOpening",
+      "name": "Faster Hood Opening",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2584112711",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "ExerciseWithGearAgain",
+      "name": "Exercise With Gear Again",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3390760692",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "RepairableWindows",
+      "name": "Repairable Windows",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3378304610",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "ClimbDownRope",
+      "name": "Climb Down the Rope",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3000725405",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "darkerMap",
+      "name": "Darker Map",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2939187818",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "enhanced_flashlight_glow",
+      "name": "Enhanced Flashlight Glow",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389781770",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "SmokingSoundsOverhaul",
+      "name": "Smoking Sounds Overhaul",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2857762294",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "ConditionOnDash",
+      "name": "Condition On Dash",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3306168142",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "RealisticDash",
+      "name": "Realistic Dashboard & Gauges",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3635591071",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "EverythingHasAName",
+      "name": "Everything Has a Name",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2867163008",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "GydeTraitMags",
+      "name": "Gyde's Trait Magazines",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3342191739",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "RebalancedPropMoving",
+      "name": "Rebalanced Prop Moving",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2699828474",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreDamagedObjects",
+      "name": "More Damaged Objects",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3413150945",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "better-auto-mechanics",
+      "name": "Better Auto Mechanics",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3635856965",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "ChangeSandboxOptionsByStar",
+      "name": "Change Sandbox Options",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2894296454",
+      "notes": "Wave 1-40 admin"
+    },
+    {
+      "kind": "mod",
+      "id": "QNWDebugMenuB42",
+      "name": "[B42]DebugMenu",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3386556284",
+      "notes": "Wave 1-40 admin"
+    },
+    {
+      "kind": "mod",
+      "id": "ModLoadOrderSorter_b42",
+      "name": "Mod Load Order Sorter",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3423660713",
+      "notes": "Wave 1-40 admin"
+    },
+    {
+      "kind": "mod",
+      "id": "MinimalSidebar",
+      "name": "Minimal Sidebar",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3642084851",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "BetterSortCC",
+      "name": "Better Sorting",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2313387159",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "BCGTools",
+      "name": "Bushcraft Gear - Tools",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2423906082",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "BicycleMod",
+      "name": "Bicycle!",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3461415167",
+      "notes": "Wave 1-40"
+    },
+    {
+      "kind": "mod",
+      "id": "POB42_Customs_69charger",
+      "name": "TouchMeNot PO B42 Customs (POB42_Customs_69charger)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3644403340",
+      "notes": "Wave 1-40 KI5 skins"
+    },
+    {
+      "kind": "mod",
+      "id": "POB42_Customs_85chevyStepVan",
+      "name": "TouchMeNot PO B42 Customs (POB42_Customs_85chevyStepVan)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3644403340",
+      "notes": "Wave 1-40 KI5 skins"
+    },
+    {
+      "kind": "mod",
+      "id": "POB42_Customs_86chevyCUCV",
+      "name": "TouchMeNot PO B42 Customs (POB42_Customs_86chevyCUCV)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3644403340",
+      "notes": "Wave 1-40 KI5 skins"
+    },
+    {
+      "kind": "mod",
+      "id": "POB42_Customs_92amgeneralM998",
+      "name": "TouchMeNot PO B42 Customs (POB42_Customs_92amgeneralM998)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3644403340",
+      "notes": "Wave 1-40 KI5 skins"
+    },
+    {
+      "kind": "mod",
+      "id": "POB42_Customs_92nissanGTR",
+      "name": "TouchMeNot PO B42 Customs (POB42_Customs_92nissanGTR)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3644403340",
+      "notes": "Wave 1-40 KI5 skins"
+    },
+    {
+      "kind": "mod",
+      "id": "FH",
+      "name": "Fluffy Hair",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2447729538",
+      "notes": "Wave 41-80; required by Spongie's Hair (FH)"
+    },
+    {
+      "kind": "mod",
+      "id": "ClimbWall",
+      "name": "Climb",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389681224",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "nope",
+      "name": "Equip Item While Running",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3396218724",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "BB_ExtraGunSlot",
+      "name": "Extra Gun Slot",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3120702374",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "FireRebalance",
+      "name": "Fire Rebalance",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3398838250",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "WaterGoesBad",
+      "name": "Water Goes Bad",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2849467715",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "AutoReload",
+      "name": "Auto Reload",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389448389",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "AutoTailoring",
+      "name": "Auto Tailoring",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3388183573",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "TableSaw",
+      "name": "Table Saw",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3540297822",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Reading+",
+      "name": "Reading+",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3641697417",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "FunctionalAppliances2",
+      "name": "Functional Appliances 2",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3042138819",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "UBPropFix",
+      "name": "Propane Torch Fix",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2883755057",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "ReducedWoodWeight2x41",
+      "name": "50% Wood Weight",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2377867605",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "ItemCondition_KingEJ",
+      "name": "Item Condition Overlay",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3641048285",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Crawl",
+      "name": "Crawl",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389681552",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "CWWell",
+      "name": "Clean Well Water",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3397419870",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Buttstroke",
+      "name": "Buttstroke / Gun Stock Attack",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3394044313",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Neat_Building",
+      "name": "Neat Building [B42] (Neat_Building)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3536052310",
+      "notes": "Wave 41-80; last collection leftover"
+    },
+    {
+      "kind": "mod",
+      "id": "Neat_Building_Railings",
+      "name": "Neat Building [B42] (Neat_Building_Railings)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3536052310",
+      "notes": "Wave 41-80; last collection leftover"
+    },
+    {
+      "kind": "mod",
+      "id": "Neat_Building_UIOnly",
+      "name": "Neat Building [B42] (Neat_Building_UIOnly)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3536052310",
+      "notes": "Wave 41-80; last collection leftover"
+    },
+    {
+      "kind": "mod",
+      "id": "redrawnmoodles",
+      "name": "Old moodles",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3386486141",
+      "notes": "Wave 41-80; conflicts with Modern Status HUD"
+    },
+    {
+      "kind": "mod",
+      "id": "oldbordermoodles",
+      "name": "Old border for moodles",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3386952765",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "NepEasyDistro",
+      "name": "Easy Distributions API",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3487312010",
+      "notes": "Wave 41-80 library"
+    },
+    {
+      "kind": "mod",
+      "id": "WayMoreCars",
+      "name": "More Car Features",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3520758551",
+      "notes": "Wave 41-80 WIP"
+    },
+    {
+      "kind": "mod",
+      "id": "70roadRunner",
+      "name": "'70 Plymouth Road Runner",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3642935062",
+      "notes": "Wave 41-80 vehicle"
+    },
+    {
+      "kind": "mod",
+      "id": "84cadillacDeVille",
+      "name": "'84 Cadillac DeVille",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3592777775",
+      "notes": "Wave 41-80 vehicle"
+    },
+    {
+      "kind": "mod",
+      "id": "84oldsmobile98",
+      "name": "'84 Oldsmobile 98 Regency",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3601417745",
+      "notes": "Wave 41-80 vehicle"
+    },
+    {
+      "kind": "mod",
+      "id": "69charger",
+      "name": "'69 Dodge Charger",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3631989559",
+      "notes": "Wave 41-80 vehicle"
+    },
+    {
+      "kind": "mod",
+      "id": "84merc",
+      "name": "'84 Mercedes Benz W460",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2805630347",
+      "notes": "Wave 41-80 vehicle"
+    },
+    {
+      "kind": "mod",
+      "id": "KATTAJ1_ClothesCore",
+      "name": "KATTAJ1 Clothes Core",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3470422050",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Military_Tool_Kit",
+      "name": "Military Tool Kit",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2705406713",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "BB_Achievements",
+      "name": "Braven's Achievements",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3051277957",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "Conditional-Speech",
+      "name": "Conditional-Speech",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2398253681",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "CommunityModdingDebugTools",
+      "name": "Community Modding Projects (CommunityModdingDebugTools)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2909488957",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "CommunityModdingFrameworks",
+      "name": "Community Modding Projects (CommunityModdingFrameworks)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2909488957",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "CommunityModdingPatch",
+      "name": "Community Modding Projects (CommunityModdingPatch)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2909488957",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "TargetSquareOnLoad",
+      "name": "Target Square: On Load Commands",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2969455858",
+      "notes": "Wave 41-80"
+    },
+    {
+      "kind": "mod",
+      "id": "AutoMechanics",
+      "name": "Auto Mechanics",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3387539308",
+      "notes": "Wave 41-80; overlaps Better Auto Mechanics"
+    },
+    {
+      "kind": "mod",
+      "id": "RVInteriorExpansion",
+      "name": "RV Interior Expansion [B42]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3618427553",
+      "notes": "Wave 41-80 caution ~69MB"
+    },
+    {
+      "kind": "mod",
+      "id": "SM4BootsExpandedB42",
+      "name": "Boots Expanded (SM4BootsExpandedB42)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2850935956",
+      "notes": "Wave 41-80 caution ~92MB"
+    },
+    {
+      "kind": "mod",
+      "id": "SM4BootsExpandedB42VanillaONLY",
+      "name": "Boots Expanded (SM4BootsExpandedB42VanillaONLY)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2850935956",
+      "notes": "Wave 41-80 caution ~92MB"
+    },
+    {
+      "kind": "mod",
+      "id": "SM4BootsExpandedFlatshoes",
+      "name": "Boots Expanded (SM4BootsExpandedFlatshoes)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2850935956",
+      "notes": "Wave 41-80 caution ~92MB"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreDescriptionForTraits42",
+      "name": "More Description for Traits",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2685168362",
+      "notes": "Wave 41-80; title says Not b42"
+    },
+    {
+      "kind": "library",
+      "id": "TchernoLib",
+      "name": "TchernoLib",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389605231",
+      "notes": "Start-compat: required by Climb/Crawl"
+    },
+    {
+      "kind": "library",
+      "id": "EasyConfigChucked",
+      "name": "Easy Config Chucked",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2529746725",
+      "notes": "Start-compat: required by Conditional-Speech"
+    },
+    {
+      "kind": "mod",
+      "id": "TakeAnyAmount",
+      "name": "Take Any Amount [B42MP]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3389115640",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "SimpleReadWhileWalking41",
+      "name": "Read While Walking",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2845952197",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "RandomizedGeneratorsB42",
+      "name": "Randomized Generators",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3041558127",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "doorsHaveAChance",
+      "name": "Doors Have A Chance",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3041602364",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "GenRange",
+      "name": "Visible Generator Range",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2972289937",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "close-the-trunk",
+      "name": "Close The Trunk",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3262467691",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "extendedBatteryLife",
+      "name": "Extended Battery Life",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3387462212",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "LightNailsAndScrews",
+      "name": "Rat's Lightened Nails",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3387401141",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "LT",
+      "name": "Rat's Lighter Textiles",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3387547602",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "EasySpareMagazineReload",
+      "name": "Easy Spare Magazine Reload",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3390014923",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "42GunReloadFix",
+      "name": "Gun Reload Fix [B42.13 MP]",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3647039527",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "LightOnBelt",
+      "name": "Simple Flashlight on Belt",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3394588830",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "FreeYourHands",
+      "name": "FreeYourHands",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3393040295",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "[B42]PumpsHavePropane-transplant",
+      "name": "Pumps Have Propane",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3394378143",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "Rebalanced_Butchering",
+      "name": "Rebalanced Butchering",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3393739163",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "All Shots Fired Increase Aiming XP",
+      "name": "All Shots Fired Increase Aiming XP",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3394109542",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "hideVanillaReadIcon",
+      "name": "Known And Collected (hideVanillaReadIcon)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2881764317",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "KnownAndCollected",
+      "name": "Known And Collected (KnownAndCollected)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2881764317",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "RiskyInspectWeapon",
+      "name": "Inspect Weapon",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2948824747",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "showweaponstatsplus",
+      "name": "Show Weapon Stats Plus",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3391710239",
+      "notes": "Top 20 QoL"
+    },
+    {
+      "kind": "mod",
+      "id": "AirdropManager",
+      "name": "Airdrop Manager",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3792142238",
+      "notes": "Notepad safe: B42.20 MP airdrops"
+    },
+    {
+      "kind": "mod",
+      "id": "HordeNights",
+      "name": "Horde Nights",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3782615002",
+      "notes": "Notepad safe: MP event"
+    },
+    {
+      "kind": "mod",
+      "id": "CVI",
+      "name": "Carry Visible Items In Hands",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3749026793",
+      "notes": "Notepad safe: held-item 3D, not body"
+    },
+    {
+      "kind": "mod",
+      "id": "DetailedDescriptionsForOccupationsAndTraits",
+      "name": "Detailed Descriptions Occupations/Traits",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3387957272",
+      "notes": "Notepad safe: trait UI"
+    },
+    {
+      "kind": "mod",
+      "id": "SKITTLE_LongTermPreservation",
+      "name": "Long Term Preservation",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3406392630",
+      "notes": "Notepad safe: food"
+    },
+    {
+      "kind": "mod",
+      "id": "CyesPushDoors",
+      "name": "Cye's Push Doors",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3780683663",
+      "notes": "Notepad safe: doors SP/MP"
+    },
+    {
+      "kind": "mod",
+      "id": "EquipClothingWhileMoving",
+      "name": "Equip Clothing While Moving",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3446510982",
+      "notes": "Notepad safe: clothing while moving"
+    },
+    {
+      "kind": "mod",
+      "id": "stanks_suicide",
+      "name": "Immersive Suicide",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3426448380",
+      "notes": "Notepad safe: client gesture"
+    },
+    {
+      "kind": "mod",
+      "id": "B42PackMule",
+      "name": "Pack Mule",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3540903327",
+      "notes": "Notepad safe: carry weight WIP"
+    },
+    {
+      "kind": "mod",
+      "id": "STA_PryOpen",
+      "name": "Pry Open",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3579640010",
+      "notes": "Notepad safe: crowbar action"
+    },
+    {
+      "kind": "mod",
+      "id": "ItemArrange",
+      "name": "Item Arrange",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3767639280",
+      "notes": "Notepad safe: loot layout"
+    },
+    {
+      "kind": "mod",
+      "id": "NepMoreOnFloor",
+      "name": "More on the Floor",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3457064550",
+      "notes": "Notepad safe: floor MP"
+    },
+    {
+      "kind": "mod",
+      "id": "JB_BugsInLights",
+      "name": "JB's Bugs In Lights",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3717902500",
+      "notes": "Notepad safe: cosmetics"
+    },
+    {
+      "kind": "mod",
+      "id": "NamedSkillVHSTapes",
+      "name": "Named skill VHS",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2732294885",
+      "notes": "Notepad safe: VHS labels"
+    },
+    {
+      "kind": "mod",
+      "id": "HardwoodsTurnoutGear",
+      "name": "Hardwood Firefighter Finery",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3671351750",
+      "notes": "Notepad safe: clothing add-on"
+    },
+    {
+      "kind": "mod",
+      "id": "GasPumpIndicator",
+      "name": "Gas Pump Indicator",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3755993986",
+      "notes": "Notepad safe: pump UI"
+    },
+    {
+      "kind": "mod",
+      "id": "coldwinters",
+      "name": "Cold Winters",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3577100076",
+      "notes": "Notepad safe: climate MP"
+    },
+    {
+      "kind": "mod",
+      "id": "InjuredZombiesStumble",
+      "name": "Injured Zombies Stumble",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3648051123",
+      "notes": "Notepad safe: zombie anim"
+    },
+    {
+      "kind": "mod",
+      "id": "LazoloDynamicBackpackUpgrades",
+      "name": "Dynamic Backpack Upgrades",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2996978365",
+      "notes": "Notepad safe: bags"
+    },
+    {
+      "kind": "mod",
+      "id": "BB_WhereAmI",
+      "name": "Where Am I?",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3097650043",
+      "notes": "Notepad safe: map coords"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreVarietyLoot",
+      "name": "More Variety Loot (MoreVarietyLoot)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3427382678",
+      "notes": "Notepad safe: loot tables"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreVarietyLoot200%",
+      "name": "More Variety Loot (MoreVarietyLoot200%)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3427382678",
+      "notes": "Notepad safe: loot tables"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreVarietyLoot25%",
+      "name": "More Variety Loot (MoreVarietyLoot25%)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3427382678",
+      "notes": "Notepad safe: loot tables"
+    },
+    {
+      "kind": "mod",
+      "id": "MoreVarietyLoot50%",
+      "name": "More Variety Loot (MoreVarietyLoot50%)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3427382678",
+      "notes": "Notepad safe: loot tables"
+    },
+    {
+      "kind": "mod",
+      "id": "PSR",
+      "name": "Plysken Solar Revolution",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3725311427",
+      "notes": "Notepad safe: electricity MP"
+    },
+    {
+      "kind": "mod",
+      "id": "WorkshopUpdateCheck",
+      "name": "Workshop Update Checker",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3628835042",
+      "notes": "Notepad safe: client checker"
+    },
+    {
+      "kind": "mod",
+      "id": "TacHoldCompleteFixed",
+      "name": "Tactical Hold Complete",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3712348921",
+      "notes": "Notepad caution: weapon hold anim"
+    },
+    {
+      "kind": "mod",
+      "id": "WeaponLoadout",
+      "name": "Weapon Loadout",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3780702752",
+      "notes": "Notepad caution: vs Equipment UI"
+    },
+    {
+      "kind": "mod",
+      "id": "VanillaGearExpanded",
+      "name": "Vanilla Gear Expanded",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3401134276",
+      "notes": "Notepad caution: clothes vs Spongie"
+    },
+    {
+      "kind": "mod",
+      "id": "VanillaOutfitsExpanded",
+      "name": "Vanilla Outfits Expanded",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3783094058",
+      "notes": "Notepad caution: outfits vs Spongie"
+    },
+    {
+      "kind": "mod",
+      "id": "1VCESTANDARD",
+      "name": "Vanilla Clothing Expansion",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3421271152",
+      "notes": "Notepad caution: clothes vs Spongie"
+    },
+    {
+      "kind": "mod",
+      "id": "FWOFitnessWorkoutOverhaul",
+      "name": "Fitness & Workout Overhaul (FWOFitnessWorkoutOverhaul)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2940354599",
+      "notes": "Notepad caution: vs Exercise With Gear"
+    },
+    {
+      "kind": "mod",
+      "id": "FWOBenchPressTreadmill",
+      "name": "Fitness & Workout Overhaul (FWOBenchPressTreadmill)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2940354599",
+      "notes": "Notepad caution: vs Exercise With Gear"
+    },
+    {
+      "kind": "mod",
+      "id": "traitsAsSkills",
+      "name": "Traits As Skills",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3784847437",
+      "notes": "Notepad caution: traits vs Gyde"
+    },
+    {
+      "kind": "mod",
+      "id": "FunctionalGutters",
+      "name": "Functional Gutters (FunctionalGutters)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3439305933",
+      "notes": "Notepad caution: water vs Plumbing"
+    },
+    {
+      "kind": "mod",
+      "id": "FunctionalGuttersRemoved",
+      "name": "Functional Gutters (FunctionalGuttersRemoved)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3439305933",
+      "notes": "Notepad caution: water vs Plumbing"
+    },
+    {
+      "kind": "mod",
+      "id": "AliceGear",
+      "name": "ALICE Gear",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3610005735",
+      "notes": "Notepad caution: slots vs Extra Gun Slot"
+    },
+    {
+      "kind": "mod",
+      "id": "hf_point_blank",
+      "name": "Point Blank",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "2990322197",
+      "notes": "Notepad caution: ballistics MP"
+    },
+    {
+      "kind": "mod",
+      "id": "StarvingZombies",
+      "name": "Starving Zombies (StarvingZombies)",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3396867685",
+      "notes": "Notepad caution: AI vs Skully"
+    },
+    {
+      "kind": "mod",
+      "id": "StarvingZombiesWIP",
+      "name": "Starving Zombies (StarvingZombiesWIP)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3396867685",
+      "notes": "Notepad caution: AI vs Skully"
+    },
+    {
+      "kind": "mod",
+      "id": "SHdynamicmusic",
+      "name": "Silent Hill Dynamic Music",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3556702241",
+      "notes": "Notepad caution: ~1.5GB audio"
+    },
+    {
+      "kind": "mod",
+      "id": "DynamicVehicleSnow",
+      "name": "Dynamic Snow Vanilla Vehicles",
+      "source": "workshop",
+      "enabled": true,
+      "workshop_id": "3781818628",
+      "notes": "Notepad caution: ~208MB vs KI5"
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsLibraries",
+      "name": "MEATBALLS Libraries (B42.20)",
+      "source": "workshop",
+      "enabled": false,
+      "workshop_id": "3796197817",
+      "notes": "New-world 5-pack #1 https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817 Required by Core/KI5/Character/Gameplay. Do not write WorkshopItems= on XLGAMES."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsCore",
+      "name": "MEATBALLS Core (B42.20)",
+      "source": "local",
+      "enabled": false,
+      "notes": "New-world 5-pack #2. require=MeatballsLibraries (3796197817). Workshop id pending upload."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsKI5",
+      "name": "MEATBALLS KI5 Garage (B42.20)",
+      "source": "local",
+      "enabled": false,
+      "notes": "New-world 5-pack #3. require=MeatballsLibraries (3796197817). Workshop id pending upload. ~450MB."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsCharacter",
+      "name": "MEATBALLS Character (B42.20)",
+      "source": "local",
+      "enabled": false,
+      "notes": "New-world 5-pack #4. require=MeatballsLibraries (3796197817). Workshop id pending upload."
+    },
+    {
+      "kind": "mod",
+      "id": "MeatballsGameplay",
+      "name": "MEATBALLS Gameplay (B42.20)",
+      "source": "local",
+      "enabled": false,
+      "notes": "New-world 5-pack #5. require=MeatballsLibraries (3796197817). Workshop id pending upload."
     }
   ]
 }

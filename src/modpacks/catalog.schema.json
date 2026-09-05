@@ -6,6 +6,10 @@
   "properties": {
     "name": { "type": "string" },
     "ini_filename": { "type": "string" },
+    "dedicated_workshop_items": {
+      "type": "boolean",
+      "description": "If false, apply-ini writes WorkshopItems= empty. Dedicated still loads Mods= from FTP folders; skips Steam download that NPEs B42 when a Workshop item fails."
+    },
     "items": {
       "type": "array",
       "items": {

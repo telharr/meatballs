@@ -124,6 +124,48 @@ local function factionObject(faction)
     return { name = name, owner = owner, tag = tag, members = members }
 end
 
+local function onlinePlayers()
+    local out = {}
+    local ok, players = pcall(function()
+        if not getOnlinePlayers then
+            return nil
+        end
+        return getOnlinePlayers()
+    end)
+    if not ok or not players then
+        return out
+    end
+    local i = 0
+    while i < players:size() do
+        local player = players:get(i)
+        if player then
+            local name = ""
+            pcall(function()
+                if player.getUsername then
+                    name = tostring(player:getUsername() or "")
+                end
+            end)
+            local x, y, z = 0, 0, 0
+            pcall(function()
+                if player.getX then
+                    x = math.floor(player:getX())
+                end
+                if player.getY then
+                    y = math.floor(player:getY())
+                end
+                if player.getZ then
+                    z = math.floor(player:getZ())
+                end
+            end)
+            if name ~= "" then
+                out[#out + 1] = { name = name, x = x, y = y, z = z }
+            end
+        end
+        i = i + 1
+    end
+    return out
+end
+
 local function writeMembersJson(names)
     local parts = {}
     local i = 1
@@ -207,6 +249,23 @@ function MeatballsSafehousesServer.dump()
         buf[#buf + 1] = "\n"
         fi = fi + 1
     end
+    buf[#buf + 1] = "  ],\n"
+    local people = onlinePlayers()
+    buf[#buf + 1] = '  "players": [\n'
+    local pi = 1
+    while pi <= #people do
+        local p = people[pi]
+        buf[#buf + 1] = "    {"
+        buf[#buf + 1] = '"name":' .. jsonQuote(p.name) .. ","
+        buf[#buf + 1] = '"x":' .. tostring(p.x) .. ","
+        buf[#buf + 1] = '"y":' .. tostring(p.y) .. ","
+        buf[#buf + 1] = '"z":' .. tostring(p.z) .. "}"
+        if pi < #people then
+            buf[#buf + 1] = ","
+        end
+        buf[#buf + 1] = "\n"
+        pi = pi + 1
+    end
     buf[#buf + 1] = "  ]\n}\n"
     writeFile(MeatballsSafehouses.DUMP_FILE, table.concat(buf))
     return #houses
@@ -217,6 +276,7 @@ function MeatballsSafehousesServer.writeBridge()
         .. '  "ok": true,\n'
         .. '  "mod": ' .. jsonQuote(MeatballsSafehouses.MODULE) .. ",\n"
         .. '  "version": ' .. jsonQuote(MeatballsSafehouses.VERSION) .. ",\n"
+        .. '  "better_safehouse": ' .. (MeatballsSafehouses.isBetterSafehouseActive() and "true" or "false") .. ",\n"
         .. '  "polled_at": ' .. jsonQuote(stamp()) .. "\n"
         .. "}\n"
     writeFile(MeatballsSafehouses.BRIDGE_FILE, body)
@@ -277,30 +337,23 @@ local function toInt(value, fallback)
     return math.floor(n)
 end
 
-function MeatballsSafehousesServer.findHouse(x, y, w, h)
-    if not SafeHouse or not SafeHouse.getSafehouseList then
-        return nil
-    end
-    local list = SafeHouse.getSafehouseList()
-    if not list then
-        return nil
-    end
-    local i = 0
-    while i < list:size() do
-        local house = list:get(i)
-        if house
-            and house:getX() == x
-            and house:getY() == y
-            and house:getW() == w
-            and house:getH() == h then
-            return house
-        end
-        i = i + 1
-    end
-    return nil
+function MeatballsSafehousesServer.findHouse(x, y, w, h, owner)
+    return MeatballsSafehouses.findHouse(x, y, w, h, owner)
 end
 
 function MeatballsSafehousesServer.overlapping(x, y, w, h, ignore)
+    local list = MeatballsSafehouses.eachSafehouse()
+    local i = 1
+    while i <= #list do
+        local house = list[i]
+        if house ~= ignore then
+            local hx, hy, hw, hh = MeatballsSafehouses.houseRect(house)
+            if MeatballsSafehouses.rectsOverlap(x, y, w, h, hx, hy, hw, hh) then
+                return house
+            end
+        end
+        i = i + 1
+    end
     local x2 = x + w
     local y2 = y + h
     if SafeHouse and SafeHouse.getSafehouseOverlapping then
@@ -309,11 +362,87 @@ function MeatballsSafehousesServer.overlapping(x, y, w, h, ignore)
         end
         return SafeHouse.getSafehouseOverlapping(x, y, x2, y2)
     end
-    local existing = MeatballsSafehousesServer.findHouse(x, y, w, h)
-    if existing and existing ~= ignore then
-        return existing
-    end
     return nil
+end
+
+local function syncHouse(house)
+    if house and house.syncSafehouse then
+        pcall(function()
+            house:syncSafehouse()
+        end)
+    end
+end
+
+local function notifyBetterAdded(x, y, w, h, owner, title)
+    if not MeatballsSafehouses.isBetterSafehouseActive() or not sendServerCommand then
+        return
+    end
+    local moduleName = "BetterSafehouseCC"
+    if BetterSafehouse and BetterSafehouse.CustomClaim and BetterSafehouse.CustomClaim.NET_MODULE then
+        moduleName = BetterSafehouse.CustomClaim.NET_MODULE
+    end
+    local payload = {
+        x = x,
+        y = y,
+        w = w,
+        h = h,
+        owner = owner,
+        title = title,
+    }
+    local ok, players = pcall(function()
+        return getOnlinePlayers()
+    end)
+    if not ok or not players then
+        return
+    end
+    local i = 0
+    while i < players:size() do
+        local player = players:get(i)
+        if player then
+            pcall(function()
+                sendServerCommand(player, moduleName, "SafehouseAdded", payload)
+            end)
+        end
+        i = i + 1
+    end
+end
+
+local function notifyBetterReleased(x, y, w, h)
+    if not MeatballsSafehouses.isBetterSafehouseActive() or not sendServerCommand then
+        return
+    end
+    local payload = { x = x, y = y, w = w, h = h, z = 0 }
+    local ok, players = pcall(function()
+        return getOnlinePlayers()
+    end)
+    if not ok or not players then
+        return
+    end
+    local i = 0
+    while i < players:size() do
+        local player = players:get(i)
+        if player then
+            pcall(function()
+                sendServerCommand(player, "BetterSafehouse", "SafehouseReleased", payload)
+            end)
+        end
+        i = i + 1
+    end
+end
+
+local function clearBetterExpansion(house)
+    if not house or not MeatballsSafehouses.isBetterSafehouseActive() then
+        return
+    end
+    local owner = ""
+    if house.getOwner then
+        owner = tostring(house:getOwner() or "")
+    end
+    if BetterSafehouseExpansion_Server and BetterSafehouseExpansion_Server.clearExpansionStateForSafehouse then
+        pcall(function()
+            BetterSafehouseExpansion_Server.clearExpansionStateForSafehouse(house, owner)
+        end)
+    end
 end
 
 local function broadcast(command, args)
@@ -424,8 +553,10 @@ function MeatballsSafehousesServer.applyCreate(cmd)
         house:setOwner(owner)
     end
     addMembers(house, members)
+    syncHouse(house)
     local args = payloadFromHouse(house, { op = "create" })
     broadcast("apply", args)
+    notifyBetterAdded(args.x, args.y, args.w, args.h, args.owner, args.title)
     return true, "", args
 end
 
@@ -434,9 +565,13 @@ function MeatballsSafehousesServer.applyUpdate(cmd)
     local y = toInt(cmd.y)
     local w = toInt(cmd.w)
     local h = toInt(cmd.h)
-    local house = MeatballsSafehousesServer.findHouse(x, y, w, h)
+    local house = MeatballsSafehousesServer.findHouse(x, y, w, h, cmd.owner)
     if not house then
         return false, "safehouse not found", { x = x, y = y, w = w, h = h }
+    end
+    local prevOwner = ""
+    if house.getOwner then
+        prevOwner = tostring(house:getOwner() or "")
     end
     if cmd.title ~= nil then
         local title = MeatballsSafehouses.decode(cmd.title)
@@ -455,6 +590,18 @@ function MeatballsSafehousesServer.applyUpdate(cmd)
     if cmd.members ~= nil and cmd.members ~= "" then
         addMembers(house, MeatballsSafehouses.splitCsv(cmd.members))
     end
+    local newOwner = ""
+    if house.getOwner then
+        newOwner = tostring(house:getOwner() or "")
+    end
+    if newOwner ~= "" and prevOwner ~= "" and newOwner ~= prevOwner then
+        if BetterSafehouseExpansion_Server and BetterSafehouseExpansion_Server.resetForOwnerChange then
+            pcall(function()
+                BetterSafehouseExpansion_Server.resetForOwnerChange(house, prevOwner)
+            end)
+        end
+    end
+    syncHouse(house)
     local args = payloadFromHouse(house, { op = "update" })
     broadcast("apply", args)
     return true, "", args
@@ -465,17 +612,19 @@ function MeatballsSafehousesServer.applyRelease(cmd)
     local y = toInt(cmd.y)
     local w = toInt(cmd.w)
     local h = toInt(cmd.h)
-    local house = MeatballsSafehousesServer.findHouse(x, y, w, h)
+    local house = MeatballsSafehousesServer.findHouse(x, y, w, h, cmd.owner)
     if not house then
         return false, "safehouse not found", { x = x, y = y, w = w, h = h }
     end
     local args = payloadFromHouse(house, { op = "release" })
+    clearBetterExpansion(house)
     if SafeHouse and SafeHouse.removeSafeHouse then
         SafeHouse.removeSafeHouse(house)
     else
         return false, "removeSafeHouse missing", args
     end
     broadcast("remove", args)
+    notifyBetterReleased(args.x, args.y, args.w, args.h)
     return true, "", args
 end
 
@@ -547,6 +696,7 @@ local function pulse()
         return
     end
     MeatballsSafehousesServer.poll()
+    MeatballsSafehousesServer.dump()
     MeatballsSafehousesServer.writeBridge()
 end
 
@@ -573,6 +723,15 @@ end
 
 if Events.OnServerStarted then
     Events.OnServerStarted.Add(onWorldReady)
+end
+if Events.OnSafehouseCreate then
+    Events.OnSafehouseCreate.Add(function()
+        if isClient() and not isServer() then
+            return
+        end
+        MeatballsSafehousesServer.dump()
+        MeatballsSafehousesServer.writeBridge()
+    end)
 end
 if Events.OnInitGlobalModData then
     Events.OnInitGlobalModData.Add(function()

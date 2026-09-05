@@ -11,6 +11,7 @@ from panel.safehouses import (
     decode_members,
     encode_cmd,
     encode_members,
+    online_from_dump,
     parse_cmd_blocks,
     percent_decode,
     percent_encode,
@@ -79,6 +80,19 @@ def test_status_note_missing_mod() -> None:
     assert "не найден" in note
 
 
+def test_online_from_dump() -> None:
+    rows = online_from_dump({
+        "players": [
+            {"name": "Alice", "x": 10648, "y": 6912, "z": 0},
+            {"name": "", "x": 1, "y": 1},
+            {"username": "Bob", "x": "3500", "y": "3500"},
+        ],
+    })
+    assert rows[0]["name"] == "Alice"
+    assert rows[1]["name"] == "Bob"
+    assert rows[1]["x"] == 3500
+
+
 if __name__ == "__main__":
     test_percent_roundtrip_unicode()
     test_encode_create_block()
@@ -86,4 +100,5 @@ if __name__ == "__main__":
     test_members_comma_names()
     test_status_note_waiting_restart()
     test_status_note_missing_mod()
+    test_online_from_dump()
     print("ok")
