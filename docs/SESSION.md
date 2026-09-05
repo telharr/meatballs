@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.4.10 c05 fire/loot/cd)
+Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.5.0 c06 will)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.10 — c05: fire fail, one tag, noise cooldown.
+- Current: **s00** v0.5.0 — c06: `docs/scenario/s00/quests/c06-will.md`. Office at day 25; house oath still day 100.
 
 ## Panel
 
