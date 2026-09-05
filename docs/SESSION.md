@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (branch `scenario`: s00 v0.4.3 c02 hygiene)
+Last updated: 2026-09-05 (live five-pack on XLGAMES; scenario s00 v0.4.4 c02 stove/sheets/cut)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.3 — c02: `docs/scenario/s00/quests/c02-hygiene.md`.
+- Current: **s00** v0.4.4 — c02: heat check, sheet hint, didactic-cut grace.
 
 ## Panel
 
@@ -47,9 +47,10 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - Optional: set `PZ_DEDICATED_DIR` in `.env`
 - Client GameServer path is machine-specific — do not hardcode in shared docs
 
-## Mods (intent template)
+## Mods (live XLGAMES, 2026-09-05)
 
-Example loadout: `Mods=ServerTweaker;LogExtender;MeatballsSlots;AdminTools;MeatballsSafehouses`
+FTP `/ServerWorld/mods`: MeatballsLibraries, MeatballsCore, MeatballsKI5, MeatballsCharacter, MeatballsGameplay.  
+`Mods=` same order. `WorkshopItems=` `3796197817;3796206775;3796212345;3796217229;3796224319` (client auto-download). Hoster JVM restart required after INI write. Steam pages were set Public; Valve may still hide redistributed packs (`removed from the community`, author-only). Do not add original KI5/QoL Workshop IDs alongside these five.
 
 ## Tools to prefer
 
