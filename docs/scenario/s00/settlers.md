@@ -1,7 +1,7 @@
 ---
 season: "00"
 id: settlers
-version: 0.1.0
+version: 0.2.0
 updated: 2026-09-05
 ---
 

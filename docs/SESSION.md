@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (branch `scenario`: season 00 Nadzor bible)
+Last updated: 2026-09-05 (branch `scenario`: s00 v0.2.0 NPC quests + captain trial)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** нулевой сезон — ввод Надзора. Files: `docs/scenario/`. Changelog: `docs/scenario/CHANGELOG.md`.
+- Current: **s00** v0.2.0 — Надзор, NPC, испытание капитана. `docs/scenario/`. Changelog: `docs/scenario/CHANGELOG.md`.
 
 ## Panel
 
