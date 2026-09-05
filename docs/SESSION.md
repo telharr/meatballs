@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (live five-pack on XLGAMES; scenario s00 v0.4.4 c02 stove/sheets/cut)
+Last updated: 2026-09-05 (live five-pack on XLGAMES; scenario s00 v0.4.5 c03 church stealth)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.4 — c02: heat check, sheet hint, didactic-cut grace.
+- Current: **s00** v0.4.5 — c03: `docs/scenario/s00/quests/c03-church.md`.
 
 ## Panel
 

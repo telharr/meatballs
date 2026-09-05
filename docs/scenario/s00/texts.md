@@ -2,7 +2,7 @@
 season: "00"
 id: texts
 campaign: Хроника пустых коек
-version: 0.4.3
+version: 0.4.5
 updated: 2026-09-05
 ---
 
@@ -75,6 +75,8 @@ updated: 2026-09-05
 ```
 
 ## Записка пастора (`c03`)
+
+Предмет: `MeatballsNadzor.NotePastorRen` (заказчик: `Note_Pastor_Ren`). Одна на мир, стол дома `8093,11707,z=0`. UI: [c03-church.md](quests/c03-church.md) §3.2. Бланк прихода, EN на бумаге, RU в той же модалке.
 
 Стол дома на Черч-стрит.
 
