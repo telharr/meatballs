@@ -2222,17 +2222,19 @@
       "kind": "mod",
       "id": "MeatballsCore",
       "name": "MEATBALLS Core (B42.20)",
-      "source": "local",
+      "source": "workshop",
       "enabled": false,
-      "notes": "New-world 5-pack #2. require=MeatballsLibraries (3796197817). Workshop id pending upload."
+      "workshop_id": "3796206775",
+      "notes": "New-world 5-pack #2 https://steamcommunity.com/sharedfiles/filedetails/?id=3796206775 require=MeatballsLibraries (3796197817). Do not write WorkshopItems= on XLGAMES."
     },
     {
       "kind": "mod",
       "id": "MeatballsKI5",
       "name": "MEATBALLS KI5 Garage (B42.20)",
-      "source": "local",
+      "source": "workshop",
       "enabled": false,
-      "notes": "New-world 5-pack #3. require=MeatballsLibraries (3796197817). Workshop id pending upload. ~450MB."
+      "workshop_id": "3796212345",
+      "notes": "New-world 5-pack #3 https://steamcommunity.com/sharedfiles/filedetails/?id=3796212345 require=MeatballsLibraries (3796197817). ~450MB. Do not write WorkshopItems= on XLGAMES."
     },
     {
       "kind": "mod",

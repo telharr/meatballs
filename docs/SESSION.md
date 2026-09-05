@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (Libraries WS 3796197817; KI5 next; branch `mod`)
+Last updated: 2026-09-05 (Libraries/Core/KI5 on Steam; Character next; branch `mod`)
 
 ## Host (do not commit secrets)
 
@@ -37,7 +37,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - **Notepad list local (2026-09-05):** from Desktop URL dump. Safe wave 23 WS → 26 folders, kept one More Variety Loot (dropped 25/50/200%). Smoke **PASS**, 171 loaded. Caution wave 13 WS (skipped Item Condition `2852309899`, Tanks Have Propane `3676347667`, Tactical Pistol Hold `3680633169`); dropped FunctionalGuttersRemoved + StarvingZombiesWIP. Smoke **PASS**, 185 loaded, `*** SERVER STARTED ****`, no NPE/WD/required-mod. Cachedir `.mirror/meatballs-xl/ServerWorld`. **Live not FTP’d.** Do not add ETO/VFE/Lifestyle/old Common Sense/outdated/NPC SP/Necroa/Tomb body/grenades/silencers/basements.
 - **Workshop bundles (2026-09-05):** as-is folders (not Lua merge) in `.cache/workshop-packs/`: required Libraries / Core / KI5 / Character / Gameplay; optional Audio (`SHdynamicmusic`, not in server `Mods=`). Rebuild: `python tools/pack_server_bundles.py`. Steam upload not done (needs Guard + `STEAM_PASSWORD`). **Live not FTP’d.**
 - **Unified five ids (2026-09-05, new world):** `python tools/pack_unified_five.py` → `MeatballsLibraries` `MeatballsCore` `MeatballsKI5` `MeatballsCharacter` `MeatballsGameplay` (BetterSafehouse inside Core). Local test `-servername pack5` (`Server/pack5.ini`), cachedir meatballs-xl. Smoke **PASS**, loaded 5/5, `*** SERVER STARTED ****`, no NPE/WD/MakeTire. ~9k last-wins overwrites inside packs (some UI patches dropped). Audio still optional / not in `Mods=`. `world.ini` 184-id loadout left intact. **Live not FTP’d.** Steam not published.
-- **Workshop stage (2026-09-05):** five logos in `Zomboid\Workshop\Meatballs*` + `.cache/workshop-upload\*.vdf`. **1/5 Libraries** [3796197817](https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817). Next upload: **3/5 KI5** (`C:\Users\zvaa\Zomboid\Workshop\MeatballsKI5`, Required = Libraries). Core (2/5) local `workshop.txt` still has empty id. Five-pack catalog: `src/modpacks/meatballs-five.catalog.json` (`enabled: false` in live `meatballs.catalog.json`). Do not write these ids to live `WorkshopItems=`. **Live not FTP’d.**
+- **Workshop stage (2026-09-05):** five logos in `Zomboid\Workshop\Meatballs*`. Steam: **1/5 Libraries** [3796197817](https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817), **2/5 Core** [3796206775](https://steamcommunity.com/sharedfiles/filedetails/?id=3796206775), **3/5 KI5** [3796212345](https://steamcommunity.com/sharedfiles/filedetails/?id=3796212345). Next: **4/5 Character** (`C:\Users\zvaa\Zomboid\Workshop\MeatballsCharacter`, Required = Libraries). Catalog `src/modpacks/meatballs-five.catalog.json` (those five `enabled: false` in live `meatballs.catalog.json`). Do not write these ids to live `WorkshopItems=`. **Live not FTP’d.**
 
 ## Panel
 

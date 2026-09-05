@@ -20,6 +20,13 @@ TELEGRAM = "https://t.me/meatballpz"
 PANEL = "https://github.com/telharr/meatballs"
 LIBRARIES_WS = "3796197817"
 LIBRARIES_PAGE = f"https://steamcommunity.com/sharedfiles/filedetails/?id={LIBRARIES_WS}"
+CORE_WS = "3796206775"
+KI5_WS = "3796212345"
+PUBLISHED = {
+    "MeatballsLibraries": LIBRARIES_WS,
+    "MeatballsCore": CORE_WS,
+    "MeatballsKI5": KI5_WS,
+}
 
 PACKS = (
     {

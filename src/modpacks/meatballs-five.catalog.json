@@ -17,17 +17,19 @@
       "kind": "mod",
       "id": "MeatballsCore",
       "name": "MEATBALLS Core (B42.20)",
-      "source": "local",
+      "source": "workshop",
       "enabled": true,
-      "notes": "5-pack #2. require=MeatballsLibraries. Workshop id pending upload."
+      "workshop_id": "3796206775",
+      "notes": "5-pack #2. https://steamcommunity.com/sharedfiles/filedetails/?id=3796206775 require=MeatballsLibraries 3796197817. XLGAMES: FTP folder, do not write WorkshopItems=."
     },
     {
       "kind": "mod",
       "id": "MeatballsKI5",
       "name": "MEATBALLS KI5 Garage (B42.20)",
-      "source": "local",
+      "source": "workshop",
       "enabled": true,
-      "notes": "5-pack #3. require=MeatballsLibraries. Workshop id pending upload. ~450MB."
+      "workshop_id": "3796212345",
+      "notes": "5-pack #3. https://steamcommunity.com/sharedfiles/filedetails/?id=3796212345 require=MeatballsLibraries 3796197817. ~450MB. XLGAMES: FTP folder, do not write WorkshopItems=."
     },
     {
       "kind": "mod",
