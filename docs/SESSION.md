@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-04 (panel 3.24.3 CSRF headers on wizard save; VPS has MEATBALLS)
+Last updated: 2026-09-05 (branch `scenario`: season 00 Nadzor bible)
 
 ## Host (do not commit secrets)
 
@@ -17,6 +17,11 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Panel bugfix agent
 
 - Screenshot reports: reproduce local (`python run_panel.py`) then test VPS; commits only on branch **`fix`**; merge after user readiness check. Protocol: `.cursor/rules/panel-bugfix.mdc`.
+
+## Scenario bible
+
+- Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
+- Current: **s00** нулевой сезон — ввод Надзора. Files: `docs/scenario/`. Changelog: `docs/scenario/CHANGELOG.md`.
 
 ## Panel
 

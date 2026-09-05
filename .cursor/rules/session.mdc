@@ -16,3 +16,5 @@ Update `docs/SESSION.md` (short bullets, no secrets) when:
 - live `Mods=` / `WorkshopItems=` change
 - dedi path or B42 launch flags change
 - a host/process restart is required for a deploy
+
+Season lore / factions: branch **`scenario`** (`.cursor/rules/scenario.mdc`). Do not land that work on `main`, `mod`, or `fix`.

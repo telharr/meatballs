@@ -1,0 +1,30 @@
+---
+description: Season scenarios and faction lore — branch scenario, do not merge until ready
+alwaysApply: true
+---
+
+# Сценарии сезонов
+
+When the task is **лор, фракции, устав, персонажи, ритуал, сценарий сезона**, this protocol owns the work. Panel stays on `main` / `fix`. Mods stay on `mod`. This agent does not merge.
+
+## Loop (do not skip)
+
+1. Read `docs/scenario/README.md` → current season folder `docs/scenario/sXX/` → `docs/scenario/CHANGELOG.md`.
+2. `git fetch` + rebase **`scenario`** onto latest `main`. Resolve conflicts; do not rewrite other agents' commits.
+3. Work only under `docs/scenario/` (and this rule). Do not land `panel/` or `src/mods/` unless the user asked for a bridge after the lore is written.
+4. One name per faction. **Надзор** is the name. Short vanilla tag `НДЗ` is a technical field, not a second title.
+5. Bump the season file `version` and append `docs/scenario/CHANGELOG.md` on every lore change.
+6. Commits on **`scenario`**: `docs(scenario): …`. No `.env`, no saves, no `WorldDictionary.bin`.
+7. Do **not** merge to `main` until the user says the season is ready.
+
+## Seasons
+
+- `s00` — нулевой сезон (ввод Надзора). Хартия закрыта.
+- Later seasons get `s01`, `s02`, … — do not rewrite s00 in place to fit a new season; add a file and changelog entry.
+
+## Do / Don't
+
+- **Do** keep player-facing names stable. If a name changes, changelog it.
+- **Do** mark which NPCs exist in `MeatballsSlots` vs lore-only.
+- **Don't** commit on `main`. **Don't** merge. **Don't** invent a second faction name for the same roof.
+---
