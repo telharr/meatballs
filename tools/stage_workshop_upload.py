@@ -22,10 +22,12 @@ LIBRARIES_WS = "3796197817"
 LIBRARIES_PAGE = f"https://steamcommunity.com/sharedfiles/filedetails/?id={LIBRARIES_WS}"
 CORE_WS = "3796206775"
 KI5_WS = "3796212345"
+CHARACTER_WS = "3796217229"
 PUBLISHED = {
     "MeatballsLibraries": LIBRARIES_WS,
     "MeatballsCore": CORE_WS,
     "MeatballsKI5": KI5_WS,
+    "MeatballsCharacter": CHARACTER_WS,
 }
 
 PACKS = (
@@ -76,8 +78,50 @@ PACKS = (
     },
 )
 
+STEAM_DESC_MAX = 8000
+WS_PAGE = "https://steamcommunity.com/sharedfiles/filedetails/?id="
+
+
 def _url(href: str, label: str) -> str:
     return f"[url={href}]{label}[/url]"
+
+
+def _parse_credits(credits: str) -> list[tuple[str, str, str]]:
+    rows: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for raw in credits.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("id\t") or "copyright" in line.lower():
+            continue
+        if line.startswith("MEATBALLS ") or line.startswith("This item"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        mid, name, ws = parts[0].strip(), parts[1].strip(), parts[2].strip()
+        if name.endswith(")") and " (" in name:
+            name = name[: name.rfind(" (")].strip()
+        key = ws if ws.isdigit() else mid
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append((mid, name, ws))
+    return rows
+
+
+def _credits_bbcode(credits: str, *, clickable: bool) -> str:
+    items = []
+    for _mid, name, ws in _parse_credits(credits):
+        if ws.isdigit():
+            if clickable:
+                items.append(f"[*] {_url(WS_PAGE + ws, name)}")
+            else:
+                items.append(f"[*] {name} ({ws})")
+        else:
+            items.append(f"[*] {name} ({_mid})")
+    if not items:
+        return ""
+    return "[h1]Состав[/h1]\n[list]\n" + "\n".join(items) + "\n[/list]\n"
 
 
 FOOTER = f"""
@@ -87,8 +131,7 @@ FOOTER = f"""
 [*] [b]Режим:[/b] PvE · моды · 24/7 · Muldraugh KY · Build 42.20
 [*] [b]IP:[/b] {SERVER_IP}
 [/list]
-Зайти: клиент Project Zomboid → Join → этот IP.
-Нужны все 5 модов набора, [b]Libraries первым[/b].
+Зайти: клиент → Join → этот IP. Нужны все 5 модов набора, [b]Libraries первым[/b].
 
 [h1]Ссылки[/h1]
 [list]
@@ -105,51 +148,53 @@ FOOTER = f"""
 [/list]
 
 [h1]Авторы[/h1]
-Это замороженный снимок чужих модов для одного dedicated. Авторские права остаются у оригинальных авторов. Список id и оригинальных Workshop — в credits внутри пака. Обновляем централизованно под вайп сервера, не следим за ночными апдейтами Steam.
-
-[h1]Server[/h1]
-{SERVER_NAME} — PvE, Muldraugh KY, B42.20
-Join: {SERVER_IP}
-[list]
-[*] {_url(DISCORD, "Discord")}
-[*] {_url(TELEGRAM, "Telegram")}
-[*] {_url(PANEL, "Control panel")}
-[/list]
+Снимок чужих модов для dedicated MEATBALLS. Авторские права остаются у оригинальных авторов (ссылки в составе выше). Обновляем централизованно под вайп, не следим за ночными апдейтами Steam.
 """
 
 
-def _page_body(pack: dict) -> str:
+def _page_body(pack: dict, credits: str = "", *, clickable_credits: bool = True) -> str:
     require = ""
     if pack["id"] != "MeatballsLibraries":
         require = (
             f"[b]Required:[/b] {_url(LIBRARIES_PAGE, 'MEATBALLS Libraries')} "
             f"(Workshop ID {LIBRARIES_WS})\n\n"
         )
+    composition = _credits_bbcode(credits, clickable=clickable_credits)
     return (
         f"[h1]{pack['title']}[/h1]\n"
         f"[b]Mod ID:[/b] {pack['id']}\n\n"
         f"{pack['blurb_ru']}\n\n"
         f"[i]{pack['blurb_en']}[/i]\n\n"
         f"{require}"
+        f"{composition}"
         f"{FOOTER}"
     )
 
 
 def _steam_description(pack: dict, credits: str) -> str:
-    return (
-        f"{_page_body(pack).strip()}\n\n"
-        f"[h1]Состав этого файла[/h1]\n"
-        f"[code]\n{credits.strip()}\n[/code]\n"
-    )
+    text = _page_body(pack, credits, clickable_credits=True).strip() + "\n"
+    if len(text) > STEAM_DESC_MAX:
+        text = _page_body(pack, credits, clickable_credits=False).strip() + "\n"
+    if len(text) > STEAM_DESC_MAX:
+        text = text[: STEAM_DESC_MAX - 20].rstrip() + "\n…"
+    return text
 
 
-def _workshop_txt(pack: dict, *, published_id: str = "", visibility: str = "2") -> str:
+def _workshop_txt(
+    pack: dict,
+    credits: str = "",
+    *,
+    published_id: str = "",
+    visibility: str = "2",
+    title: str | None = None,
+) -> str:
+    body = _steam_description(pack, credits)
     lines = [
         "version=1",
         f"id={published_id}",
-        f"title={pack['title']}",
+        f"title={title or pack['title']}",
     ]
-    for line in _page_body(pack).strip("\n").splitlines():
+    for line in body.strip("\n").splitlines():
         lines.append(f"description={line}")
     lines.append(f"tags={pack['tags']}")
     lines.append(f"visibility={visibility}")
@@ -211,7 +256,10 @@ def main() -> None:
         _copy_mod(src, dest_42)
         shutil.copy2(preview_src, zroot / "preview.png")
         shutil.copy2(preview_src, dest_42 / "poster.png")
-        (zroot / "workshop.txt").write_text(_workshop_txt(pack), encoding="utf-8")
+        (zroot / "workshop.txt").write_text(
+            _workshop_txt(pack, credits, published_id=PUBLISHED.get(pack["id"], "")),
+            encoding="utf-8",
+        )
         (zroot / "steam_description.txt").write_text(_steam_description(pack, credits), encoding="utf-8")
 
         # SteamCMD layout: contentfolder contains mods/<id>/

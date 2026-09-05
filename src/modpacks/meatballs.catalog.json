@@ -2240,9 +2240,10 @@
       "kind": "mod",
       "id": "MeatballsCharacter",
       "name": "MEATBALLS Character (B42.20)",
-      "source": "local",
+      "source": "workshop",
       "enabled": false,
-      "notes": "New-world 5-pack #4. require=MeatballsLibraries (3796197817). Workshop id pending upload."
+      "workshop_id": "3796217229",
+      "notes": "New-world 5-pack #4 https://steamcommunity.com/sharedfiles/filedetails/?id=3796217229 require=MeatballsLibraries (3796197817). Do not write WorkshopItems= on XLGAMES."
     },
     {
       "kind": "mod",
