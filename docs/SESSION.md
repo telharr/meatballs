@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (branch `scenario`: s00 v0.4.1 c01 gate sprint spec)
+Last updated: 2026-09-05 (branch `scenario`: s00 v0.4.2 c01 tech risks)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.4.1 — ТЗ главы 1 `docs/scenario/s00/quests/c01-gate.md`.
+- Current: **s00** v0.4.2 — c01: late-join `c01_done`, tag recovery, sprite transmit.
 
 ## Panel
 
