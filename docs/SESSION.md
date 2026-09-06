@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (4/5 on Steam; Gameplay next; branch `mod`)
+Last updated: 2026-09-06 (five packs live; sandbox/registries harvest; Join ResetLua guards)
 
 ## Host (do not commit secrets)
 
@@ -37,7 +37,10 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - **Notepad list local (2026-09-05):** from Desktop URL dump. Safe wave 23 WS → 26 folders, kept one More Variety Loot (dropped 25/50/200%). Smoke **PASS**, 171 loaded. Caution wave 13 WS (skipped Item Condition `2852309899`, Tanks Have Propane `3676347667`, Tactical Pistol Hold `3680633169`); dropped FunctionalGuttersRemoved + StarvingZombiesWIP. Smoke **PASS**, 185 loaded, `*** SERVER STARTED ****`, no NPE/WD/required-mod. Cachedir `.mirror/meatballs-xl/ServerWorld`. **Live not FTP’d.** Do not add ETO/VFE/Lifestyle/old Common Sense/outdated/NPC SP/Necroa/Tomb body/grenades/silencers/basements.
 - **Workshop bundles (2026-09-05):** as-is folders (not Lua merge) in `.cache/workshop-packs/`: required Libraries / Core / KI5 / Character / Gameplay; optional Audio (`SHdynamicmusic`, not in server `Mods=`). Rebuild: `python tools/pack_server_bundles.py`. Steam upload not done (needs Guard + `STEAM_PASSWORD`). **Live not FTP’d.**
 - **Unified five ids (2026-09-05, new world):** `python tools/pack_unified_five.py` → `MeatballsLibraries` `MeatballsCore` `MeatballsKI5` `MeatballsCharacter` `MeatballsGameplay` (BetterSafehouse inside Core). Local test `-servername pack5` (`Server/pack5.ini`), cachedir meatballs-xl. Smoke **PASS**, loaded 5/5, `*** SERVER STARTED ****`, no NPE/WD/MakeTire. ~9k last-wins overwrites inside packs (some UI patches dropped). Audio still optional / not in `Mods=`. `world.ini` 184-id loadout left intact. **Live not FTP’d.** Steam not published.
-- **Workshop stage (2026-09-05):** Steam: **1/5 Libraries** [3796197817](https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817), **2/5 Core** [3796206775](https://steamcommunity.com/sharedfiles/filedetails/?id=3796206775), **3/5 KI5** [3796212345](https://steamcommunity.com/sharedfiles/filedetails/?id=3796212345), **4/5 Character** [3796217229](https://steamcommunity.com/sharedfiles/filedetails/?id=3796217229). Next: **5/5 Gameplay** (`C:\Users\zvaa\Zomboid\Workshop\MeatballsGameplay`, Required = Libraries). Descriptions list included mods (Steam 8000-char cap). Catalog `src/modpacks/meatballs-five.catalog.json`. Do not write these ids to live `WorkshopItems=`. **Live not FTP’d.**
+- **Workshop stage (2026-09-05):** Steam: **1/5 Libraries** [3796197817](https://steamcommunity.com/sharedfiles/filedetails/?id=3796197817), **2/5 Core** [3796206775](https://steamcommunity.com/sharedfiles/filedetails/?id=3796206775), **3/5 KI5** [3796212345](https://steamcommunity.com/sharedfiles/filedetails/?id=3796212345), **4/5 Character** [3796217229](https://steamcommunity.com/sharedfiles/filedetails/?id=3796217229), **5/5 Gameplay** [3796224319](https://steamcommunity.com/sharedfiles/filedetails/?id=3796224319). Descriptions list included mods (Steam 8000-char cap). Catalog `src/modpacks/meatballs-five.catalog.json`.
+- **Live five packs (2026-09-06):** FTP `/ServerWorld/mods` + `/steamapps/workshop/content/108600/<id>/mods/` + `appworkshop_108600.acf` (`NeedsDownload=0`). `Mods=` same order. `WorkshopItems=` those five IDs (client Join auto-download). Prior empty-cache JVM download of `3796197817` died `onItemNotDownloaded result=2` then NPE `GameServerWorkshopItems.Install`. Do not press XLGAMES SteamWorkshop «Добавить». Tools: `apply_five_live_ini.py`, `seed_workshop_cache.py`.
+- **Packed last-wins (2026-09-06):** `sandbox-options.txt` kept only the last inner mod per pack. Harvested inner defaults into live `world_SandboxVars.lua` and pack `sandbox-options.txt` on FTP **and** server workshop cache (`tools/merge_pack_sandbox.py`). First hoster Restart still logged Vest2 nils until the cache files were replaced. Packed `42/media/registries.lua` was AliceGear-only on Character; merged SPNCC+Spongie+Alice+KATTAJ1 (`tools/merge_pack_registries.py`). Starlit `Trait and Trait.class`; Reflection skipped unless debug; KillCount Java binds in pcall.
+- **Join ResetLua (2026-09-06):** first Steam download can hang on splash (`required mod "MeatballsLibraries" not found`) — full-kill PZ then Join. Then nil `ItemBodyLocation` / Events / factories during `ConnectToServerState.receiveServerOptions`. Guards: BodyLocations_Setup defer `OnGameBoot`, CharacterCustomisationPanel, AdminToolsClient, MDFT, Mod Manager `chooseModsWindow`, MLOS `onButtonCancel` (`tools/patch_resetlua_guards.py`). Vanilla `ConnectToServer.lua` `Events.OnConnected` is a cascade — do not patch vanilla. Other players still need a Steam update of Character/Libraries/Gameplay. Lua patches live on this PC’s workshop cache + FTP; Steam Verify can wipe local copies.
 
 ## Panel
 
@@ -73,6 +76,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Tools to prefer
 
 - FTP: `tools/ftp_client.py`, `tools/ftp_manager.py`
+- Five-pack live: `tools/apply_five_live_ini.py`, `tools/seed_workshop_cache.py`, `tools/merge_pack_sandbox.py`, `tools/merge_pack_registries.py`, `tools/patch_resetlua_guards.py`
 - Catalog apply: `POST /api/mods/apply-ini` or `tools/mod_catalog.py`
 - Local dedi: `python tools/local_server.py status|start|stop`
 - Safehouses: panel **Приваты**, `src/mods/MeatballsSafehouses`
