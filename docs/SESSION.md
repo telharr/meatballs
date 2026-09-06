@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-06 (five packs live; sandbox/registries harvest; Join ResetLua guards)
+Last updated: 2026-09-06 (main: five packs + Join ResetLua; scenario s00 v0.6.1 c07)
 
 ## Host (do not commit secrets)
 
@@ -41,6 +41,11 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 - **Live five packs (2026-09-06):** FTP `/ServerWorld/mods` + `/steamapps/workshop/content/108600/<id>/mods/` + `appworkshop_108600.acf` (`NeedsDownload=0`). `Mods=` same order. `WorkshopItems=` those five IDs (client Join auto-download). Prior empty-cache JVM download of `3796197817` died `onItemNotDownloaded result=2` then NPE `GameServerWorkshopItems.Install`. Do not press XLGAMES SteamWorkshop «Добавить». Tools: `apply_five_live_ini.py`, `seed_workshop_cache.py`.
 - **Packed last-wins (2026-09-06):** `sandbox-options.txt` kept only the last inner mod per pack. Harvested inner defaults into live `world_SandboxVars.lua` and pack `sandbox-options.txt` on FTP **and** server workshop cache (`tools/merge_pack_sandbox.py`). First hoster Restart still logged Vest2 nils until the cache files were replaced. Packed `42/media/registries.lua` was AliceGear-only on Character; merged SPNCC+Spongie+Alice+KATTAJ1 (`tools/merge_pack_registries.py`). Starlit `Trait and Trait.class`; Reflection skipped unless debug; KillCount Java binds in pcall.
 - **Join ResetLua (2026-09-06):** first Steam download can hang on splash (`required mod "MeatballsLibraries" not found`) — full-kill PZ then Join. Then nil `ItemBodyLocation` / Events / factories during `ConnectToServerState.receiveServerOptions`. Guards: BodyLocations_Setup defer `OnGameBoot`, CharacterCustomisationPanel, AdminToolsClient, MDFT, Mod Manager `chooseModsWindow`, MLOS `onButtonCancel` (`tools/patch_resetlua_guards.py`). Vanilla `ConnectToServer.lua` `Events.OnConnected` is a cascade — do not patch vanilla. Other players still need a Steam update of Character/Libraries/Gameplay. Lua patches live on this PC’s workshop cache + FTP; Steam Verify can wipe local copies.
+
+## Scenario bible
+
+- Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
+- Current: **s00** v0.6.1 — c07: `docs/scenario/s00/quests/c07-table.md`. `Corpse_RenHale` item, firebreak at isolation door, vigil radius 5.
 
 ## Panel
 
