@@ -2,7 +2,7 @@
 season: "00"
 id: texts
 campaign: Хроника пустых коек
-version: 0.6.0
+version: 0.6.1
 updated: 2026-09-06
 ---
 
@@ -142,7 +142,7 @@ ROSEWOOD F.D.
 
 ## Тело и ключи Рен (`c07`)
 
-Тело: `IsoDeadBody` с тегом `MeatballsNadzor_ren_body` или предмет `MeatballsNadzor.Corpse_RenHale` (`Weight >= 20`). Один на мир, медблок `7696,11818`. Сожжено — цикл закрыт, не респавнить.
+Тело: только предмет `MeatballsNadzor.Corpse_RenHale` (`Weight = 40`, двуручный, 3D в руках). **Не** `IsoDeadBody`. Один на мир, медблок `7696,11818`, на полу — world item. Сожжено игроком — цикл закрыт, не респавнить. Скриптовый пожар крыла до изолятора не допускается (буфер у двери).
 
 Ключи: `MeatballsNadzor.RenReserveKeys`. В кулаке трупа. Один комплект. Ключи без тела — этот персонаж не капитан.
 

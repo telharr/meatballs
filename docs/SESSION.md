@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-06 (scenario s00 v0.6.0 c07 table; live five-pack WorkshopItems seeded)
+Last updated: 2026-09-06 (scenario s00 v0.6.1 c07 locks; live five-pack WorkshopItems seeded)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.6.0 — c07: `docs/scenario/s00/quests/c07-table.md`. Body to duty table at dawn; captain flag; house oath still day 100.
+- Current: **s00** v0.6.1 — c07: `docs/scenario/s00/quests/c07-table.md`. `Corpse_RenHale` item, firebreak at isolation door, vigil radius 5.
 
 ## Panel
 

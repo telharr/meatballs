@@ -1,7 +1,7 @@
 ---
 season: "00"
 title: Нулевой сезон — Хроника пустых коек
-version: 0.6.0
+version: 0.6.1
 updated: 2026-09-06
 ---
 
@@ -29,7 +29,7 @@ updated: 2026-09-06
 | [quests/c04-fuel.md](quests/c04-fuel.md) | ТЗ спринта: канистра Дойла, лист Эллиса |
 | [quests/c05-tommy.md](quests/c05-tommy.md) | ТЗ спринта: Томми, доска памяти |
 | [quests/c06-will.md](quests/c06-will.md) | ТЗ спринта: офис, письмо Рен, выезд |
-| [quests/c07-table.md](quests/c07-table.md) | ТЗ спринта: тело, панихида, капитан |
+| [quests/c07-table.md](quests/c07-table.md) | ТЗ спринта: тело-предмет, буфер огня, капитан |
 | [scripts.md](scripts.md) | Реплики |
 | [texts.md](texts.md) | Жетоны, тетрадь, письмо |
 | [places.md](places.md) | Якоря XY |
