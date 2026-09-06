@@ -2,7 +2,7 @@
 
 **Сначала** `docs/PRODUCT.md` (цели панели, профиль сервера), **потом** этот файл. Спринты: `docs/SPRINTS.md`.
 
-Last updated: 2026-09-05 (live five-pack FTP; scenario s00 v0.5.0 c06 will)
+Last updated: 2026-09-06 (scenario s00 v0.6.0 c07 table; live five-pack WorkshopItems seeded)
 
 ## Host (do not commit secrets)
 
@@ -21,7 +21,7 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Scenario bible
 
 - Season lore / factions: commits only on branch **`scenario`**; rebase onto `main`; merge after readiness. Protocol: `.cursor/rules/scenario.mdc`.
-- Current: **s00** v0.5.0 — c06: `docs/scenario/s00/quests/c06-will.md`. Office at day 25; house oath still day 100.
+- Current: **s00** v0.6.0 — c07: `docs/scenario/s00/quests/c07-table.md`. Body to duty table at dawn; captain flag; house oath still day 100.
 
 ## Panel
 
@@ -50,7 +50,8 @@ Fill this section **locally only**. Do not put real passwords, tokens, or privat
 ## Mods (live XLGAMES, 2026-09-05)
 
 FTP `/ServerWorld/mods`: MeatballsLibraries, MeatballsCore, MeatballsKI5, MeatballsCharacter, MeatballsGameplay.  
-`Mods=` same order. **`WorkshopItems=` empty** — 2026-09-05 XLGAMES B42.20.4: query found 5 items, download `3796197817` `onItemNotDownloaded result=2`, then NPE `GameServerWorkshopItems.Install` → `deleteDirectory` null File, JVM exit. Do not put the five MEATBALLS WS ids (or originals) in live `WorkshopItems=` on this hoster. Clients: subscribe to public MEATBALLS pages, then Join; server loads FTP folders.
+Same five copied to `/steamapps/workshop/content/108600/<id>/mods/` + `appworkshop_108600.acf` (`NeedsDownload=0`).  
+`Mods=` same order. `WorkshopItems=` `3796197817;3796206775;3796212345;3796217229;3796224319` (client Join auto-download). Prior empty-cache JVM download of `3796197817` died `onItemNotDownloaded result=2` then NPE `GameServerWorkshopItems.Install`. Hoster Restart required after this write. Do not also press XLGAMES SteamWorkshop «Добавить».
 
 ## Tools to prefer
 
